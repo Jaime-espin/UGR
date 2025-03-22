@@ -14,3 +14,6 @@ lib/liboper2.a: obj/oper2.o
 
 clean:
 	rm obj/*.o
+
+cleanall:
+	rm obj/*.o bin/*
