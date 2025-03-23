@@ -17,7 +17,7 @@ int calcularTamanio(int tmax) {
 
 void mostrar ( const bool estado [ ], const int tam ) {
     for ( int i = 0; i < tam ; ++ i ){
-        cout << ( estado [ i ] ? NEGRO : BLANCO) << " \u2003\u2003 " << RESET;
+        cout << ( estado [ i ] ? NEGRO : BLANCO) << "\u2003\u2003 " << RESET;
     }
     cout << endl;
 }
