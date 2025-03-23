@@ -1,30 +1,37 @@
+/*
+NOMBRE Y APELLIDOS: Jaime Espín Rodríguez
+DNI: 75571535K
+GRUPO DE PRÁCTICAS: Jueves
+*/
+
 #include <iostream>
 #include "automata.h"
 
 using namespace std;
 
-# define BLANCO  " \33[30;47m" // fondo blanco
-# define NEGRO " \33[30;40m" // fondo negro
-# define RESET " \33[0m" // resetear fondo
+# define BLANCO  "\33[30;47m" // fondo blanco
+# define NEGRO "\33[30;40m" // fondo negro
+# define RESET "\33[0m" // resetear fondo
 
 int calcularTamanio(int tmax) {
-    int tam = tmax + 1;
+    int tam = 2*tmax;
     if(tam < 100){
         return tam;
     }
     return 100;
 }
 
-void mostrar ( const bool estado [ ], const int tam ) {
-    for ( int i = 0; i < tam ; ++ i ){
-        cout << ( estado [ i ] ? NEGRO : BLANCO) << "\u2003\u2003 " << RESET;
+
+void mostrar(const bool estado[], const int tam) {
+    for (int i = 0; i < tam; ++i) {
+        cout << (estado[i] ? NEGRO : BLANCO) << "\u2003\u2003 " << RESET;
     }
     cout << endl;
 }
 
 void generarReglas(int regla, bool reglas[8]){
     for (int i = 0; i <= 7; i++) {
-        reglas[i] = regla%2;
+        reglas[i] = regla % 2;
         regla /= 2;
     }
 }

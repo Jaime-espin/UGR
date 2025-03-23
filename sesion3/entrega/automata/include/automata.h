@@ -1,3 +1,9 @@
+/*
+NOMBRE Y APELLIDOS: Jaime Espín Rodríguez
+DNI: 75571535K
+GRUPO DE PRÁCTICAS: Jueves
+*/
+
 #ifndef AUTOMATA_H
 #define AUTOMATA_H
 

@@ -1,3 +1,9 @@
+/*
+NOMBRE Y APELLIDOS: Jaime Espín Rodríguez
+DNI: 75571535K
+GRUPO DE PRÁCTICAS: Jueves
+*/
+
 #include <iostream>
 #include "automata.h"
 
