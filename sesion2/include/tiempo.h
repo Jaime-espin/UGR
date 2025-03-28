@@ -17,6 +17,6 @@ Tiempo segundosEnTiempo(const int);
 bool esPosterior(const Tiempo &,const Tiempo &);
 bool sonIguales(const Tiempo &, const Tiempo &);
 Tiempo calcularNuevoTiempo(const Tiempo &, const int );
-string toString(const Tiempo &);
+string toStringT(const Tiempo &);
 
-#endif TIEMPO_H
+#endif
