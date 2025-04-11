@@ -28,12 +28,12 @@ int main(){
     p1.y=0;
 
     Punto2D p2;
-    p2.x=1;
-    p2.y=1;
+    p2.x=3;
+    p2.y=3;
 
     Punto2D p3;
-    p3.x=3;
-    p3.y=3;
+    p3.x=1;
+    p3.y=1;
     agregarPunto(c, p1);
     agregarPunto(c, p2);
     agregarPunto(c, p3);
