@@ -18,10 +18,9 @@ int puntoPertence(Camino & c, Punto2D p){
   for(int i = 0; i<c.util; i++){
     if(p.x==c.path[i].x && p.y==c.path[i].y){
       return i;
-    }else{
-      return c.util+1;
     }
   }
+  return c.util+1;
 }
 void borrarPunto(Camino & c, Punto2D p){
   int i = puntoPertence(c, p);
@@ -47,7 +46,7 @@ double distanciaPuntos(Punto2D p1, Punto2D p2){
 void masLejanos(Camino & c, Punto2D & p1, Punto2D & p2){
   double distMax=0;
   for(int i=0; i<c.util; i++){
-    for(int j=1; j<c.util;j++){
+    for(int j=i+1; j<c.util;j++){
       if(distanciaPuntos(c.path[i],c.path[j])>distMax){
         distMax=distanciaPuntos(c.path[i],c.path[j]);
         p1=c.path[i];
@@ -63,9 +62,13 @@ Punto2D siguientePunto(Camino c, Punto2D p){
   bool encontrado = false;
 
   for(int i=0; i<c.util; i++){
-    if(distanciaPuntos(p, c.path[i])<distMin && distanciaPuntos(p, c.path[i])>0){
-      siguiente=c.path[i];
+    double dist = distanciaPuntos(p, c.path[i]);
+    if(dist < distMin && dist > 0){
+      distMin = dist;
+      siguiente = c.path[i];
+      encontrado = true;
     }
+
   }
 
   return siguiente;
@@ -115,13 +118,107 @@ double longitud(Camino & c){
 }
 
 void unirCaminos(Camino c1, Camino c2, Camino &c){
-  Camino nuevo;
-  nuevo.path[i]=c1.path[0]
-  for(int i=0; i<c1.util+c2.util; i++){
-    nuevo.path[i]=
-    for(int j=0; j<)
-    
+  c.path = nullptr;
+  c.util = 0;
+
+  int total = c1.util + c2.util;
+  Punto2D* todos = new Punto2D[total];
+  int k = 0;
+
+  for (int i = 0; i < c1.util; i++) {
+    todos[k++] = c1.path[i];
   }
+  for (int i = 0; i < c2.util; i++) {
+    todos[k++] = c2.path[i];
+  }
+
+  bool* visitados = new bool[total];
+  for(int i=0; i<total; i++){
+    visitados[i]=false;
+  }
+  Punto2D actual = c1.path[0];
+  agregarPunto(c, actual);
+
+  for (int i = 0; i < total; i++) {
+    if (todos[i].x == actual.x && todos[i].y == actual.y) {
+      visitados[i] = true;
+      break;
+    }
+  }
+
+  for (int usados = 1; usados < total; usados++) {
+    double minDist = 1e10;
+    int indiceMin = -1;
+
+    for (int i = 0; i < total; i++) {
+      if (!visitados[i]) {
+        double d = distanciaPuntos(actual, todos[i]);
+          if (d < minDist) {
+          minDist = d;
+          indiceMin = i;
+        }
+      }
+    }
+
+    if (indiceMin != -1) {
+      agregarPunto(c, todos[indiceMin]);
+      visitados[indiceMin] = true;
+      actual = todos[indiceMin];
+    }
+  }
+
+  delete[] todos;
+  delete[] visitados;
+  
+  
+  /*int total = c1.util+c2.util;
+  Punto2D* nuevo = new Punto2D[total];
+  bool* visitado1 = new bool[c1.util]();
+  bool* visitado2 = new bool[c2.util]();
+
+  Punto2D actual=c1.path[0];
+  nuevo[0]=actual;
+  int usados=1;
+
+  int pos = puntoPertence(c1, actual);
+  if(pos != -1) visitado1[pos] = true;
+
+  pos = puntoPertence(c2, actual);
+  if(pos != -1) visitado2[pos] = true;
+
+  while (usados < total) {
+    double minDist = 1e10;
+    Punto2D siguiente;
+    bool encontrado = false;
+    for (int i = 0; i < c1.util; i++) {
+      if (!visitado1[i]) {
+        double d = distanciaPuntos(actual, c1.path[i]);
+        if (d < minDist) {
+          minDist = d;
+          siguiente = c1.path[i];
+          encontrado = true;
+        }
+      }
+    }
+    for (int i = 0; i < c2.util; i++) {
+      if (!visitado2[i]) {
+        double d = distanciaPuntos(actual, c2.path[i]);
+        if (d < minDist) {
+          minDist = d;
+          siguiente = c2.path[i];
+          encontrado = true;
+        }
+      }
+    }
+    nuevo[usados] = siguiente;
+    usados++;
+
+    pos = puntoPertence(c1, siguiente);
+    if (pos != -1) visitado1[pos] = true;
+    pos = puntoPertence(c2, siguiente);
+    if (pos != -1) visitado2[pos] = true;
+    actual = siguiente;
+  }*/
 }
 void mostrarCamino(Camino c){
   cout<<c.util<<" -> ";

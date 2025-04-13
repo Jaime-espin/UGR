@@ -40,11 +40,34 @@ int main(){
 
     mostrarCamino(c);
 
-    Punto2D plejano1, plejano2;
+    /*Punto2D plejano1, plejano2;
 
     masLejanos(c, plejano1, plejano2);
     cout<< plejano1.x <<","<< plejano1.y<<endl;
     cout<< plejano2.x <<","<< plejano2.y<<endl;
 
-    cout<<longitud(c)<<endl;
+    cout<<longitud(c)<<endl;*/
+
+    Camino c2;
+    Punto2D p4;
+    p4.x=5;
+    p4.y=5;
+
+    Punto2D p5;
+    p5.x=2;
+    p5.y=2;
+
+    Punto2D p6;
+    p6.x=8;
+    p6.y=8;
+    agregarPunto(c2, p4);
+    agregarPunto(c2, p5);
+    agregarPunto(c2, p6);
+
+    mostrarCamino(c2);
+
+    Camino cUnion;
+    unirCaminos(c,c2,cUnion);
+
+    mostrarCamino(cUnion);
 }
