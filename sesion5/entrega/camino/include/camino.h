@@ -1,3 +1,8 @@
+/*
+NOMBRE Y APELLIDOS: Jaime Espín Rodríguez
+DNI: 75571535K
+GRUPO DE PR´ACTICAS: Jueves
+*/
 #ifndef CAMINO_H
 #define CAMINO_H
 

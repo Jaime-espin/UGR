@@ -22,12 +22,13 @@ void agregarPunto(Camino & c, const Punto2D &p){
 }
 
 int puntoPertence(Camino & c, Punto2D p){
+  int pos=-1;
   for(int i = 0; i<c.util; i++){
     if(p.x==c.path[i].x && p.y==c.path[i].y){
-      return i;
+      pos=i;
     }
   }
-  return -1;
+  return pos;
 }
 void borrarPunto(Camino & c, Punto2D p){
   int i = puntoPertence(c, p);
@@ -82,9 +83,7 @@ Punto2D siguientePunto(Camino c, Punto2D p, bool* visitados){
 }
 
 double longitud(Camino & c){
-  if(c.util < 2) {
-    return 0.0;
-  }
+  
 
   Punto2D p1, p2;
   masLejanos(c, p1, p2);
@@ -98,22 +97,22 @@ double longitud(Camino & c){
   for(int i = 0; i < c.util; i++) {
     visitados[i] = false;
   }
-
-  for(int i = 0; i < c.util; i++) {
+  bool encontrado=false;
+  for(int i = 0; i < c.util || !encontrado; i++) {
     if(c.path[i].x == p1.x && c.path[i].y == p1.y) {
       visitados[i] = true;
-      break;
+      encontrado=true;
     }
   }
-  
-  while(puntosVisitados < c.util /*&& (actual.x != p2.x || actual.y != p2.y)*/) {
+  encontrado=false;
+  while(puntosVisitados < c.util) {
     siguiente = siguientePunto(c, actual, visitados);
     
-    for(int i = 0; i < c.util; i++) {
+    for(int i = 0; i < c.util || !encontrado; i++) {
       if(c.path[i].x == siguiente.x && c.path[i].y == siguiente.y && !visitados[i]) {
         visitados[i] = true;
         puntosVisitados++;
-        break;
+        encontrado=true;
       }
     }
 
@@ -122,6 +121,9 @@ double longitud(Camino & c){
   }
   
   delete [] visitados;
+  if(c.util < 2) {
+    longitudTotal=0.0;
+  }
   return longitudTotal;
 }
 
@@ -147,10 +149,11 @@ void unirCaminos( Camino &c, Camino c1, Camino c2){
   Punto2D actual = c1.path[0];
   agregarPunto(c, actual);
 
-  for (int i = 0; i < total; i++) {
+  bool encontrado=false;
+  for (int i = 0; i < total || !encontrado; i++) {
     if (todos[i].x == actual.x && todos[i].y == actual.y) {
       visitados[i] = true;
-      break;
+      encontrado=true;
     }
   }
 

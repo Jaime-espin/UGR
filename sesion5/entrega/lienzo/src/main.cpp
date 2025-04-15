@@ -1,5 +1,5 @@
 #include <iostream>
-#include "lienzo.hpp"
+#include "lienzo.h"
 #include "test.hpp"
 
 using namespace std;

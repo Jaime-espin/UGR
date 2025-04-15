@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cassert>
-#include "lienzo.hpp"
+#include "lienzo.h"
 #include "test.hpp"
 
 using namespace std;
@@ -192,7 +192,7 @@ void test7(){
 }
 
 void test8(){
-  mostrarCartel("Prueba t odo");
+  mostrarCartel("Prueba todo");
   Lienzo imgBase, img, imgC;
   
   reservarLienzo(imgBase, 5, 5);
