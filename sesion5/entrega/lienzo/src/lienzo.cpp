@@ -86,6 +86,7 @@ void rotarLienzo(Lienzo & l){
     liberarLienzo(laux);
 }
 void unirLienzos(Lienzo & l, Lienzo l1, Lienzo l2){
+    liberarLienzo(l);
     int totalCol=l1.nc+l2.nc;
     int totalFil;
     if(l1.nf==l2.nf){
@@ -136,6 +137,7 @@ bool sonIguales(Lienzo l1, Lienzo l2){
     return true;
 }
 void copiarLienzo(Lienzo & lcopia, Lienzo l){
+    liberarLienzo(lcopia);
     reservarLienzo(lcopia, l.nf, l.nc);
     for(int i=0; i<l.nf; i++){
         for(int j=0; j<l.nc; j++){
