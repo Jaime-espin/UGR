@@ -1,7 +1,7 @@
 all: bin/lienzo
 
 bin/lienzo: obj/main.o obj/lienzo.o obj/test.o
-	g++ -o bin/lienzo obj/main.o obj/lienzo.o obj/test.o
+	g++ -o bin/test obj/main.o obj/lienzo.o obj/test.o
 
 obj/main.o: src/main.cpp include/lienzo.h include/test.hpp
 	g++ -Iinclude -c -o obj/main.o src/main.cpp

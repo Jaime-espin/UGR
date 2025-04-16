@@ -105,6 +105,7 @@ void unirLienzos(Lienzo & l, Lienzo l1, Lienzo l2){
     }
 }
 void copiarRectangulo(Lienzo & l, Lienzo l1, int fil, int col, int alto, int ancho){
+    liberarLienzo(l);
     int filFin=fil+alto-1;
     if(filFin>l1.nf){
         filFin=l1.nf-1;
