@@ -22,4 +22,4 @@ void copiarRectangulo(Lienzo & l1, Lienzo l, int fil, int col, int alto, int anc
 bool sonIguales(Lienzo l1, Lienzo l2);
 void copiarLienzo(Lienzo & lcopia, Lienzo l);
 
-#endif LIENZO_H
+#endif

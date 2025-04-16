@@ -128,7 +128,7 @@ double longitud(Camino & c){
 }
 
 void unirCaminos( Camino &c, Camino c1, Camino c2){
-  c.path = nullptr;
+  c.path = 0;
   c.util = 0;
 
   int total = c1.util + c2.util;
@@ -195,6 +195,6 @@ string toString(Punto2D p){
 
 void liberaMemoria(Camino &c) {
     delete[] c.path;
-    c.path = nullptr;
+    c.path = 0;
     c.util = 0;
 }
