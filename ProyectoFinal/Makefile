@@ -1,6 +1,6 @@
-all: bin/proyecto
+all: bin/test_preparacion
 
-bin/proyecto: obj/main.o obj/vector.o obj/particula.o obj/util.o
+bin/test_preparacion: obj/main.o obj/vector.o obj/particula.o obj/util.o
 	g++ -o bin/proyecto obj/main.o obj/vector.o obj/particula.o obj/util.o
 
 obj/main.o: src/main_test.cpp

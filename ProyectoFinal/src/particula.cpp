@@ -115,3 +115,9 @@ void Particula::choque(Particula &p){
 string Particula::toString(){
     return "{("+to_string(getPosicion().getX())+","+to_string(getPosicion().getY())+"),("+to_string(getVelocidad().getX())+","+to_string(getVelocidad().getY())+"),("+to_string(getAceleracion().getX())+","+to_string(getAceleracion().getY())+")"+","+to_string(radio)+","+to_string(tipo)+"}";
 }
+
+//Parte1
+
+void Particula::wrap(){
+    
+}

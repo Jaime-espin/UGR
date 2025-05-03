@@ -28,6 +28,8 @@ public:
     bool colision(Particula p);
     void choque(Particula &p);
     std::string toString();
+    //Parte1
+    void wrap();
 };
 
 #endif
