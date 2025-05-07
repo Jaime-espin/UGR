@@ -85,13 +85,22 @@ void Particula::mover(){
 }
 void Particula::rebotar(){
     Vector2D newVel;
+    Vector2D newAce;
+    
     if(getPosicion().getX() + getRadio() >= MAX_X || getPosicion().getX() - getRadio() <= MIN_X){
         newVel.setXY(getVelocidad().getX()*-1, getVelocidad().getY());
         setVelocidad(newVel);
+        
+        newAce.setXY(getAceleracion().getX()*-1, getAceleracion().getY());
+        setAceleracion(newAce);
     }
+    
     if(getPosicion().getY() + getRadio() >= MAX_Y || getPosicion().getY() - getRadio() <= MIN_Y){
         newVel.setXY(getVelocidad().getX(), getVelocidad().getY()*-1);
         setVelocidad(newVel);
+        
+        newAce.setXY(getAceleracion().getX(), getAceleracion().getY()*-1);
+        setAceleracion(newAce);
     }
 }
 bool Particula::colision(Particula p){

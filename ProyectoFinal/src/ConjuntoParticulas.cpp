@@ -19,6 +19,8 @@ ConjuntoParticulas::ConjuntoParticulas(const ConjuntoParticulas &cp){
     }
 }
 ConjuntoParticulas::~ConjuntoParticulas(){
+    num_particulas=0;
+    capacidad=0;
     delete [] conjunto;
 }
 int ConjuntoParticulas::size(){

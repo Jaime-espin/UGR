@@ -78,7 +78,7 @@ void test_suma() {
 
 void test_distancia() {
   Vector2D v1(1.0, 2.0), v2(3.0, 4.0);
-
+  
   assert(v1.distancia(v2) == sqrt(8.0));
 }
 
@@ -170,7 +170,7 @@ void test_rebotar() {
   Particula p(Vector2D(1, 2), vel, acel, 1.0, 0);
   p.rebotar();
   assert(p.getPosicion().distancia(Vector2D(1, 2)) == 0.0);
-  assert(p.getAceleracion().distancia(Vector2D(1, 0)) == 0.0);
+  assert(p.getAceleracion().distancia(Vector2D(-1, 0)) == 0.0);
   assert(p.getVelocidad().distancia(Vector2D(-2, -3)) == 0.0);
   
   // La partícula no llega al borde izquierdo, luego no cambia
