@@ -4,6 +4,8 @@
 #include <string>
 #include "vector.h"
 
+using namespace std;
+
 class Particula{
 private:
     Vector2D posicion;
@@ -18,11 +20,11 @@ public:
     void setVelocidad(Vector2D newVel);
     void setAceleracion(Vector2D newAce);
     void setRadio(double newRadio);
-    Vector2D getPosicion();
-    Vector2D getVelocidad();
-    Vector2D getAceleracion();
-    double getRadio();
-    int getTipo();
+    Vector2D getPosicion() const;
+    Vector2D getVelocidad() const;
+    Vector2D getAceleracion() const;
+    double getRadio() const;
+    int getTipo() const;
     void mover();
     void rebotar();
     bool colision(Particula p);
@@ -30,6 +32,12 @@ public:
     std::string toString();
     //Parte1
     void wrap();
+    //funciones auxiliares
+    bool operator==(Particula &p);
 };
+
+//Parte2
+ostream& operator<<(ostream &flujo, Particula &p);
+istream& operator>>(istream &flujo, Particula &p);
 
 #endif

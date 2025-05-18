@@ -1,5 +1,6 @@
 #include "vector.h"
 #include <cmath>
+#include <iostream>
 
 using namespace std;
 
@@ -54,4 +55,32 @@ double Vector2D::distancia(Vector2D v){
 
 string Vector2D::toString(){
   return "(" + to_string(getX()) + "," + to_string(getY()) + ")";
+}
+
+//Parte2
+Vector2D Vector2D::operator+(const Vector2D &v){
+  return sumar(v);
+}
+Vector2D Vector2D::operator*(const double &n){
+  return escalar(n);
+}
+bool Vector2D::operator==(const Vector2D &v){
+  double EPSILON=1e-10;
+  return (getX() - v.getX() > -EPSILON && getX() - v.getX() < EPSILON) && (getY() - v.getY() > -EPSILON && getY() - v.getY() < EPSILON);
+}
+bool Vector2D::operator!=(const Vector2D &v){
+  return !(*this == v);
+}
+
+ostream& operator<<(ostream &flujo, Vector2D &v){
+  flujo<<v.toString();
+  return flujo;
+}
+
+istream& operator>>(istream &flujo, Vector2D &v){
+  double _x, _y;
+  flujo >> _x >> _y;
+
+  v.setXY(_x, _y);
+  return flujo;
 }

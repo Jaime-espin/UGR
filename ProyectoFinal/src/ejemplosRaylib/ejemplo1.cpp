@@ -1,4 +1,3 @@
-
 #include "raylib.h"
 #include "Punto2D.h"
 #include <cmath>

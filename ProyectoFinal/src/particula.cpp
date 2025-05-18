@@ -1,4 +1,5 @@
 #include <cmath>
+#include <iostream>
 #include "particula.h"
 #include "vector.h"
 #include "util.hpp"
@@ -35,19 +36,19 @@ void Particula::setAceleracion(Vector2D newAce){
 void Particula::setRadio(double newRadio){
     radio=newRadio;
 }
-Vector2D Particula::getPosicion(){
+Vector2D Particula::getPosicion()const{
     return posicion;
 }
-Vector2D Particula::getVelocidad(){
+Vector2D Particula::getVelocidad()const{
     return velocidad;
 }
-Vector2D Particula::getAceleracion(){
+Vector2D Particula::getAceleracion()const{
     return aceleracion;
 }
-double Particula::getRadio(){
+double Particula::getRadio()const{
     return radio;
 }
-int Particula::getTipo(){
+int Particula::getTipo()const{
     return tipo;
 }
 
@@ -128,5 +129,43 @@ string Particula::toString(){
 //Parte1
 
 void Particula::wrap(){
+    Vector2D pos = getPosicion();
     
+    if (pos.getX() + radio > MAX_X) {
+        pos.setX(MIN_X + radio);
+    } else if (pos.getX() - radio < MIN_X) {
+        pos.setX(MAX_X - radio);
+    }
+    
+    if (pos.getY() + radio > MAX_Y) {
+        pos.setY(MIN_Y + radio);
+    } else if (pos.getY() - radio < MIN_Y) {
+        pos.setY(MAX_Y - radio);
+    }
+    
+    setPosicion(pos);
+}
+
+//auxiliares
+bool Particula::operator==(Particula &p){
+    if(getPosicion()==p.getPosicion() && getVelocidad()==p.getVelocidad() && getAceleracion()==p.getAceleracion() && getRadio()==p.getRadio() && getTipo()==p.getTipo()){
+        return true;
+    }
+}
+
+//Parte2
+
+ostream& operator<<(ostream &flujo, Particula &p){
+    flujo<<p.toString();
+    return flujo;
+}
+istream& operator>>(istream &flujo, Particula &p){
+    string nombre;
+    double pos_x, pos_y, vel_x, vel_y, ace_x, ace_y, radio;
+    int tipo;
+
+    flujo>>nombre>>pos_x>>pos_y>>vel_x>>vel_y>>ace_x>>ace_y>>radio>>tipo;
+    
+    p=Particula({pos_x, pos_y}, {vel_x, vel_y}, {ace_x, ace_y}, radio, tipo);
+    return flujo;
 }

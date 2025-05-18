@@ -3,6 +3,7 @@
 
 #include <string>
 
+using namespace std;
 class Vector2D{
 private:
 	double x, y;
@@ -22,6 +23,14 @@ public:
 	void normalizar();
 	double distancia(Vector2D v);
 	std::string toString();
+	//Parte2
+	Vector2D operator+(const Vector2D &v);
+	Vector2D operator*(const double &n);
+	bool operator==(const Vector2D &v);
+	bool operator!=(const Vector2D &v);
+	
 };
+ostream& operator<<(ostream &flujo, Vector2D &v);
+std::istream& operator>>(std::istream &flujo, Vector2D &v);
 
 #endif
