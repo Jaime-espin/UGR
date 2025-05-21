@@ -131,15 +131,15 @@ string Particula::toString(){
 void Particula::wrap(){
     Vector2D pos = getPosicion();
     
-    if (pos.getX() + radio > MAX_X) {
+    if (pos.getX() + radio >= MAX_X) {
         pos.setX(MIN_X + radio);
-    } else if (pos.getX() - radio < MIN_X) {
+    } else if (pos.getX() - radio <= MIN_X) {
         pos.setX(MAX_X - radio);
     }
-    
-    if (pos.getY() + radio > MAX_Y) {
+
+    if (pos.getY() + radio >= MAX_Y) {
         pos.setY(MIN_Y + radio);
-    } else if (pos.getY() - radio < MIN_Y) {
+    } else if ((pos.getY() - radio) <= MIN_Y) {
         pos.setY(MAX_Y - radio);
     }
     

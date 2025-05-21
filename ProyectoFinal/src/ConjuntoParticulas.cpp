@@ -1,6 +1,6 @@
+#include <iostream>
 #include "ConjuntoParticulas.hpp"
 
-using namespace std;
 
 ConjuntoParticulas::ConjuntoParticulas(int n){ //Constructor con parámetro por defecto
     capacidad=n;
@@ -11,8 +11,13 @@ ConjuntoParticulas::ConjuntoParticulas(int n){ //Constructor con parámetro por 
             conjunto[i]=Particula(0);
         }
     }
+    else {
+        conjunto = nullptr; // Initialize to nullptr when n <= 0
+    }
 }
 ConjuntoParticulas::ConjuntoParticulas(const ConjuntoParticulas &cp){ //Constructor de copia
+    capacidad = cp.capacidad;
+    num_particulas = cp.num_particulas;
     conjunto = new Particula[cp.capacidad];
     for(int i=0; i<cp.num_particulas; i++){
         conjunto[i]=cp.conjunto[i];
@@ -48,26 +53,29 @@ void ConjuntoParticulas::agregar(Particula p){
     num_particulas++;
 }
 void ConjuntoParticulas::borrar(int pos) {
-    conjunto[pos] = conjunto[num_particulas-1];
-    num_particulas--;
-    
-    if (capacidad - num_particulas > TAM_BLOQUE) {
-        int nueva_capacidad = num_particulas;
+    if (pos >= 0 && pos < num_particulas) {
+        conjunto[pos] = conjunto[num_particulas-1];
+        num_particulas--;
+        
+        if (capacidad - num_particulas > TAM_BLOQUE && num_particulas > 0) {
+            int nueva_capacidad = num_particulas;
 
-        Particula* nuevo_conjunto = new Particula[nueva_capacidad];
-        
-        for (int i = 0; i < num_particulas; i++) {
-            nuevo_conjunto[i] = conjunto[i];
+            Particula* nuevo_conjunto = new Particula[nueva_capacidad];
+            
+            for (int i = 0; i < num_particulas; i++) {
+                nuevo_conjunto[i] = conjunto[i];
+            }
+            
+            delete[] conjunto;
+            conjunto = nuevo_conjunto;
+            capacidad = nueva_capacidad;
         }
-        
-        delete[] conjunto;
-        conjunto = nuevo_conjunto;
-        capacidad = nueva_capacidad;
     }
 }
 Particula ConjuntoParticulas::obtener(int pos){
     return conjunto[pos];
 }
+
 void ConjuntoParticulas::reemplazar(int pos, Particula p){
     conjunto[pos]=p;
 }
@@ -90,9 +98,9 @@ void ConjuntoParticulas::mover(int tipo_mov){
 }
 void ConjuntoParticulas::gestionarColisiones(){
     for(int i=0; i<num_particulas; i++){
-        for(int j=0; j<num_particulas; j++){
-            if(conjunto[i].colision(conjunto[j+1])){
-                conjunto[i].choque(conjunto[j+1]);
+        for(int j=i+1; j<num_particulas; j++){
+            if(conjunto[i].colision(conjunto[j])){
+                conjunto[i].choque(conjunto[j]);
             }
         }
     }
@@ -126,6 +134,18 @@ ConjuntoParticulas & ConjuntoParticulas::operator=(const ConjuntoParticulas & c)
     
     return *this;
 }
+ConjuntoParticulas & ConjuntoParticulas::operator+(ConjuntoParticulas & c){
+    ConjuntoParticulas nuevo(c);
+    
+    for(int i=0; i<size(); i++) {
+        Particula p = conjunto[i];
+        if (!nuevo.pertenece(p)) {
+            nuevo.agregar(p);
+        }
+    }
+    *this=nuevo;
+    return *this;
+}
 ConjuntoParticulas & ConjuntoParticulas::operator+=(Particula & p){
     if(!pertenece(p)){
         agregar(p);
@@ -136,26 +156,28 @@ ConjuntoParticulas & ConjuntoParticulas::operator-=(const int & indice){
     borrar(indice);
     return *this;
 }
+
 ostream& operator<<(ostream &flujo, ConjuntoParticulas &c){
     flujo<<c.toString();
     return flujo;
 }
 
-istream& operator>>(istream &flujo, ConjuntoParticulas &c){
-    string cabecera;
+std::istream& operator>>(std::istream &flujo, ConjuntoParticulas &c){
+    std::string cabecera;
     int n;
     
-    //flujo >> cabecera >> n;
+    flujo >> cabecera;
+    flujo >> n;
     
     c = ConjuntoParticulas(0);
     
     for(int i = 0; i < n; i++) {
-        string etiqueta;
+        std::string etiqueta;
         double pos_x, pos_y, vel_x, vel_y, ace_x, ace_y, radio;
         int tipo;
         
         flujo >> etiqueta;
-        //flujo >> pos_x >> pos_y >> vel_x >> vel_y >> ace_x >> ace_y >> radio >> tipo;
+        flujo >> pos_x >> pos_y >> vel_x >> vel_y >> ace_x >> ace_y >> radio >> tipo;  // Uncomment this line
         
         Particula p(Vector2D(pos_x, pos_y), Vector2D(vel_x, vel_y), Vector2D(ace_x, ace_y), radio, tipo);
         c.agregar(p);

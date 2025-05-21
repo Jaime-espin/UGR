@@ -64,20 +64,61 @@ int main(int argc, char *argv[]) {
         Particula p(pos, vel, acel, radio, 0);
         habitacion.agregar(p);
     }
+    ConjuntoParticulas aux =ConjuntoParticulas(habitacion);
 
     SetTargetFPS(45); // velocidad de la simulación
     //----------------------------------------------------------
 
-    bool continuar = true;
-    
+    bool continuar = 0;
 
     // bucle principal
     //---------------------------------------------------------
     while (!WindowShouldClose()) // Detect window close button or ESC key
     {
-        habitacion.mover(1);
-        aspirador.mover();
-        aspirador.rebotar();
+        if(IsKeyPressed(KEY_ENTER)){
+            for(int i=0; i<aux.size(); i++){
+                habitacion.agregar(aux[i]);
+            }
+           /*ConjuntoParticulas nuevo;
+           nuevo=habitacion+aux;
+           habitacion=nuevo;*/
+        }
+        if(IsKeyPressed(KEY_RIGHT)){
+            if(aspirador.getVelocidad().getX()<0){
+                aspirador.setVelocidad({aspirador.getVelocidad().getX()*-1,aspirador.getVelocidad().getY()});
+            }
+        }
+        if(IsKeyPressed(KEY_DOWN)){
+            if(aspirador.getVelocidad().getY()<0){
+                aspirador.setVelocidad({aspirador.getVelocidad().getX(),aspirador.getVelocidad().getY()*-1});
+            }
+        }
+        if(IsKeyPressed(KEY_LEFT)){
+            if(aspirador.getVelocidad().getX()>0){
+                aspirador.setVelocidad({aspirador.getVelocidad().getX()*-1,aspirador.getVelocidad().getY()});
+            }
+        }
+        if(IsKeyPressed(KEY_UP)){
+            if(aspirador.getVelocidad().getY()>0){
+                aspirador.setVelocidad({aspirador.getVelocidad().getX(),aspirador.getVelocidad().getY()*-1});
+            }
+        }
+
+        if(habitacion.size()==0){
+            continuar=!continuar;
+        }
+        if(!continuar){
+            habitacion.mover(1);
+            habitacion.gestionarColisiones();
+            aspirador.mover();
+            aspirador.rebotar();
+
+            for(int i=0; i<habitacion.size(); i++){
+                if(aspirador.colision(habitacion[i])){
+                    habitacion.borrar(i);
+                }
+            }
+        }
         //-----------------------------------------------------
         // pintar los objetos
         //-----------------------------------------------------
@@ -90,8 +131,11 @@ int main(int argc, char *argv[]) {
         }
         pintaPunto(aspirador, RED);
         DrawText("ESC para salir", 60, 10, 20, BLACK);
+        DrawText(("Particulas: " + to_string(habitacion.size())).c_str(), GetScreenWidth()-150, 10, 20, SKYBLUE);
         
-        
+        if (habitacion.size()==0){
+            DrawText("La habitación está limpia", screenWidth/2-120, screenHeight/2, 30, GRAY);
+        }
         EndDrawing();
         
         //-----------------------------------------------------

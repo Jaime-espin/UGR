@@ -26,9 +26,9 @@ public:
     double getRadio() const;
     int getTipo() const;
     void mover();
-    void rebotar();
-    bool colision(Particula p);
-    void choque(Particula &p);
+    void rebotar();     //Para cuando choca con las paredes
+    bool colision(Particula p);     //Si choca con particula
+    void choque(Particula &p);      //Para cuando choca con particula
     std::string toString();
     //Parte1
     void wrap();

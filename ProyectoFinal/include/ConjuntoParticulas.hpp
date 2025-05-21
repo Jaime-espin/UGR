@@ -2,7 +2,6 @@
 #define CONJUNTOPARTICULAS_H
 
 #include "particula.h"
-using namespace std;
 
 const int TAM_BLOQUE=3;
 
@@ -27,6 +26,7 @@ public:
     //Parte2
     Particula operator[](const int indice);
     ConjuntoParticulas & operator=(const ConjuntoParticulas & c);
+    ConjuntoParticulas & operator+(ConjuntoParticulas & c);
     ConjuntoParticulas & operator+=(Particula & p);
     ConjuntoParticulas & operator-=(const int & indice);
 
@@ -36,6 +36,6 @@ public:
 };
 
 ostream& operator<<(ostream &flujo, ConjuntoParticulas &c);
-istream& operator>>(istream &flujo, ConjuntoParticulas &c);
+std::istream& operator>>(std::istream &flujo, ConjuntoParticulas &c);
 
 #endif
