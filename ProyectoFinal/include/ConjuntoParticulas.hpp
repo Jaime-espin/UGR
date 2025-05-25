@@ -17,17 +17,20 @@ public:
     int size();
     void agregar(Particula p);
     void borrar(int pos);
-    Particula obtener(int pos);
+    Particula& obtener(int pos) const;
+    Particula& obtener(int pos);
     void reemplazar(int pos, Particula p);
     void mover(int tipo_mov=0);
     void gestionarColisiones();
-    std::string toString();
+    std::string toString() const;
 
     //Parte2
-    Particula operator[](const int indice);
+    Particula& operator[](int indice);
+    Particula& operator[](int indice) const;
     ConjuntoParticulas & operator=(const ConjuntoParticulas & c);
-    ConjuntoParticulas & operator+(ConjuntoParticulas & c);
-    ConjuntoParticulas & operator+=(Particula & p);
+    ConjuntoParticulas operator+(ConjuntoParticulas c);
+    ConjuntoParticulas & operator+=(Particula p);
+    ConjuntoParticulas & operator+=(ConjuntoParticulas c);
     ConjuntoParticulas & operator-=(const int & indice);
 
     //funciones auxiliares

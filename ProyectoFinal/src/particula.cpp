@@ -148,9 +148,15 @@ void Particula::wrap(){
 
 //auxiliares
 bool Particula::operator==(Particula &p){
-    if(getPosicion()==p.getPosicion() && getVelocidad()==p.getVelocidad() && getAceleracion()==p.getAceleracion() && getRadio()==p.getRadio() && getTipo()==p.getTipo()){
-        return true;
+    bool igual=false;
+    if(getPosicion()==p.getPosicion()){
+        igual=true;
     }
+    return igual;
+}
+
+bool Particula::operator!=(Particula &p){
+    return !(*this==p);
 }
 
 //Parte2

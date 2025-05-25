@@ -34,6 +34,7 @@ public:
     void wrap();
     //funciones auxiliares
     bool operator==(Particula &p);
+    bool operator!=(Particula &p);
 };
 
 //Parte2

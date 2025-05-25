@@ -12,7 +12,7 @@ ConjuntoParticulas::ConjuntoParticulas(int n){ //Constructor con parámetro por 
         }
     }
     else {
-        conjunto = nullptr; // Initialize to nullptr when n <= 0
+        conjunto = nullptr;
     }
 }
 ConjuntoParticulas::ConjuntoParticulas(const ConjuntoParticulas &cp){ //Constructor de copia
@@ -32,25 +32,22 @@ int ConjuntoParticulas::size(){
     return num_particulas;
 }
 void ConjuntoParticulas::agregar(Particula p){
-    if(capacidad<num_particulas+1){
-        // Create larger array
-        int nueva_capacidad = capacidad + TAM_BLOQUE;
-        Particula* nuevo_conjunto = new Particula[nueva_capacidad];
-        
-        // Copy existing elements
-        for(int i=0; i<num_particulas; i++){
-            nuevo_conjunto[i] = conjunto[i];
+    if(!pertenece(p)){
+        if(capacidad<num_particulas+1){
+            int nueva_capacidad = capacidad + TAM_BLOQUE;
+            Particula* nuevo_conjunto = new Particula[nueva_capacidad];
+            
+            for(int i=0; i<num_particulas; i++){
+                nuevo_conjunto[i] = conjunto[i];
+            }
+            
+            delete[] conjunto;
+            conjunto = nuevo_conjunto;
+            capacidad = nueva_capacidad;
         }
-        
-        // Free old array and update pointers
-        delete[] conjunto;
-        conjunto = nuevo_conjunto;
-        capacidad = nueva_capacidad;
+        conjunto[num_particulas] = p;
+        num_particulas++;
     }
-    
-    // Add new particle and increment count
-    conjunto[num_particulas] = p;
-    num_particulas++;
 }
 void ConjuntoParticulas::borrar(int pos) {
     if (pos >= 0 && pos < num_particulas) {
@@ -72,12 +69,18 @@ void ConjuntoParticulas::borrar(int pos) {
         }
     }
 }
-Particula ConjuntoParticulas::obtener(int pos){
+
+Particula& ConjuntoParticulas::obtener(int pos) const{
+    return conjunto[pos];
+}
+Particula& ConjuntoParticulas::obtener(int pos){
     return conjunto[pos];
 }
 
 void ConjuntoParticulas::reemplazar(int pos, Particula p){
-    conjunto[pos]=p;
+    if (pos >= 0 && pos < num_particulas) {
+        conjunto[pos] = p;
+    }
 }
 void ConjuntoParticulas::mover(int tipo_mov){
     if(tipo_mov==0){
@@ -105,7 +108,7 @@ void ConjuntoParticulas::gestionarColisiones(){
         }
     }
 }
-string ConjuntoParticulas::toString(){
+string ConjuntoParticulas::toString() const{
     string s=to_string(capacidad)+","+to_string(num_particulas)+"\n";
     for(int i=0; i<num_particulas; i++){
         s+=conjunto[i].toString()+"\n";
@@ -116,7 +119,10 @@ string ConjuntoParticulas::toString(){
 
 //Parte2
 
-Particula ConjuntoParticulas::operator[](const int indice){
+Particula& ConjuntoParticulas::operator[](int indice){
+    return obtener(indice);
+}
+Particula& ConjuntoParticulas::operator[](int indice) const{
     return obtener(indice);
 }
 ConjuntoParticulas & ConjuntoParticulas::operator=(const ConjuntoParticulas & c){
@@ -134,22 +140,28 @@ ConjuntoParticulas & ConjuntoParticulas::operator=(const ConjuntoParticulas & c)
     
     return *this;
 }
-ConjuntoParticulas & ConjuntoParticulas::operator+(ConjuntoParticulas & c){
-    ConjuntoParticulas nuevo(c);
+ConjuntoParticulas ConjuntoParticulas::operator+(ConjuntoParticulas c){
+    ConjuntoParticulas nuevo(*this);
     
-    for(int i=0; i<size(); i++) {
-        Particula p = conjunto[i];
+    for(int i=0; i<c.size(); i++) {
+        Particula p = c.conjunto[i];
         if (!nuevo.pertenece(p)) {
             nuevo.agregar(p);
         }
     }
-    *this=nuevo;
-    return *this;
+    return nuevo;
 }
-ConjuntoParticulas & ConjuntoParticulas::operator+=(Particula & p){
+ConjuntoParticulas & ConjuntoParticulas::operator+=(Particula p){
     if(!pertenece(p)){
         agregar(p);
     }
+    return *this;
+}
+
+ConjuntoParticulas & ConjuntoParticulas::operator+=(ConjuntoParticulas c){
+    ConjuntoParticulas nuevo;
+    nuevo=*this+c;
+    *this=nuevo;
     return *this;
 }
 ConjuntoParticulas & ConjuntoParticulas::operator-=(const int & indice){
@@ -157,8 +169,11 @@ ConjuntoParticulas & ConjuntoParticulas::operator-=(const int & indice){
     return *this;
 }
 
-ostream& operator<<(ostream &flujo, ConjuntoParticulas &c){
-    flujo<<c.toString();
+ostream& operator<<(ostream &flujo, ConjuntoParticulas &c) {
+    flujo << "Particulas: " << c.size() << "\n";
+    for (int i = 0; i < c.size(); i++) {
+        flujo << "P" << i << " => " << c[i].toString() << "\n";
+    }
     return flujo;
 }
 
@@ -177,7 +192,7 @@ std::istream& operator>>(std::istream &flujo, ConjuntoParticulas &c){
         int tipo;
         
         flujo >> etiqueta;
-        flujo >> pos_x >> pos_y >> vel_x >> vel_y >> ace_x >> ace_y >> radio >> tipo;  // Uncomment this line
+        flujo >> pos_x >> pos_y >> vel_x >> vel_y >> ace_x >> ace_y >> radio >> tipo;
         
         Particula p(Vector2D(pos_x, pos_y), Vector2D(vel_x, vel_y), Vector2D(ace_x, ace_y), radio, tipo);
         c.agregar(p);
@@ -191,7 +206,7 @@ std::istream& operator>>(std::istream &flujo, ConjuntoParticulas &c){
 bool ConjuntoParticulas::pertenece(Particula & p){
     int tam=size();
     bool encontrado=false;
-    for(int i=0; i<tam; i++){
+    for(int i=0; i<size(); i++){
         if(conjunto[i]==p){
             encontrado=true;
         }

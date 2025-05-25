@@ -15,6 +15,15 @@ void pintaPunto(const Particula & p, Color c) {
     DrawCircle(p.getPosicion().getX(), p.getPosicion().getY(), p.getRadio(), c);
 }
 
+// Agregar las partículas aleatorias con aceleración cero
+void ensuciar(int numParticulas, ConjuntoParticulas & c){
+    for (int i = 0; i < numParticulas; i++) {
+        Particula p=Particula(0);
+        p.setAceleracion({0,0});
+        c.agregar(p);
+    }
+}
+
 int main(int argc, char *argv[]) {
 
     if (argc != 3) {
@@ -47,67 +56,37 @@ int main(int argc, char *argv[]) {
     ConjuntoParticulas habitacion(0);
     
     // Agregar las partículas aleatorias con aceleración cero
-    for (int i = 0; i < numParticulas; i++) {
-        // Crear posición aleatoria
-        Vector2D pos(aleatorio(MIN_X, MAX_X), aleatorio(MIN_Y, MAX_Y));
-        
-        // Crear velocidad aleatoria
-        Vector2D vel(aleatorio(-MAX_VEL, MAX_VEL), aleatorio(-MAX_VEL, MAX_VEL));
-        
-        // Aceleración cero
-        Vector2D acel(0, 0);
-        
-        // Radio aleatorio
-        double radio = aleatorio(MIN_R, MAX_R);
-        
-        // Crear partícula y agregarla al conjunto
-        Particula p(pos, vel, acel, radio, 0);
-        habitacion.agregar(p);
-    }
-    ConjuntoParticulas aux =ConjuntoParticulas(habitacion);
+    ensuciar(numParticulas, habitacion);
 
     SetTargetFPS(45); // velocidad de la simulación
     //----------------------------------------------------------
 
-    bool continuar = 0;
+    bool continuar = true;
 
     // bucle principal
     //---------------------------------------------------------
     while (!WindowShouldClose()) // Detect window close button or ESC key
     {
         if(IsKeyPressed(KEY_ENTER)){
-            for(int i=0; i<aux.size(); i++){
-                habitacion.agregar(aux[i]);
-            }
-           /*ConjuntoParticulas nuevo;
-           nuevo=habitacion+aux;
-           habitacion=nuevo;*/
+            ensuciar(numParticulas, habitacion);
         }
-        if(IsKeyPressed(KEY_RIGHT)){
-            if(aspirador.getVelocidad().getX()<0){
-                aspirador.setVelocidad({aspirador.getVelocidad().getX()*-1,aspirador.getVelocidad().getY()});
-            }
+        if((IsKeyPressed(KEY_RIGHT) && aspirador.getVelocidad().getX()<0)|| IsKeyPressed(KEY_LEFT) && (aspirador.getVelocidad().getX()>0)){
+            aspirador.setVelocidad({aspirador.getVelocidad().getX()*-1,aspirador.getVelocidad().getY()});
         }
-        if(IsKeyPressed(KEY_DOWN)){
-            if(aspirador.getVelocidad().getY()<0){
-                aspirador.setVelocidad({aspirador.getVelocidad().getX(),aspirador.getVelocidad().getY()*-1});
-            }
-        }
-        if(IsKeyPressed(KEY_LEFT)){
-            if(aspirador.getVelocidad().getX()>0){
-                aspirador.setVelocidad({aspirador.getVelocidad().getX()*-1,aspirador.getVelocidad().getY()});
-            }
-        }
-        if(IsKeyPressed(KEY_UP)){
-            if(aspirador.getVelocidad().getY()>0){
-                aspirador.setVelocidad({aspirador.getVelocidad().getX(),aspirador.getVelocidad().getY()*-1});
-            }
+        if((IsKeyPressed(KEY_DOWN) && aspirador.getVelocidad().getY()<0)|| (IsKeyPressed(KEY_UP) &&  aspirador.getVelocidad().getY()>0)){
+            aspirador.setVelocidad({aspirador.getVelocidad().getX(),aspirador.getVelocidad().getY()*-1});
         }
 
         if(habitacion.size()==0){
-            continuar=!continuar;
+            continuar = false;
+            aspirador.setVelocidad({0,0});
+        }else{
+            continuar = true;
+            if(aspirador.getVelocidad()==0){
+                aspirador.setVelocidad(velAsp);
+            }
         }
-        if(!continuar){
+        if(continuar){
             habitacion.mover(1);
             habitacion.gestionarColisiones();
             aspirador.mover();
@@ -130,8 +109,8 @@ int main(int argc, char *argv[]) {
             pintaPunto(habitacion[i], BLUE);
         }
         pintaPunto(aspirador, RED);
-        DrawText("ESC para salir", 60, 10, 20, BLACK);
-        DrawText(("Particulas: " + to_string(habitacion.size())).c_str(), GetScreenWidth()-150, 10, 20, SKYBLUE);
+        DrawText("ESC para salir", 50, 10, 20, BLACK);
+        DrawText(("Particulas: " + to_string(habitacion.size())).c_str(), GetScreenWidth()-170, 10, 20, SKYBLUE);
         
         if (habitacion.size()==0){
             DrawText("La habitación está limpia", screenWidth/2-120, screenHeight/2, 30, GRAY);
@@ -145,7 +124,4 @@ int main(int argc, char *argv[]) {
     //---------------------------------------------------------
     CloseWindow(); 
     //----------------------------------------------------------
-
-    
-    return 0;
 }

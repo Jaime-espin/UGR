@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <cassert>
 #include <cmath>
 #include "util.hpp" // El módulo util proporciona la función aleatorio
@@ -13,6 +14,12 @@ void test_escalar();
 void test_distancia();
 void test_normalizar();
 void test_toString();
+void test_operator_plus();
+void test_operator_scalar();
+void test_operator_eq_and_neq();;
+void test_operator_out();
+void test_operator_in();
+
 
 /* Conjunto de tests para Particula */
 void test_constructor_getset_particula();
@@ -22,7 +29,9 @@ void test_colision();
 void test_choque();
 void test_toString_particula();
 void test_wrap();
-
+void test_operator_eq_and_neq_particula();
+void test_operator_out_particula();
+void test_operator_in_particula();
 
 /* Conjunto de tests para ConjuntoParticulas */
 void test_constructor_size();
@@ -32,6 +41,14 @@ void test_obtener_reemplazar();
 void test_borrar();
 void test_mover_particulas();
 void test_gestionarColisiones();
+void test_operator_indexar_conjunto();
+void test_operator_asignacion_conjunto();
+void test_operator_plus_conjunto();
+void test_operator_plus_equal_conjunto();
+void test_operator_minus_equal_conjunto();
+void test_operator_out_conjunto();
+void test_operator_in_conjunto();
+
 
 
 int main() {
@@ -43,6 +60,11 @@ int main() {
   test_escalar();
   test_normalizar();
   test_toString();
+  test_operator_plus();
+  test_operator_scalar();
+  test_operator_eq_and_neq();
+  test_operator_out();
+  test_operator_in();
   cout << "✅ Todos los tests de Vector2D han pasado bien." << endl;
   
   cout << "\nEjecutando tests para Particula Extendido..." << endl;
@@ -53,6 +75,9 @@ int main() {
   test_choque();
   test_toString_particula();
   test_wrap();
+  test_operator_eq_and_neq_particula();
+  test_operator_out_particula();
+  test_operator_in_particula();
   cout << "✅ Todos los tests de Particula han pasado bien." << endl;
 
   cout << "\nEjecutando tests para Conjunto de Particulas..." << endl;
@@ -63,6 +88,13 @@ int main() {
   test_borrar();
   test_mover_particulas();
   test_gestionarColisiones();
+  test_operator_indexar_conjunto();
+  test_operator_asignacion_conjunto();
+  test_operator_plus_conjunto();
+  test_operator_plus_equal_conjunto();
+  test_operator_minus_equal_conjunto();
+  test_operator_out_conjunto();
+  test_operator_in_conjunto();
   cout << "✅ Todos los tests de ConjuntoParticulas han pasado bien." << endl;
 
   return 0;
@@ -121,6 +153,40 @@ void test_normalizar() {
 void test_toString() {
   Vector2D v1(1.0, 0.0);
   assert(v1.toString() == "(1.000000,0.000000)");
+}
+
+void test_operator_plus() {
+    Vector2D v1(1.5, -2.0), v2(3.5, 4.0);
+    Vector2D suma = v1 + v2;
+    assert(abs(suma.getX() - 5.0) < EPSILON);
+    assert(abs(suma.getY() - 2.0) < EPSILON);
+}
+
+void test_operator_scalar() {
+    Vector2D v(2.0, -3.0);
+    Vector2D esc = v * 2.5;
+    assert(esc.toString() == "(5.000000,-7.500000)");
+}
+
+void test_operator_eq_and_neq() {
+    Vector2D a(0.0, 0.0), b(0.0, 0.0), c(1.0, 0.0);
+    assert(a == b);
+    assert(a != c);
+}
+
+void test_operator_out() {
+    Vector2D v(1.0, 2.0);
+    stringstream flujo;
+    flujo << v;
+    assert(flujo.str() == "(1.000000,2.000000)");
+}
+
+void test_operator_in() {
+    stringstream flujo;
+    flujo.str("3.0  4.0");
+    Vector2D v;
+    flujo >> v;
+    assert(v.toString() == "(3.000000,4.000000)");
 }
 
 
@@ -243,6 +309,28 @@ void test_wrap() {
   assert(p2.getAceleracion().distancia(Vector2D(1, 1)) == 0.0);
 }
 
+void test_operator_eq_and_neq_particula(){
+  Particula p1(Vector2D(1, 2), Vector2D(0, 1), Vector2D(1, 0), 1.0, 1);
+  Particula p2(Vector2D(1, 2), Vector2D(0, 1), Vector2D(1, 0), 1.0, 1);
+  Particula p3(Vector2D(3, 4), Vector2D(0, 1), Vector2D(1, 0), 1.0, 1);
+  assert(p1 == p2);
+  assert(p1 != p3);
+}
+
+void test_operator_out_particula(){
+  Particula p(Vector2D(1, 2), Vector2D(0, 1), Vector2D(1, 0), 1.0, 1);
+  stringstream flujo;
+  flujo << p;
+  assert(flujo.str() == "{(1.000000,2.000000),(0.000000,1.000000),(1.000000,0.000000),1.000000,1}");
+}
+
+void test_operator_in_particula(){
+  stringstream flujo;
+  flujo.str("P: 503.46 307.75 -2.03 1.12 0.03 0.85 8.0 1");
+  Particula p;
+  flujo >> p;
+  assert(p.toString() == "{(503.460000,307.750000),(-2.030000,1.120000),(0.030000,0.850000),8.000000,1}");
+}
 
 /* Conjunto de tests para ConjuntoParticulas */
 void test_constructor_size() {
@@ -353,7 +441,7 @@ void test_gestionarColisiones() {
   c.agregar(p1);
   c.agregar(p2);
   c.agregar(p3);
-  c.obtener(2).mover();
+  c[2].mover();
   
   c.gestionarColisiones();
 
@@ -370,3 +458,97 @@ void test_gestionarColisiones() {
   assert(c.obtener(2).getAceleracion().getY() ==  2.0);
 }
 
+
+void test_operator_indexar_conjunto(){
+  ConjuntoParticulas cp;
+  Particula p1(Vector2D(1, 2), Vector2D(3, 4), Vector2D(0, 1), 1.0, 0);
+  Particula p2(Vector2D(5, 6), Vector2D(7, 8), Vector2D(0, -1), 2.0, 1);
+  cp.agregar(p1);
+  cp.agregar(p2);
+
+  assert(cp[0].getPosicion().getX() == p1.getPosicion().getX());
+  assert(cp[1].getPosicion().getY() == p2.getPosicion().getY());
+}
+
+void test_operator_asignacion_conjunto(){
+  ConjuntoParticulas cp;
+  Particula p1, p2;
+  cp.agregar(p1);
+  cp.agregar(p2);
+  
+  ConjuntoParticulas cp1 = cp;
+  assert(cp1[0].getPosicion().getX() == p1.getPosicion().getX());
+  assert(cp1[1].getPosicion().getY() == p2.getPosicion().getY());
+
+  const ConjuntoParticulas &cp2 = cp1;
+  assert(cp2[0].getPosicion().getX() == p1.getPosicion().getX());
+  assert(cp2[1].getPosicion().getY() == p2.getPosicion().getY());
+}
+
+void test_operator_plus_conjunto(){
+  ConjuntoParticulas cp1, cp2;
+  Particula p1, p2, p3;
+  cp1.agregar(p1);
+  cp1.agregar(p2);
+  cp2.agregar(p3);
+
+  ConjuntoParticulas cp3 = cp1 + cp2;
+  assert(cp3.size() == cp1.size() + cp2.size());
+  assert(cp3[0] == p1);
+  assert(cp3[1] == p2);
+  assert(cp3[2] == p3);
+}
+
+void test_operator_plus_equal_conjunto(){
+  ConjuntoParticulas cp1, cp2;
+  Particula p1, p2, p3;
+  cp1.agregar(p1);
+  cp1.agregar(p2);
+  cp2.agregar(p3);
+
+  cp1 += cp2;
+  assert(cp1.size() == 3);
+  assert(cp1[0] == p1);
+  assert(cp1[1] == p2);
+  assert(cp1[2] == p3);
+
+  const Particula p4;
+  cp1 += p4;
+  assert(cp1.size() == 4);
+}
+
+void test_operator_minus_equal_conjunto(){
+  ConjuntoParticulas cp;
+  Particula p1, p2, p3;
+  cp.agregar(p1);
+  cp.agregar(p2);
+  cp.agregar(p3);
+
+  cp -= 1;
+  assert(cp.size() == 2);
+  assert(cp[0] == p1);
+  assert(cp[1] == p3);
+}
+
+void test_operator_out_conjunto(){
+  ConjuntoParticulas cp;
+  Particula p1, p2;
+  cp.agregar(p1);
+  cp.agregar(p2);
+
+  stringstream flujo;
+  flujo << cp;
+  assert(flujo.str() == "Particulas: 2\nP0 => " + p1.toString() + "\nP1 => " + p2.toString() + "\n");
+}
+
+void test_operator_in_conjunto(){
+  stringstream flujo;
+  flujo.str("@Particulas: 3\np1: 503.46 307.75 -2.03 1.12 0.03 0.85 8.0 1\np2: 583.66 296.14 2.71 -2.07 0.09 0.16 8.0 1\np3: 534.91 240.13 -1.47 -2.16 0.25 0.18 8.0 0");
+  
+  ConjuntoParticulas cp;
+  flujo >> cp;
+  assert(cp.size() == 3);
+  assert(cp[0].toString() == "{(503.460000,307.750000),(-2.030000,1.120000),(0.030000,0.850000),8.000000,1}");
+  assert(cp[1].toString() == "{(583.660000,296.140000),(2.710000,-2.070000),(0.090000,0.160000),8.000000,1}");
+  assert(cp[2].toString() == "{(534.910000,240.130000),(-1.470000,-2.160000),(0.250000,0.180000),8.000000,0}");
+}
