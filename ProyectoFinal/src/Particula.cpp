@@ -1,7 +1,7 @@
 #include <cmath>
 #include <iostream>
-#include "particula.h"
-#include "vector.h"
+#include "Particula.hpp"
+#include "Vector2D.hpp"
 #include "util.hpp"
 #include "params.hpp"
 

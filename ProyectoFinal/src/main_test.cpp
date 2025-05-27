@@ -3,7 +3,7 @@
 #include <cmath>
 #include "util.hpp" // El módulo util proporciona la función aleatorio
 #include "params.hpp" // El archivo de cabecera params.hpp proporciona las constantes
-#include "particula.h"
+#include "Particula.hpp"
 using namespace std;
 
 /* Conjunto de tests para Vector 2D */

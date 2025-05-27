@@ -2,9 +2,10 @@
 #define PARTICULA_H
 
 #include <string>
-#include "vector.h"
+#include "Vector2D.hpp"
+#include "escudo.hpp"
 
-using namespace std;
+class Escudo;
 
 class Particula{
 private:
@@ -35,6 +36,8 @@ public:
     //funciones auxiliares
     bool operator==(Particula &p);
     bool operator!=(Particula &p);
+    //extra de mi juego
+    void rebotarEscudo(Escudo e, bool &rebota);
 };
 
 //Parte2

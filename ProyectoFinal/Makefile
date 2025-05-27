@@ -1,46 +1,44 @@
-all: bin/proyecto_final
-prep: bin/test_preparacion
-test1: bin/test1
-test2: bin/test2
+CPPFLAGS = -g -std=c++11
+LDFLAGS = -L./lib -lraylib -lm -lpthread -ldl -lrt #-lX11 -lGL
 
-bin/test2:obj/main_test2.o obj/vector.o obj/particula.o obj/util.o obj/ConjuntoParticulas.o
-	g++ -g -o bin/test2 obj/main_test2.o obj/vector.o obj/particula.o obj/util.o obj/ConjuntoParticulas.o
+all : bin/test0 bin/test1 bin/test2 bin/test_raylib
 
-bin/test1:obj/main_test1.o obj/vector.o obj/particula.o obj/util.o obj/ConjuntoParticulas.o
-	g++ -g -o bin/test1 obj/main_test1.o obj/vector.o obj/particula.o obj/util.o obj/ConjuntoParticulas.o
+bin/test_raylib : obj/main_raylib.o obj/ConjuntoParticulas.o obj/Particula.o obj/Vector2D.o obj/util.o
+	g++ $(CPPFLAGS) -o bin/test_raylib obj/main_raylib.o obj/ConjuntoParticulas.o obj/Particula.o obj/Vector2D.o obj/util.o $(LDFLAGS)
 
-bin/proyecto_final: obj/main.o obj/vector.o obj/particula.o obj/util.o obj/ConjuntoParticulas.o
-	g++ -g -o bin/proyecto obj/main.o obj/vector.o obj/particula.o obj/util.o obj/ConjuntoParticulas.o ./lib/libraylib.a -lm -lpthread -ldl -lrt
+obj/main_raylib.o : src/main_raylib.cpp include/Particula.hpp include/util.hpp include/Vector2D.hpp
+	g++ $(CPPFLAGS) -c -I./include -o obj/main_raylib.o src/main_raylib.cpp
 
-bin/test_preparacion: obj/main_test.o obj/vector.o obj/particula.o obj/util.o obj/ConjuntoParticulas.o
-	g++ -g -o bin/prep obj/main_test.o obj/vector.o obj/particula.o obj/util.o obj/ConjuntoParticulas.o
+bin/test0 : obj/test0.o obj/Particula.o obj/Vector2D.o obj/util.o
+	g++ $(CPPFLAGS) -o bin/test0 obj/test0.o obj/Particula.o obj/Vector2D.o obj/util.o
 
-obj/main_test.o: src/main_test.cpp
-	g++ -g -c -I./include -o obj/main_test.o src/main_test.cpp
+bin/test1 : obj/test1.o obj/Particula.o obj/Vector2D.o obj/util.o obj/ConjuntoParticulas.o
+	g++ $(CPPFLAGS) -o bin/test1 obj/test1.o obj/Particula.o obj/Vector2D.o obj/util.o obj/ConjuntoParticulas.o
 
-obj/main_test1.o: src/main_test1.cpp
-	g++ -g -c -I./include -o obj/main_test1.o src/main_test1.cpp
+bin/test2 : obj/test2.o obj/Particula.o obj/Vector2D.o obj/util.o obj/ConjuntoParticulas.o
+	g++ $(CPPFLAGS) -o bin/test2 obj/test2.o obj/Particula.o obj/Vector2D.o obj/util.o obj/ConjuntoParticulas.o
 
-obj/main_test2.o: src/main_test2.cpp
-	g++ -g -c -I./include -o obj/main_test2.o src/main_test2.cpp
+obj/test0.o : src/main_test.cpp include/Particula.hpp include/util.hpp include/Vector2D.hpp
+	g++ $(CPPFLAGS) -c -I./include -o obj/test0.o src/main_test.cpp
 
-obj/main.o: src/main.cpp
-	g++ -g -c -I./include -o obj/main.o src/main.cpp
+obj/test1.o : src/main_test1.cpp include/Particula.hpp include/util.hpp include/Vector2D.hpp
+	g++ $(CPPFLAGS) -c -I./include -o obj/test1.o src/main_test1.cpp
 
-obj/vector.o: src/vector.cpp
-	g++ -g -c -I./include -o obj/vector.o src/vector.cpp
+obj/test2.o : src/main_test2.cpp include/Particula.hpp include/util.hpp include/Vector2D.hpp include/ConjuntoParticulas.hpp
+	g++ $(CPPFLAGS) -c -I./include -o obj/test2.o src/main_test2.cpp
 
-obj/particula.o: src/particula.cpp
-	g++ -g -c -I./include -o obj/particula.o src/particula.cpp
+obj/Particula.o : src/Particula.cpp include/util.hpp include/Vector2D.hpp include/Particula.hpp
+	g++ $(CPPFLAGS) -c -I./include -o obj/Particula.o src/Particula.cpp
 
-obj/util.o: src/util.cpp
-	g++ -g -c -I./include -o obj/util.o src/util.cpp
+obj/ConjuntoParticulas.o : src/ConjuntoParticulas.cpp include/util.hpp include/Vector2D.hpp include/ConjuntoParticulas.hpp
+	g++ $(CPPFLAGS) -c -I./include -o obj/ConjuntoParticulas.o src/ConjuntoParticulas.cpp
 
-obj/ConjuntoParticulas.o: src/ConjuntoParticulas.cpp
-	g++ -g -c -I./include -o obj/ConjuntoParticulas.o src/ConjuntoParticulas.cpp
+obj/Vector2D.o : src/Vector2D.cpp include/util.hpp include/Vector2D.hpp
+	g++ $(CPPFLAGS) -c -I./include -o obj/Vector2D.o src/Vector2D.cpp
+
+obj/util.o : src/util.cpp include/util.hpp
+	g++ $(CPPFLAGS) -c -I./include -o obj/util.o src/util.cpp
 
 clean:
-	rm obj/*.o
-
-cleanall: clean
-	rm obj/*.o bin/*
+	@echo "Limpiando archivos..."
+	rm bin/* obj/*.o
