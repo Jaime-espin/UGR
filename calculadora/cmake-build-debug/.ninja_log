@@ -1,0 +1,11 @@
+# ninja log v6
+3	1016	7507118191825264	CMakeFiles/calculadora.dir/op_infijo.cpp.obj	61c7501afea636d4
+1022	1194	7507118202023364	calculadora.exe	de754e8b8803faea
+5	538	7507119044994921	CMakeFiles/calculadora.dir/op_infijo.cpp.obj	61c7501afea636d4
+539	634	7507119050334468	calculadora.exe	de754e8b8803faea
+31	431	7507124852745786	CMakeFiles/calculadora.dir/op_infijo.cpp.obj	61c7501afea636d4
+432	509	7507124856760552	calculadora.exe	de754e8b8803faea
+5	443	7507125358750370	CMakeFiles/calculadora.dir/op_infijo.cpp.obj	61c7501afea636d4
+444	523	7507125363143390	calculadora.exe	de754e8b8803faea
+26	440	7507125549437803	CMakeFiles/calculadora.dir/op_infijo.cpp.obj	61c7501afea636d4
+441	527	7507125553583916	calculadora.exe	de754e8b8803faea

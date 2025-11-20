@@ -1,0 +1,114 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.29"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "entrega4_for",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "cambio::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-cambio-Debug-a8beedb54a7b669aecb4.json",
+					"name" : "cambio",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "figuras::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-figuras-Debug-b95453326bbdc3e4b734.json",
+					"name" : "figuras",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "maximo_medias::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-maximo_medias-Debug-47dfbb8292ae31662626.json",
+					"name" : "maximo_medias",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "media_varianza::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-media_varianza-Debug-0692ac053e8dc2462a6c.json",
+					"name" : "media_varianza",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "numero_perfecto::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-numero_perfecto-Debug-6788d52f22db1b97e373.json",
+					"name" : "numero_perfecto",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "numero_rango::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-numero_rango-Debug-5fcd6da029998d54922b.json",
+					"name" : "numero_rango",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "recuadro::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-recuadro-Debug-93eae76f41ec2be4fc03.json",
+					"name" : "recuadro",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/Jaime Esp\u00edn/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega4_for/cmake-build-debug",
+		"source" : "C:/Users/Jaime Esp\u00edn/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega4_for"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

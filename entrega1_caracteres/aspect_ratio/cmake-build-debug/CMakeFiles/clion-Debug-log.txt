@@ -1,0 +1,1 @@
+CMakeLists.txt not found in C:\Users\Jaime Espín\Desktop\01 Universidad\01 Apuntes\FP\Practica\entrega1_caracteres\aspect_ratio Select CMakeLists.txt

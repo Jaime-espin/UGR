@@ -1,0 +1,3 @@
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega1_caracteres/aspect_ratio/cmake-build-debug/CMakeFiles/aspect_ratio.dir
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega1_caracteres/aspect_ratio/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega1_caracteres/aspect_ratio/cmake-build-debug/CMakeFiles/rebuild_cache.dir

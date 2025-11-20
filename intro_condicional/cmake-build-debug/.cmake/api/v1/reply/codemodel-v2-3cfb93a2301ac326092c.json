@@ -1,0 +1,60 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.29"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "intro_condicional",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "intro_condicional::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-intro_condicional-Debug-d8cdfde85e823481dc69.json",
+					"name" : "intro_condicional",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/Jaime Esp\u00edn/Desktop/01 Universidad/01 Apuntes/FP/Practica/intro_condicional/cmake-build-debug",
+		"source" : "C:/Users/Jaime Esp\u00edn/Desktop/01 Universidad/01 Apuntes/FP/Practica/intro_condicional"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}
