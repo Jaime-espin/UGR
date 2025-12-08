@@ -10,6 +10,7 @@ package irrgarten;
  * @author Jaime Espín
  */
 import java.util.Random;
+import java.util.ArrayList;
 
 public class Dice {
     private static final int MAX_USES = 5;                  // número máximo de usos de armas y escudos
@@ -88,5 +89,15 @@ public class Dice {
         double probabilityOfDiscard = (double) (MAX_USES - usesLeft) / MAX_USES;
 
         return generator.nextDouble() < probabilityOfDiscard;
+    }
+    public static Directions nextStep(Directions preference, ArrayList<Directions> validMoves, float intelligence){
+        boolean direccionPreferida = (generator.nextFloat()*MAX_INTELLIGENCE < intelligence);
+        if (direccionPreferida){
+            return preference;
+        }
+        else{
+            int movimiento = generator.nextInt(validMoves.size());
+            return validMoves.get(movimiento);
+        }
     }
 }

@@ -12,88 +12,73 @@ import java.util.ArrayList;
  *
  * @author Jaime Espín
  */
-public class Player {
+public class Player extends LabyrinthCharacter{
     private static final int MAX_WEAPONS = 2;
     private static final int MAX_SHIELD = 3;
     private static final int INITIAL_HEALTH = 10;
     private static final int HITS2LOSE = 3;
     
-    private String name;
     private char number;
-    private float intelligence;
-    private float strength;
-    private float health;
-    private int row;
-    private int col;
     private int consecutiveHits = 0;
     
     private ArrayList<Weapon> weapons;
     private ArrayList<Shield> shields;
+    
+    private ShieldCardDeck shieldCardDeck;
+    private WeaponCardDeck weaponCardDeck;
 
     public Player(char number, float intelligence, float strength) {
+        super("Player# " + number, intelligence, strength, INITIAL_HEALTH);
         this.number = number;
-        this.intelligence = intelligence;
-        this.strength = strength;
-        
-        this.name = "Player #"+number;
-        
-        this.health=INITIAL_HEALTH;
         this.weapons = new ArrayList<>();
         this.shields = new ArrayList<>();
         this.consecutiveHits=0;
+        
+        shieldCardDeck = new ShieldCardDeck();
+        shieldCardDeck.addCards();
+        weaponCardDeck = new WeaponCardDeck();
+        weaponCardDeck.addCards();
+        
+    }
+    
+    public Player(Player p){
+        super(p);
+        number = p.number;
+        shields = p.shields;
+        weapons = p.weapons;
+        shieldCardDeck = p.shieldCardDeck;
+        weaponCardDeck = p.weaponCardDeck;
     }
     
     public void resurrect(){
-        this.health=INITIAL_HEALTH;
+        setHealth(INITIAL_HEALTH);
         this.weapons.clear();
         this.shields.clear();
         this.consecutiveHits=0;
-    }
-
-    public int getRow() {
-        return row;
-    }
-
-    public int getCol() {
-        return col;
     }
 
     public char getNumber() {
         return number;
     }
     
-    public void setPos(int row, int col){
-        this.row=row;
-        this.col=col;
-    }
-    
-    public boolean dead(){
-        return this.health<=0;
-    }
-    
-    public Directions move(Directions direction, Directions[] validMoves){
-        int size = validMoves.length;
-        boolean contained = false;
-        for (int i=0; i<size; i++) {
-            Directions d = validMoves[i];
-            if (d == direction) {
-                contained = true;
-                break;
-            }
-        }
+    public Directions move(Directions direction, ArrayList<Directions> validMoves){
+        int size = validMoves.size();
+        boolean contained = validMoves.contains(direction);
         
         if (size > 0 && !contained) {
-            Directions firstElement = validMoves[0];
+            Directions firstElement = validMoves.get(0);
             return firstElement;
         } else {
             return direction;
         }
     }
     
+    @Override
     public float attack(){
-        return this.strength + this.sumWeapons();
+        return getStrength() + this.sumWeapons();
     }
     
+    @Override
     public boolean defend(float receivedAttack){
         return manageHit(receivedAttack);
     }
@@ -104,23 +89,17 @@ public class Player {
         int sReward = dado.shieldsReward();
         
         for(int i=1; i<wReward; i++){
-            Weapon wnew = this.newWeapon();
+            Weapon wnew = weaponCardDeck.nextCard();
             this.receiveWeapon(wnew);
         }
         for(int i=1; i<sReward; i++){
-            Shield snew = this.newShield();
+            Shield snew = shieldCardDeck.nextCard();
             this.receiveShield(snew);
         }
         int extraHealth = dado.healthReward();
         
-        this.health += extraHealth;
+        setHealth(getHealth()+extraHealth);
     }
-    
-    @Override
-    public String toString(){
-        String s = this.name + "\n" + "  Stats: [Int=" + this.intelligence + ", Str=" + this.strength + ", Health=" + this.health + "]\n" + "  Position: [" + this.row + ", " + this.col + "]\n" +"  Items: [" + this.weapons.size() + " Armas, " + this.shields.size() + " Escudos]\n" + "  Consecutive Hits: " + this.consecutiveHits;
-        return s;
-   }
     
     private void receiveWeapon(Weapon w){
         Weapon wi;
@@ -152,6 +131,7 @@ public class Player {
         } 
     }
     
+    /*
     private Weapon newWeapon(){
         Dice dado=new Dice();
         Weapon arma= new Weapon(dado.weaponPower(), dado.usesLeft());
@@ -163,8 +143,9 @@ public class Player {
         Shield escudo= new Shield(dado.shieldPower(), dado.usesLeft());
         return escudo;
     }
+    */
     
-    private float sumWeapons(){
+    protected float sumWeapons(){
         float sum=0;
         for(int i=0; i<weapons.size(); i++){
             sum+=weapons.get(i).attack();
@@ -172,7 +153,7 @@ public class Player {
         return sum;
     }
     
-    private float sumShields(){
+    protected float sumShields(){
         float sum=0;
         for(int i=0; i<shields.size(); i++){
             sum+=shields.get(i).protect();
@@ -180,8 +161,8 @@ public class Player {
         return sum;
     }
     
-    private float defensiveEnergy(){
-        return this.intelligence+this.sumShields();
+    protected float defensiveEnergy(){
+        return getIntelligence()+this.sumShields();
     }
     
     private boolean manageHit(float recievedAttack){
@@ -206,10 +187,6 @@ public class Player {
     
     private void resetHits(){
         this.consecutiveHits=0;
-    }
-    
-    private void gotWounded(){
-        this.health--;
     }
     
     private void incConsecutiveHits(){

@@ -4,7 +4,7 @@ package irrgarten;
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-
+import java.util.ArrayList;
 /**
  *
  * @author Jaime Espín
@@ -186,25 +186,16 @@ public class Labyrinth {
             col += incCol;
         }
     }
-    public Directions[] validMoves(int row,int col){
-        Directions[] output = new Directions[10];
-        int pos=0;
-        if(this.canStepOn(row+1, col)){
-            output[pos]=Directions.DOWN;
-            pos++;
-        }
-        if(this.canStepOn(row-1, col)){
-            output[pos]=Directions.UP;
-            pos++;
-        }
-        if(this.canStepOn(row, col+1)){
-            output[pos]=Directions.RIGHT;
-            pos++;
-        }
-        if(this.canStepOn(row, col-1)){
-            output[pos]=Directions.LEFT;
-            pos++;
-        }
+    public ArrayList<Directions> validMoves(int row,int col){
+        ArrayList<Directions> output = new ArrayList<>();
+        if (this.canStepOn(row+1, col))
+            output.add(Directions.DOWN);
+        if (this.canStepOn(row-1, col))
+            output.add(Directions.UP);
+        if (this.canStepOn(row, col+1))
+            output.add(Directions.RIGHT);
+        if (this.canStepOn(row, col-1))
+            output.add(Directions.LEFT);
         
         return output;
     }

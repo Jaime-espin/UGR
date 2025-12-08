@@ -9,33 +9,20 @@ package irrgarten;
  *
  * @author Jaime Espín
  */
-public class Shield {
+public class Shield extends CombatElement{
     private float protection;
     private int uses;
 
     public Shield(float protection, int uses) {
-        this.protection = protection;
-        this.uses = uses;
+        super(protection, uses);
     }  
     
-    
     public float protect(){
-        if(uses>0){
-            uses--;
-            return protection;
-        }else{
-            return 0;
-        }
+        return produceEffect();
     }
 
     @Override
     public String toString() {
         return "S[" + protection + ", " + uses + ']';
     }
-    
-    public boolean discard(){
-        Dice dado=null;
-        return dado.discardElement(uses);
-    }
-    
 }
