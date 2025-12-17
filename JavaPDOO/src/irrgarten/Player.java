@@ -43,11 +43,24 @@ public class Player extends LabyrinthCharacter{
     
     public Player(Player p){
         super(p);
-        number = p.number;
-        shields = p.shields;
-        weapons = p.weapons;
-        shieldCardDeck = p.shieldCardDeck;
-        weaponCardDeck = p.weaponCardDeck;
+        this.number = p.number;
+        this.consecutiveHits = p.consecutiveHits;
+        
+        // Copia profunda de las armas
+        this.weapons = new ArrayList<>();
+        for (Weapon w : p.weapons) {
+            this.weapons.add(w);
+        }
+        
+        // Copia profunda de los escudos
+        this.shields = new ArrayList<>();
+        for (Shield s : p.shields) {
+            this.shields.add(s);
+        }
+        
+        // Los CardDecks se comparten (son mazo común)
+        this.shieldCardDeck = p.shieldCardDeck;
+        this.weaponCardDeck = p.weaponCardDeck;
     }
     
     public void resurrect(){
@@ -84,49 +97,48 @@ public class Player extends LabyrinthCharacter{
     }
     
     public void receiveReward(){
-        Dice dado = new Dice();
-        int wReward = dado.weaponsReward();
-        int sReward = dado.shieldsReward();
+        int wReward = Dice.weaponsReward();
+        int sReward = Dice.shieldsReward();
         
-        for(int i=1; i<wReward; i++){
+        for(int i=0; i<wReward; i++){
             Weapon wnew = weaponCardDeck.nextCard();
             this.receiveWeapon(wnew);
         }
-        for(int i=1; i<sReward; i++){
+        for(int i=0; i<sReward; i++){
             Shield snew = shieldCardDeck.nextCard();
             this.receiveShield(snew);
         }
-        int extraHealth = dado.healthReward();
+        int extraHealth = Dice.healthReward();
         
         setHealth(getHealth()+extraHealth);
     }
     
     private void receiveWeapon(Weapon w){
-        Weapon wi;
-        int size = this.weapons.size();
-        for(int i = 0; i < size; i++){
-            wi=this.weapons.get(i);
+        // Eliminar armas descartadas iterando hacia atrás
+        for(int i = this.weapons.size() - 1; i >= 0; i--){
+            Weapon wi = this.weapons.get(i);
             boolean discard = wi.discard();
             if(discard){
-                this.weapons.remove(wi);
+                this.weapons.remove(i);
             }
         }
-        if(size<MAX_WEAPONS){
+        // Añadir nueva arma si hay espacio
+        if(this.weapons.size() < MAX_WEAPONS){
             this.weapons.add(w);
         } 
     }
     
     private void receiveShield(Shield s){
-        Shield si;
-        int size = this.shields.size();
-        for(int i = 0; i < size; i++){
-            si=this.shields.get(i);
+        // Eliminar escudos descartados iterando hacia atrás
+        for(int i = this.shields.size() - 1; i >= 0; i--){
+            Shield si = this.shields.get(i);
             boolean discard = si.discard();
             if(discard){
-                this.shields.remove(si);
+                this.shields.remove(i);
             }
         }
-        if(size<MAX_SHIELD){
+        // Añadir nuevo escudo si hay espacio
+        if(this.shields.size() < MAX_SHIELD){
             this.shields.add(s);
         } 
     }
@@ -165,11 +177,11 @@ public class Player extends LabyrinthCharacter{
         return getIntelligence()+this.sumShields();
     }
     
-    private boolean manageHit(float recievedAttack){
+    private boolean manageHit(float receivedAttack){
         float defense = this.defensiveEnergy();
         boolean lose;
         
-        if(defense < recievedAttack){
+        if(defense < receivedAttack){
             this.gotWounded();
             this.incConsecutiveHits();
         }else{
@@ -192,5 +204,32 @@ public class Player extends LabyrinthCharacter{
     private void incConsecutiveHits(){
          this.consecutiveHits++;
    }
+    
+    @Override
+    public String toString() {
+        String result = super.toString();
+        
+        // Añadir información de armas
+        result += " Weapons: [";
+        for (int i = 0; i < weapons.size(); i++) {
+            result += weapons.get(i).toString();
+            if (i < weapons.size() - 1) {
+                result += ", ";
+            }
+        }
+        result += "]";
+        
+        // Añadir información de escudos
+        result += " Shields: [";
+        for (int i = 0; i < shields.size(); i++) {
+            result += shields.get(i).toString();
+            if (i < shields.size() - 1) {
+                result += ", ";
+            }
+        }
+        result += "]";
+        
+        return result;
+    }
     
 }

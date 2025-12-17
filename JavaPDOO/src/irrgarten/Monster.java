@@ -18,16 +18,14 @@ public class Monster extends LabyrinthCharacter{
     
     @Override
     public float attack(){
-        Dice dado = new Dice();
-        return dado.intensity(getStrength());
+        return Dice.intensity(getStrength());
     }
     
     @Override
     public boolean defend(float receivedAttack){
         boolean isDead = this.dead();
-        Dice dado = new Dice();
         if(!isDead){
-            float defensiveEnergy = dado.intensity(getIntelligence());
+            float defensiveEnergy = Dice.intensity(getIntelligence());
             if(defensiveEnergy < receivedAttack){
                 this.gotWounded();
                 isDead = this.dead();

@@ -21,7 +21,7 @@ public class Game {
     private static final int DEFAULT_EXIT_ROW = 0;
     private static final int DEFAULT_EXIT_COL = 9;
     private static final float DEFAULT_INTELLIGENCE = 10;
-    private static final float DEFAULT_STREGNTH = 10;
+    private static final float DEFAULT_STRENGTH = 10;
     
     
     private static final int MAX_ROUNDS = 10;
@@ -40,15 +40,13 @@ public class Game {
         this.players = new ArrayList<>();
         
         for(int i = 0; i<nplayers; i++){
-            Player newPlayer = new Player((char)(i+1), DEFAULT_INTELLIGENCE, DEFAULT_STREGNTH);
+            Player newPlayer = new Player((char)('0' + i + 1), DEFAULT_INTELLIGENCE, DEFAULT_STRENGTH);
             this.players.add(newPlayer);
         }
         
         this.labyrinth = new Labyrinth(DEFAULT_N_ROWS,DEFAULT_N_COLS,DEFAULT_EXIT_ROW,DEFAULT_EXIT_COL);
         
-        Dice dado = new Dice();
-        
-        this.currentPlayerIndex = dado.whoStarts(nplayers);
+        this.currentPlayerIndex = Dice.whoStarts(nplayers);
         
         this.currentPlayer = this.players.get(this.currentPlayerIndex);
         
@@ -88,7 +86,23 @@ public class Game {
    }
    
    public GameState getGameState(){
-       GameState gamestate = new GameState(this.labyrinth.toString(), this.players.toString(), this.monsters.toString(), this.currentPlayerIndex, this.finished(), this.log);
+       String playersStr = "";
+       for (int i = 0; i < this.players.size(); i++) {
+           playersStr += this.players.get(i).toString();
+           if (i < this.players.size() - 1) {
+               playersStr += "\n";
+           }
+       }
+       
+       String monstersStr = "";
+       for (int i = 0; i < this.monsters.size(); i++) {
+           monstersStr += this.monsters.get(i).toString();
+           if (i < this.monsters.size() - 1) {
+               monstersStr += "\n";
+           }
+       }
+       
+       GameState gamestate = new GameState(this.labyrinth.toString(), playersStr, monstersStr, this.currentPlayerIndex + 1, this.finished(), this.log);
        return gamestate;
    }
    
@@ -99,6 +113,14 @@ public class Game {
        Monster monster1 = new Monster("Monster1", Dice.randomIntelligence(), Dice.randomStrength());
        monsters.add(monster1);
        labyrinth.addMonster(2, 3, monster1);
+       
+       Monster monster2 = new Monster("Monster2", Dice.randomIntelligence(), Dice.randomStrength());
+       monsters.add(monster2);
+       labyrinth.addMonster(5, 5, monster2);
+       
+       Monster monster3 = new Monster("Monster3", Dice.randomIntelligence(), Dice.randomStrength());
+       monsters.add(monster3);
+       labyrinth.addMonster(7, 7, monster3);
    }
    
    private void nextPlayer(){
@@ -111,7 +133,7 @@ public class Game {
    }
    
    private void logMonsterWon(){
-       log += "Montruo gana combate: " + this.monsters.get(this.currentPlayerIndex) + "\n";
+       log += "Monstruo gana combate: " + this.monsters.get(this.currentPlayerIndex) + "\n";
    }
    
    private void logResurrected(){
@@ -127,7 +149,7 @@ public class Game {
    }
    
    private void logNoMonster(){
-       log += "Jugador en cleda vacía/no fue posible moverse \n";
+       log += "Jugador en celda vacía/no fue posible moverse \n";
    }
    
    private void logRound(int rounds, int max){
@@ -172,9 +194,7 @@ public class Game {
        }
    }
    private void manageResurrection(){
-       Dice dado = new Dice();
-       
-       boolean resurrect = dado.resurrectPlayer();
+       boolean resurrect = Dice.resurrectPlayer();
        
        if(resurrect){
            this.currentPlayer.resurrect();

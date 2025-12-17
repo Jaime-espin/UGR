@@ -8,18 +8,15 @@
  * @author Jaime Espín
  */
 import irrgarten.Game;
-import irrgarten.UI.TextUI;
 import irrgarten.Controller.Controller;
+import irrgarten.UI.GraphicalUI;
 
 public class main {
     public static void main(String[] args) {
         
-        TextUI view = new TextUI();
-
+        GraphicalUI vista = new GraphicalUI();
         Game game = new Game(2);
-
-        Controller controller = new Controller(game, view);
-
+        Controller controller = new Controller (game, vista);
         controller.play(); 
     }
 }

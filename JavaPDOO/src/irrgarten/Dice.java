@@ -21,7 +21,7 @@ public class Dice {
     private static final int SHIELDS_REWARD = 3;            // número máximo de escudos recibidos al ganar un combate
     private static final int HEALTH_REWARD = 5;             // número máximo de unidades de salud recibidas al ganar un combate
     private static final int MAX_ATTACK = 3;                // máxima potencia de las armas
-    private static int MAX_SHIELD = 2;                // máxima potencia de los escudos
+    private static final int MAX_SHIELD = 2;                // máxima potencia de los escudos
     
     // Atributo de clase para generación de números aleatorios
     private static final Random generator = new Random();
@@ -35,11 +35,11 @@ public class Dice {
     }
     
     public static float randomIntelligence(){
-        return generator.nextFloat(MAX_INTELLIGENCE);
+        return Math.round(generator.nextFloat(MAX_INTELLIGENCE) * 10) / 10.0f;
     }
     
     public static float randomStrength(){
-        return generator.nextFloat(MAX_STRENGTH);
+        return Math.round(generator.nextFloat(MAX_STRENGTH) * 10) / 10.0f;
     }
     
     public static boolean resurrectPlayer(){

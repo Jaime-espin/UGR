@@ -30,6 +30,14 @@ public abstract class CombatElement {
         return Dice.discardElement(uses);
     }
     
+    protected float getEffect() {
+        return effect;
+    }
+    
+    protected int getUses() {
+        return uses;
+    }
+    
     @Override
     public String toString() {
         return "CombatElement{" + "effect=" + effect + ", uses=" + uses + '}';

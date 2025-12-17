@@ -13,7 +13,7 @@ public class WeaponCardDeck extends CardDeck<Weapon>{
     protected void addCards(){
         final int N = 15;
         for (int i=0; i<N; i++){
-            Weapon arma = new Weapon(Dice.shieldPower(), Dice.usesLeft());
+            Weapon arma = new Weapon(Dice.weaponPower(), Dice.usesLeft());
             addCard(arma);
         }
         

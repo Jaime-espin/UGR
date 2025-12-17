@@ -18,14 +18,18 @@ public class FuzzyPlayer extends Player{
     @Override
     public Directions move(Directions direction, ArrayList<Directions> validMoves) {
         Directions output;
+        int size = validMoves.size();
         boolean contained = validMoves.contains(direction);
-        if (contained && validMoves.size()>0){
+        
+        if (size > 0 && contained){
             output = Dice.nextStep(direction, validMoves, getIntelligence());
         }
-        else
+        else if (size > 0)
         {
-            validMoves.remove(direction);
             output = Dice.nextStep(validMoves.get(0), validMoves, getIntelligence());
+        }
+        else {
+            output = direction;
         }
         return output;
     }
@@ -35,7 +39,7 @@ public class FuzzyPlayer extends Player{
         return super.attack();
     }
     
-    protected float deffensiveEnergy(){
+    protected float defensiveEnergy(){
         return super.defensiveEnergy();
     }    
     

@@ -10,8 +10,6 @@ package irrgarten;
  * @author Jaime Espín
  */
 public class Weapon extends CombatElement{
-    private float power;
-    private int uses;
 
     public Weapon(float power, int uses) {
         super(power, uses);
@@ -23,6 +21,6 @@ public class Weapon extends CombatElement{
     
     @Override
     public String toString(){
-        return "W[" + power + "," + uses + "]";
+        return "W[" + getEffect() + "," + getUses() + "]";
     }
 }

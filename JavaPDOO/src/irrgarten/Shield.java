@@ -10,8 +10,6 @@ package irrgarten;
  * @author Jaime Espín
  */
 public class Shield extends CombatElement{
-    private float protection;
-    private int uses;
 
     public Shield(float protection, int uses) {
         super(protection, uses);
@@ -23,6 +21,6 @@ public class Shield extends CombatElement{
 
     @Override
     public String toString() {
-        return "S[" + protection + ", " + uses + ']';
+        return "S[" + getEffect() + ", " + getUses() + ']';
     }
 }

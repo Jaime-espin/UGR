@@ -55,19 +55,30 @@ public class Labyrinth {
         String s = "";
 
         s += "LABYRINTH (Dimensions: " + nRows + " X " + nCols + ")\n";
+        
+        // Línea superior inicial
+        s += "+";
+        for (int c = 0; c < nCols; c++) {
+            s += "----+"; 
+        }
+        s += "\n";
 
         for (int i = 0; i < nRows; i++) {
-            for (int c = 0; c < nCols; c++) {
-                s += "---"; 
+            // Contenido de las celdas
+            s += "|";
+            for (int j = 0; j < nCols; j++) {
+                s += "   " + labyrinth[i][j] + "  |";
             }
             s += "\n";
-            s += "| ";
-            for (int j = 0; j < nCols; j++) {
-                s += labyrinth[i][j];
-                s += " | ";
+            
+            // Línea horizontal
+            s += "+";
+            for (int c = 0; c < nCols; c++) {
+                s += "----+"; 
             }
             s += "\n";
         }
+        
         return s;
     }
     
@@ -137,13 +148,12 @@ public class Labyrinth {
     }
     
     private int[] randomEmptyPos(){
-        Dice dado = new Dice();
         int[] pos = new int[2];
         int row;
         int col;
         do{
-            row=dado.randomPos(this.nRows);
-            col=dado.randomPos(this.nCols);
+            row=Dice.randomPos(this.nRows);
+            col=Dice.randomPos(this.nCols);
         }while(!emptyPos(row, col));
         
         pos[0]=row;
