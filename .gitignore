@@ -9,3 +9,13 @@
 .vscode/
 >>>>>>> repo_mp/main
 *:Zone.Identifier
+*.o
+*.exe
+bin/
+build/
+.vscode/
+*.o
+*.exe
+bin/
+build/
+.vscode/
