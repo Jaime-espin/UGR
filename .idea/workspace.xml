@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="db0a5bfc-810b-4405-b3e5-4508b4a650e9" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/IrrgartenJuego/controller/controller.rb" beforeDir="false" afterPath="$PROJECT_DIR$/IrrgartenJuego/controller/controller.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IrrgartenJuego/game.rb" beforeDir="false" afterPath="$PROJECT_DIR$/IrrgartenJuego/game.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IrrgartenJuego/game_state.rb" beforeDir="false" afterPath="$PROJECT_DIR$/IrrgartenJuego/game_state.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IrrgartenJuego/main.rb" beforeDir="false" afterPath="$PROJECT_DIR$/IrrgartenJuego/main.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IrrgartenJuego/monster.rb" beforeDir="false" afterPath="$PROJECT_DIR$/IrrgartenJuego/monster.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IrrgartenJuego/player.rb" beforeDir="false" afterPath="$PROJECT_DIR$/IrrgartenJuego/player.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IrrgartenJuego/ui/text_ui.rb" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="35KFoqsxtPk3Y2uGEM5hjLdCnSZ" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "com.intellij.lang.ruby.rbs.tools.collection.workspace.sync.RbsCollectionUpdateProjectActivity#LAST_UPDATE_TIMESTAMP": "1762851099346",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "master",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "//wsl.localhost/Ubuntu/home/jaime/Practicas/PDOO",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "ruby.structure.view.model.defaults.configured": "true",
+    "settings.editor.selected.configurable": "org.jetbrains.plugins.ruby.settings.RubyActiveModuleSdkConfigurable",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-3aa1da707db6-JavaScript-RM-252.27397.109" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="db0a5bfc-810b-4405-b3e5-4508b4a650e9" name="Changes" comment="" />
+      <created>1762851038652</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1762851038652</updated>
+      <workItem from="1762851039174" duration="477000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
