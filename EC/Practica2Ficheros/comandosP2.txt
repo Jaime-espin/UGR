@@ -1,0 +1,57 @@
+Para hacerlo de golpe.
+gcc -no-pie sum.c msum.c -o sum
+ ./sum; echo $?
+
+Para hacerlo paso por paso
+FNSP=-fno-stack-protector 			# ahorrarse teclear switches tan largos
+FNAUT=-fno-asynchronous-unwind-tables
+MMEBR=-mmanual-endbr
+gcc -Og -S sum.c $FNAUT $MMEBR 		# crea sum.s (-CallFrameInfo)
+	cat sum.s 			# rax res, rbx s-invcado, rdi/si/dx args
+gcc -Og -S msum.c $FNAUT $MMEBR $FNSP	# crea msum.s (-StackProtector)
+ 	cat msum.s			# 8(%rsp) es var.local d
+
+gcc -c sum.s msum.c			# crea sum.o, msum.o desde ASM/C
+ls; file *.o 				# ELF 64-bit LSB relocatable
+
+gcc -no-pie sum.o msum.o -o sum		# crea exe sum(no a.out) desde objetos
+file sum; ./sum; echo $? 		# ELF 64-bit LSB executable - funciona
+
+
+Ejercicio 2
+gcc -Og -S sum.c msum.c $FNAUT $FNSP $MMEBR 	# compilar: ya no necesitamos gcc
+ls *sum.? 					# seguir trabajando con [m]sum.s
+as sum.s -o sum.o 				# ensamblar creando objeto sum.o (no a.out)
+as msum.s -o msum.o
+ls *.o; file *.o
+
+ld sum.o msum.o 			# warn: falta _start
+					# _start está definido en crt1.o, verlo con nm
+
+gcc -### sum.o msum.o 			# una forma de ver cómo enlaza gcc
+gcc -### -no-pie *.o 			# reproducir último paso collect2 usando ld:
+ls /lib64 				# : /usr/lib/x86*/crt?.o -lc –dynamic-linker …
+ls /usr/lib/x86_64-linux-gnu/*crt* 	# otros progs pudieran necesitar crtbegin/end
+					# backslash \ es "escape" para <Enter> en bash
+ld sum.o msum.o -o sum -dynamic-linker /lib64/ld-linux-x86-64.so.2 /usr/lib/x86_64-linux-gnu/crt?.o -lc
+file sum; ./sum; echo $? 		#funciona
+
+
+Ejercicio 3
+
+objdump -d sum.o 	# mostrado al lado>
+objdump -t sum.o
+nm sum.o 		# sumstore en .text
+objdump -S sum.o 	# falta -g
+
+gcc -g -Og -c sum.c $FNAUT $FNSP $MMEBR
+objdump -S sum.o 	# ahora sí
+objdump -t sum.o 	# secciones -g
+objdump -h sum.o 	# ver.text=14B
+gcc -Og -c sum.c $FNAUT $FNSP $MMEBR
+objdump -S sum.o 	# ahora no
+objdump -h sum.o 	# al quitar -g
+
+
+
+

@@ -1,0 +1,3 @@
+[submodule "IA/practica2"]
+	path = IA/practica2
+	url = git@github.com:ugr-ccia-IA/practica2.git
