@@ -1,0 +1,11 @@
+Para más valoración de nota, os propongo lo siguiente:
+
+- Generar 6 numeros aleatorios SIEMPRE, que no salgan del conjunto, 
+así hay mucha más riqueza de números y no es algo tan facilongo
+- Permitir que el usuario (antes de mostrar la solución) pueda jugar, 
+por ejemplo se le dan los numeros 1,2,3,4,5,6 y el numero 567 
+y el usuario va metiendo 6*5... 
+Y ya, al final se le dice pues correcto o casi! Había una solución mejor
+- Antes de jugar, dar la opción de jugar con 6 numeros aleatorios 
+o 6 numeros de combinación mágica, así sabremos que nuestro 
+programa va bien, porque siempre hay solución con la combinación mágica.

@@ -1,0 +1,375 @@
+.TH "Racional" 3 "TDA Racional" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Racional \- T\&.D\&.A\&. \fBRacional\fP\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fR#include <Racional\&.h>\fP
+.SS "Métodos públicos"
+
+.in +1c
+.ti -1c
+.RI "\fBRacional\fP ()"
+.br
+.RI "Constructor por defecto de la clase\&. Crea el numero racional 0/1\&. "
+.ti -1c
+.RI "\fBRacional\fP (int n, int d)"
+.br
+.RI "Constructor de la clase\&. "
+.ti -1c
+.RI "\fBRacional\fP (const \fBRacional\fP &c)"
+.br
+.RI "Constructor de copias de la clase\&. "
+.ti -1c
+.RI "int \fBnumerador\fP ()"
+.br
+.RI "Numerador\&. "
+.ti -1c
+.RI "int \fBdenominador\fP ()"
+.br
+.RI "Denominador\&. "
+.ti -1c
+.RI "void \fBasignar\fP (int n, int d)"
+.br
+.RI "Asignaci?n de un racional\&. "
+.ti -1c
+.RI "bool \fBcomparar\fP (\fBRacional\fP r)"
+.br
+.RI "Compara dos racionales\&. "
+.ti -1c
+.RI "void \fBprint\fP ()"
+.br
+.RI "Imprime un racional en el formato '(n/d)';\&. "
+.ti -1c
+.RI "\fBRacional\fP \fBoperator+\fP (const \fBRacional\fP &r)"
+.br
+.RI "Suma dos racionales\&. "
+.ti -1c
+.RI "\fBRacional\fP \fBoperator*\fP (const \fBRacional\fP &r)"
+.br
+.RI "Multiplicaci?n de dos racionales\&. "
+.ti -1c
+.RI "void \fBoperator+=\fP (const \fBRacional\fP &r)"
+.br
+.RI "Sobrecarga del operador +=\&. "
+.ti -1c
+.RI "bool \fBoperator==\fP (const \fBRacional\fP &r)"
+.br
+.RI "Sobrecarga del operador ==\&. "
+.ti -1c
+.RI "\fBRacional\fP \fBsimplifica\fP ()"
+.br
+.RI "Convierte un racional en irreducible;\&. "
+.in -1c
+.SS "Amigas"
+
+.in +1c
+.ti -1c
+.RI "ostream & \fBoperator<<\fP (ostream &os, const \fBRacional\fP &r)"
+.br
+.RI "Salida de un racional a ostream\&. "
+.ti -1c
+.RI "istream & \fBoperator>>\fP (istream &is, \fBRacional\fP &r)"
+.br
+.RI "Entrada de un \fBRacional\fP desde istream\&. "
+.in -1c
+.SH "Descripción detallada"
+.PP 
+T\&.D\&.A\&. \fBRacional\fP\&. 
+
+Una instancia \fIc\fP del tipo de datos abstracto \fR\fBRacional\fP\fP es un objeto del conjunto de los n?meros racionales, compuestos por dos valores enteros que representan, respectivamente, numerador y denominador\&. Lo representamos
+
+.PP
+num/den
+
+.PP
+Un ejemplo de su uso: 
+.PP
+.nf
+#include <iostream>
+#include <Racional\&.h>
+
+using namespace std;
+
+int main(void){
+
+  Racional a,b,c,e,f,g,w,z;
+  Racional d(2,4);
+
+  a\&.print();
+  cout << " Racional a\\n";
+
+  d\&.print();
+  cout << " Racional d\\n";
+
+  a = d;
+  a\&.print();
+  cout << " Racional a tras asignarle el racional d\\n";
+
+  a\&.asignar(6,4);
+  d\&.asignar(5,7);
+  cout << d;
+  cout << " Racional d 5/7 \\n";
+  a\&.print();
+  cout << " Racional a 6/4 \\n";
+  c = a+d;
+  c\&.print();
+  cout << " Racional c=a+d\\n";
+  c\&.simplifica();
+  cout << "Racional c=a+d irreducible " << c << endl;
+
+  c += a;
+  c\&.print();
+  cout << " Racional c=c+a\\n";
+
+  c\&.simplifica();
+  cout << "Racional c=c+a irreducible " << c << endl;
+
+  e\&.asignar(6,4);
+  f\&.asignar(3,2);
+  g\&.asignar(3,5);
+
+  cout << e << " Racional e 6/4\\n";
+  f\&.print();
+  cout << " Racional f 3/2\\n";
+  g\&.print();
+  cout << " Racional g 3/5\\n";
+
+  if (f\&.comparar(e)) 
+    cout << "f y e son iguales\\n";
+  else
+    cout << "f y e no son iguales\\n";
+
+  if
+    (f==g) cout << "f y g son iguales\\n";
+  else
+    cout << "f y g no son iguales\\n";
+
+  cout << "Introduzca el primer racional usando formato (r/i):" << endl;
+  cin >> w;
+  cout << "Introduzca el segundo racional usando formato (r/i):" << endl;
+  cin >> z;
+  cout << "La suma es " << w+z << endl;
+  cout << "El producto es " << w*z << endl;
+  return 0;
+}
+
+.fi
+.PP
+
+.PP
+\fBAutor\fP
+.RS 4
+.RE
+.PP
+\fBFecha\fP
+.RS 4
+Octubre 2017 
+.RE
+.PP
+
+.SH "Documentación de constructores y destructores"
+.PP 
+.SS "Racional::Racional (int n, int d)"
+
+.PP
+Constructor de la clase\&. 
+.PP
+\fBParámetros\fP
+.RS 4
+\fIn\fP numerador del racional a construir 
+.br
+\fId\fP denominador del racional a construir 
+.RE
+.PP
+\fBDevuelve\fP
+.RS 4
+Crea el numero racional n/d 
+.RE
+.PP
+\fBPrecondición\fP
+.RS 4
+d debe ser distinto de cero 
+.RE
+.PP
+
+.SS "Racional::Racional (const \fBRacional\fP & c)"
+
+.PP
+Constructor de copias de la clase\&. 
+.PP
+\fBParámetros\fP
+.RS 4
+\fIc\&.num\fP numerador del racional a construir 
+.br
+\fIc\&.den\fP denominador del racional a construir 
+.RE
+.PP
+
+.SH "Documentación de funciones miembro"
+.PP 
+.SS "void Racional::asignar (int n, int d)"
+
+.PP
+Asignaci?n de un racional\&. 
+.PP
+\fBParámetros\fP
+.RS 4
+\fIn\fP numerador del racional a asignar 
+.br
+\fId\fP denominador del racional a asignar 
+.RE
+.PP
+\fBDevuelve\fP
+.RS 4
+Asigna al objeto impl?cito el numero racional n/d 
+.RE
+.PP
+\fBPrecondición\fP
+.RS 4
+d debe ser distinto de cero 
+.RE
+.PP
+
+.SS "bool Racional::comparar (\fBRacional\fP r)"
+
+.PP
+Compara dos racionales\&. 
+.PP
+\fBParámetros\fP
+.RS 4
+\fIr\fP racional a comparar 
+.RE
+.PP
+\fBDevuelve\fP
+.RS 4
+Devuelve 0 si este objeto es igual a r, <0 si este objeto es menor que r, >0 si este objeto es mayor que r 
+.RE
+.PP
+
+.SS "int Racional::denominador ()"
+
+.PP
+Denominador\&. 
+.PP
+\fBDevuelve\fP
+.RS 4
+Devuelve el denominador del racional 
+.RE
+.PP
+
+.SS "int Racional::numerador ()"
+
+.PP
+Numerador\&. 
+.PP
+\fBDevuelve\fP
+.RS 4
+Devuelve el numerador del racional 
+.RE
+.PP
+
+.SS "\fBRacional\fP Racional::operator* (const \fBRacional\fP & r)"
+
+.PP
+Multiplicaci?n de dos racionales\&. 
+.PP
+\fBParámetros\fP
+.RS 4
+\fIr\fP racional a multiplicar con el objeto implicito 
+.RE
+.PP
+
+.PP
+Hace referencia a \fBRacional()\fP\&.
+.SS "\fBRacional\fP Racional::operator+ (const \fBRacional\fP & r)"
+
+.PP
+Suma dos racionales\&. 
+.PP
+\fBParámetros\fP
+.RS 4
+\fIr\fP racional a sumar con el objeto implicito 
+.RE
+.PP
+
+.PP
+Hace referencia a \fBRacional()\fP\&.
+.SS "void Racional::operator+= (const \fBRacional\fP & r)"
+
+.PP
+Sobrecarga del operador +=\&. 
+.PP
+\fBParámetros\fP
+.RS 4
+\fIr\fP racional a sumar con el objeto impl?cito 
+.RE
+.PP
+
+.SS "bool Racional::operator== (const \fBRacional\fP & r)"
+
+.PP
+Sobrecarga del operador ==\&. 
+.PP
+\fBParámetros\fP
+.RS 4
+\fIr\fP racional a comparar con el objeto impl?cito 
+.RE
+.PP
+\fBDevuelve\fP
+.RS 4
+Devuelve 0 si este objeto es igual a r 
+.RE
+.PP
+
+.SH "Documentación de símbolos amigos y relacionados"
+.PP 
+.SS "ostream & operator<< (ostream & os, const \fBRacional\fP & r)\fR [friend]\fP"
+
+.PP
+Salida de un racional a ostream\&. 
+.PP
+\fBParámetros\fP
+.RS 4
+\fIos\fP stream de salida 
+.br
+\fIr\fP \fBRacional\fP a escribir 
+.RE
+.PP
+\fBPostcondición\fP
+.RS 4
+Se obtiene en \fIos\fP la cadena (num/den) con \fInum\fP,den los valores del numerador y denominador de \fIr\fP 
+.RE
+.PP
+
+.SS "istream & operator>> (istream & is, \fBRacional\fP & r)\fR [friend]\fP"
+
+.PP
+Entrada de un \fBRacional\fP desde istream\&. 
+.PP
+\fBParámetros\fP
+.RS 4
+\fIis\fP stream de entrada 
+.br
+\fIr\fP \fBRacional\fP que recibe el valor 
+.RE
+.PP
+\fBValores devueltos\fP
+.RS 4
+\fIEl\fP \fBRacional\fP le?do en r 
+.RE
+.PP
+\fBPrecondición\fP
+.RS 4
+La entrada tiene el formato (num/den) con \fInum\fP,\fIden\fP los valores del numerador y denominador 
+.RE
+.PP
+
+
+.SH "Autor"
+.PP 
+Generado automáticamente por Doxygen para TDA Racional del código fuente\&.

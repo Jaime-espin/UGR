@@ -1,0 +1,7 @@
+/home/jaime/Practicas/ED/P3_TDA-pilas_colas/estudiante/CMakeFiles/maxstack.dir
+/home/jaime/Practicas/ED/P3_TDA-pilas_colas/estudiante/CMakeFiles/maxqueue.dir
+/home/jaime/Practicas/ED/P3_TDA-pilas_colas/estudiante/CMakeFiles/pila_max.dir
+/home/jaime/Practicas/ED/P3_TDA-pilas_colas/estudiante/CMakeFiles/cola_max.dir
+/home/jaime/Practicas/ED/P3_TDA-pilas_colas/estudiante/CMakeFiles/doc_doxygen.dir
+/home/jaime/Practicas/ED/P3_TDA-pilas_colas/estudiante/CMakeFiles/edit_cache.dir
+/home/jaime/Practicas/ED/P3_TDA-pilas_colas/estudiante/CMakeFiles/rebuild_cache.dir

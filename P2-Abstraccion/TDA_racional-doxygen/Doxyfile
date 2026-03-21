@@ -1,0 +1,6 @@
+PROJECT_NAME           = "TDARacional-doc"
+OUTPUT_DIRECTORY       = .//doc_doxygen
+INPUT                  = . .//include .//src .//doc
+GENERATE_LATEX         = NO
+IMAGE_PATH             = ./doc
+EXTRACT_PRIVATE        = NO

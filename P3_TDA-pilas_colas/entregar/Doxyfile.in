@@ -1,0 +1,6 @@
+PROJECT_NAME           = "TDA Pilas y Colas"
+OUTPUT_DIRECTORY       = ./doc_doxygen
+INPUT                  = ./include ./src ./doc
+GENERATE_LATEX         = NO
+IMAGE_PATH             = ./doc
+EXTRACT_PRIVATE	       = NO
