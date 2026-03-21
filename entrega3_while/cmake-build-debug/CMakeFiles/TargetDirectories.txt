@@ -1,0 +1,8 @@
+C:/Users/Jaime Espín/Desktop/entrega3_while/cmake-build-debug/CMakeFiles/lectura_anticipada.dir
+C:/Users/Jaime Espín/Desktop/entrega3_while/cmake-build-debug/CMakeFiles/letra_frecuente.dir
+C:/Users/Jaime Espín/Desktop/entrega3_while/cmake-build-debug/CMakeFiles/maratonista.dir
+C:/Users/Jaime Espín/Desktop/entrega3_while/cmake-build-debug/CMakeFiles/menu_calculadora.dir
+C:/Users/Jaime Espín/Desktop/entrega3_while/cmake-build-debug/CMakeFiles/positivos_negativos.dir
+C:/Users/Jaime Espín/Desktop/entrega3_while/cmake-build-debug/CMakeFiles/rango_temperaturas.dir
+C:/Users/Jaime Espín/Desktop/entrega3_while/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Jaime Espín/Desktop/entrega3_while/cmake-build-debug/CMakeFiles/rebuild_cache.dir

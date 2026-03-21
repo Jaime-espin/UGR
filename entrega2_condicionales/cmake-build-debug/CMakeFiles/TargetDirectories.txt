@@ -1,0 +1,6 @@
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega2_condicionales/cmake-build-debug/CMakeFiles/calificacionFP.dir
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega2_condicionales/cmake-build-debug/CMakeFiles/clasifica_char.dir
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega2_condicionales/cmake-build-debug/CMakeFiles/pascua.dir
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega2_condicionales/cmake-build-debug/CMakeFiles/plantas.dir
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega2_condicionales/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega2_condicionales/cmake-build-debug/CMakeFiles/rebuild_cache.dir

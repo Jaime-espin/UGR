@@ -1,0 +1,15 @@
+# ninja log v6
+15	412	7507153374690873	CMakeFiles/calificacionFP.dir/calificacionFP.cpp.obj	6b5ffc5425e5b1b5
+413	491	7507153378670602	calificacionFP.exe	2745fe2f15e79b37
+18	375	7507136712556077	CMakeFiles/clasifica_char.dir/clasifica_char.cpp.obj	edb797d299448f05
+376	456	7507136716131455	clasifica_char.exe	3d10ac8081b04cd8
+5	452	7507161912220420	CMakeFiles/pascua.dir/pascua.cpp.obj	11d2cec252437282
+453	536	7507161916685118	pascua.exe	c5f4d04a3805fc9f
+29	489	7507862596090163	CMakeFiles/pascua.dir/pascua.cpp.obj	90d181313ce1d3ec
+490	678	7507862600693633	pascua.exe	c5f4d04a3805fc9f
+4	440	7507867264150095	CMakeFiles/plantas.dir/plantas.cpp.obj	7eecc33d22c43052
+441	551	7507867268521258	plantas.exe	7d521a24b9aa1fb4
+65	532	7507873294776117	CMakeFiles/plantas.dir/plantas.cpp.obj	7eecc33d22c43052
+533	842	7507873299452865	plantas.exe	7d521a24b9aa1fb4
+12	691	7507880233176337	CMakeFiles/plantas.dir/plantas.cpp.obj	7eecc33d22c43052
+692	787	7507880239980888	plantas.exe	7d521a24b9aa1fb4

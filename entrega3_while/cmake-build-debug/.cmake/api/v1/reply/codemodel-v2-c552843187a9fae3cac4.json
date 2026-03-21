@@ -1,0 +1,105 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.29"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "entrega3_while",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "lectura_anticipada::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-lectura_anticipada-Debug-37dcb6b1e6ca8036c17c.json",
+					"name" : "lectura_anticipada",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "letra_frecuente::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-letra_frecuente-Debug-336cd59565b34cdaafcc.json",
+					"name" : "letra_frecuente",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "maratonista::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-maratonista-Debug-67b017d4892e625a508b.json",
+					"name" : "maratonista",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "menu_calculadora::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-menu_calculadora-Debug-8aa116f4b5e3778b6468.json",
+					"name" : "menu_calculadora",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "positivos_negativos::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-positivos_negativos-Debug-f975aa60d36f339f5c1f.json",
+					"name" : "positivos_negativos",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rango_temperaturas::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rango_temperaturas-Debug-87968eabebfc2503dc28.json",
+					"name" : "rango_temperaturas",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/Jaime Esp\u00edn/Desktop/entrega3_while/cmake-build-debug",
+		"source" : "C:/Users/Jaime Esp\u00edn/Desktop/entrega3_while"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

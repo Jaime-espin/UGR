@@ -1,0 +1,3 @@
+C:/Users/Jaime Espín/Desktop/divisor/cmake-build-debug/CMakeFiles/divisor.dir
+C:/Users/Jaime Espín/Desktop/divisor/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Jaime Espín/Desktop/divisor/cmake-build-debug/CMakeFiles/rebuild_cache.dir

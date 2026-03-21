@@ -1,0 +1,27 @@
+# ninja log v6
+43	427	7502740786749605	CMakeFiles/entrega1_caracteres.dir/letra_alfabeto/letra_alfabeto.cpp.obj	f6b38c683e4b1804
+90	330	7502702837978645	CMakeFiles/entrega1_caracteres.dir/consumo_dia.cpp.obj	72a9f11decf135ff
+34	457	7502740786660089	CMakeFiles/entrega1_caracteres.dir/valor_ascii/valor_ascii.cpp.obj	4a2a2d05361141c2
+98	332	7502702838058681	CMakeFiles/entrega1_caracteres.dir/letra_alfabeto.cpp.obj	2f7c7fbcc109618d
+78	683	7502702837866336	CMakeFiles/entrega1_caracteres.dir/aspect_ratio.cpp.obj	b3b1ccb53bae7626
+7	322	7502703485240410	CMakeFiles/entrega1_caracteres.dir/valor_ascii.cpp.obj	37f1066e13b518c2
+15	327	7502747091877126	build.ninja	c6541c4bb2a8c584
+38	105	7502740786705572	CMakeFiles/entrega1_caracteres.dir/consumo_dia/consumo_dia.cpp.obj	62db30a9d68460e
+30	419	7502740786620040	CMakeFiles/entrega1_caracteres.dir/aspect_ratio/aspect_ratio.cpp.obj	b0c50d4a3397fb23
+18	326	7502742004128782	CMakeFiles/entrega1_caracteres.dir/main.cpp.obj	7513483c9792b691
+13	362	7502747388219207	CMakeFiles/valor_ascii_exe.dir/valor_ascii/valor_ascii.cpp.obj	dda247065f039be4
+365	466	7502747391726362	valor_ascii_exe.exe	e3076960be60cc03
+16	478	7505368808618493	CMakeFiles/valor_ascii_exe.dir/valor_ascii/valor_ascii.cpp.obj	dda247065f039be4
+479	780	7505368813243066	valor_ascii_exe.exe	e3076960be60cc03
+3	264	7505370413837838	CMakeFiles/letra_alfabeto_exe.dir/letra_alfabeto/letra_alfabeto.cpp.obj	d34d493cb3f37d36
+265	375	7505370416447910	letra_alfabeto_exe.exe	78963057598cfab7
+5	254	7505378646508463	CMakeFiles/valor_ascii_exe.dir/valor_ascii/valor_ascii.cpp.obj	dda247065f039be4
+255	350	7505378649001896	valor_ascii_exe.exe	e3076960be60cc03
+2	280	7505381285396483	CMakeFiles/consumo_dia_exe.dir/consumo_dia/consumo_dia.cpp.obj	c1a11470a6801aa3
+281	360	7505381288190333	consumo_dia_exe.exe	70646834012a75d0
+7	263	7505382348747739	CMakeFiles/consumo_dia_exe.dir/consumo_dia/consumo_dia.cpp.obj	c1a11470a6801aa3
+264	344	7505382351314662	consumo_dia_exe.exe	70646834012a75d0
+3	250	7505384219021899	CMakeFiles/aspect_ratio_exe.dir/aspect_ratio/aspect_ratio.cpp.obj	de43b905039802bf
+250	335	7505384221485523	aspect_ratio_exe.exe	cc2cd194f93188cf
+6	240	7505393103877966	CMakeFiles/aspect_ratio_exe.dir/aspect_ratio/aspect_ratio.cpp.obj	de43b905039802bf
+241	324	7505393106228823	aspect_ratio_exe.exe	cc2cd194f93188cf

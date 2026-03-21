@@ -1,0 +1,6 @@
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega1_caracteres/cmake-build-debug/CMakeFiles/aspect_ratio_exe.dir
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega1_caracteres/cmake-build-debug/CMakeFiles/valor_ascii_exe.dir
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega1_caracteres/cmake-build-debug/CMakeFiles/consumo_dia_exe.dir
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega1_caracteres/cmake-build-debug/CMakeFiles/letra_alfabeto_exe.dir
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega1_caracteres/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Jaime Espín/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega1_caracteres/cmake-build-debug/CMakeFiles/rebuild_cache.dir

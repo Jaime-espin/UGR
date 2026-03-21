@@ -1,0 +1,87 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.29"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "entrega2_condicionales",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "calificacionFP::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-calificacionFP-Debug-7c1b7a912907af49fc84.json",
+					"name" : "calificacionFP",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "clasifica_char::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-clasifica_char-Debug-b2c5c3762a6a227a81dc.json",
+					"name" : "clasifica_char",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "pascua::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-pascua-Debug-e473aa762d3d8b367c29.json",
+					"name" : "pascua",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "plantas::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-plantas-Debug-9dd9e9449b04f7e5f3ba.json",
+					"name" : "plantas",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/Jaime Esp\u00edn/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega2_condicionales/cmake-build-debug",
+		"source" : "C:/Users/Jaime Esp\u00edn/Desktop/01 Universidad/01 Apuntes/FP/Practica/entrega2_condicionales"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}
