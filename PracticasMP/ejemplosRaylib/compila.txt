@@ -1,0 +1,9 @@
+PROBAR PRIMERO CON ESTA LINEA
+g++ testBasico.cpp -I. -lraylib -o test
+
+
+g++ testBasico.cpp -I. -lraylib -lpthread -ldl -L. -std=c++14 -o test
+
+g++ ejemplo1.cpp Punto2D.cpp -I. -lraylib -lpthread -ldl -L. -std=c++14 -o ej1
+
+g++ ejemplo2.cpp Punto2D.cpp -I. -lraylib -lpthread -ldl -L. -std=c++14 -o ej2
