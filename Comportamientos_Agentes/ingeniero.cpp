@@ -43,10 +43,101 @@ Action ComportamientoIngeniero::think(Sensores sensores)
   return accion;
 }
 
+/**
+ * @brief Determina la mejor opcion entre las 3 casillas que tiene delante
+ * 
+ * @param i terreno que hay en la poción 1 de superficie (45izq)
+ * @param c terreno que hay en la poción 2 de superficie (justo delante)
+ * @param d terreno que hay en la poción 3 de superficie (45dch)
+ * @return int 2 si es mejor WALK, 1 para TURN_SL y 3 para TURN_SR. 0 no hay nada interesante.
+ */
+int VeoCasillaInteresanteI(char i, char c, char d, bool zap){
+  if(c=='U') return 2;
+  else if (i=='U') return 1;
+  else if (d=='U') return 3;
+  else if(!zap){
+    if (c=='D') return 2;
+    else if(i =='D') return 1;
+    else if(d=='D') return 3;
+  }
+  
+  if (c=='C') return 2;
+  else if (d=='C') return 3;
+  else if (i=='C') return 1;
+  
+  return 0;
+}
+
+char ViablePorAlturaI(char casilla, int dif, bool zap){
+  if(abs(dif)<=1 or (zap and abs(dif) <= 2)){
+    return casilla;
+  }else{
+    return 'P';
+  }
+}
+
 // Niveles iniciales (Comportamientos reactivos simples)
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_0(Sensores sensores)
 {
   Action accion = IDLE;
+
+  ActualizarMapa(sensores);
+
+  if(sensores.superficie[0]=='D') tiene_zapatillas = true;
+  if(sensores.superficie[0]=='U'){ //U es planta residuos, se cumple objetivo
+    cout << "REGLA: Meta encontrada (U)" << endl;
+    accion=IDLE;
+  }else if(girando>0){
+    cout << "REGLA: Girando contador=" << girando << endl;
+    accion=TURN_SL;
+    girando--;
+  } else if(sensores.agentes[2]=='t' && sensores.superficie[2]!='U'){
+    cout << "REGLA: Tecnico delante, no es meta" << endl;
+    accion=IDLE;
+  } else if(sensores.agentes[2]=='t' && sensores.superficie[2]=='U'){
+    cout << "REGLA: Tecnico delante con meta, activando giro" << endl;
+    accion=TURN_SL;
+    girando=2;
+  }/*else if(sensores.superficie[2]=='C'){
+    accion = WALK;
+  }else if(sensores.superficie[1]=='C'){
+    accion = TURN_SL;
+  }else if(sensores.superficie[3]=='C'){
+    accion = TURN_SR;
+  }else{
+    accion = TURN_SL;
+  }*/
+  else{
+    char i = ViablePorAlturaI(sensores.superficie[1], sensores.cota[1]-sensores.cota[0], tiene_zapatillas);
+    char c = ViablePorAlturaI(sensores.superficie[2], sensores.cota[2]-sensores.cota[0], tiene_zapatillas);
+    char d = ViablePorAlturaI(sensores.superficie[3], sensores.cota[3]-sensores.cota[0], tiene_zapatillas);
+    
+    cout << "REGLA: Decision normal. i='" << i << "' c='" << c << "' d='" << d << "'" << endl;
+    
+    int pos = VeoCasillaInteresanteI(i, c, d, tiene_zapatillas);
+    cout << "  -> VeoCasillaInteresante retorna: " << pos << endl;
+    
+    switch (pos)
+    {
+    case 2:
+      cout << "  -> ACCION: WALK (delante)" << endl;
+      accion = WALK;
+      break;
+    case 1:
+      cout << "  -> ACCION: TURN_SL (izquierda)" << endl;
+      accion = TURN_SL;
+      break;
+    case 3:
+      cout << "  -> ACCION: TURN_SR (derecha)" << endl;
+      accion = TURN_SR;
+      break;
+    default:
+      cout << "  -> ACCION: TURN_SL por default (no hay nada interesante)" << endl;
+      accion = TURN_SL;
+      break;
+    }
+  }
+  last_action=accion;
   return accion;
 }
 

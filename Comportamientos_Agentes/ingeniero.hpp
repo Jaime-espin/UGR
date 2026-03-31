@@ -22,6 +22,10 @@ public:
    */
   ComportamientoIngeniero(unsigned int size = 0) : Comportamiento(size) {
     // Inicializar Variables de Estado
+    last_action=IDLE;
+    tiene_zapatillas=false;
+    giro45Izq=0;
+    girando=0;
   }
 
   /**
@@ -183,6 +187,10 @@ private:
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
   // =========================================================================
 
+Action last_action;     //Almacena la última acción ejecutada
+bool tiene_zapatillas;  //Indica si el agente tiene las zapatillas
+int giro45Izq;          //Indica el número de giros a la izq que quedan por dar
+int girando;            //Para completar un giro si hay obstaculo
 };
 
 #endif
