@@ -101,9 +101,12 @@ int Practica2::DivideyVenceras(const std::vector<int>& vec) const{
 
 int recursiva(const std::vector<int>& vec, int izq, int drch){
     int tam = drch - izq;
-    int mitad = (izq + drch) / 2;;
+    int mitad = (izq + drch) / 2;
 
-    if(vec[mitad]>mitad){ //en este caso el número que falta está a la izquierda
+    if (izq == drch) { //El rango se ha cerrado en una sola posición. Los límites coinciden.
+    // Este índice es la primera posición donde el valor no coincide con el índice.
+        return izq;
+    }else if(vec[mitad]>mitad){ //en este caso el número que falta está a la izquierda
         return recursiva(vec, izq, mitad);
     }else{  //en este aso el nº que falta está a la derecha
         return recursiva(vec, mitad+1, drch);
