@@ -92,5 +92,20 @@ void Practica2::testProfe(){
 //mayor que el indice significa que falta un valor en una posición
 //anterior.
 int Practica2::DivideyVenceras(const std::vector<int>& vec) const{
+    //Primero dividimos
+    const int size = vec.size();
+    int mitad = size/2;
 
+    return recursiva(vec, 0, size);
+}
+
+int recursiva(const std::vector<int>& vec, int izq, int drch){
+    int tam = drch - izq;
+    int mitad = (izq + drch) / 2;;
+
+    if(vec[mitad]>mitad){ //en este caso el número que falta está a la izquierda
+        return recursiva(vec, izq, mitad);
+    }else{  //en este aso el nº que falta está a la derecha
+        return recursiva(vec, mitad+1, drch);
+    }
 }
