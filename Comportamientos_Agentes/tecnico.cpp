@@ -46,6 +46,14 @@ int VeoCasillaInteresanteT(char i, char c, char d){
   else return 0;
 }
 
+/**
+ * @brief Comprueba si el ingeniero puede ir a la casilla por la diferencia de altura
+ * 
+ * @param casilla a la que quiere moverse
+ * @param dif diferencia de altura entre la casilla actual y a la que se va a mover
+ * @return char devuelve la casilla objetivo si es viable y P si no lo es
+ */
+
 char ViablePorAlturaT(char casilla, int dif){
   if(abs(dif)<=1){
     return casilla;
@@ -78,7 +86,7 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_0(Sensores sensores) {
     accion = TURN_SL;
   }*/
   else if (sensores.agentes[2] == 'i') {
-    girando = 4; // Forzar un giro de 180 grados para buscar otro camino
+    girando = 3; // Forzar un giro de 180 grados para buscar otro camino
     accion = TURN_SL;
   } else{
 

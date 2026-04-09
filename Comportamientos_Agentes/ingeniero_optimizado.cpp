@@ -49,6 +49,7 @@ Action ComportamientoIngeniero::think(Sensores sensores)
  * @param i terreno que hay en la poción 1 de superficie (45izq)
  * @param c terreno que hay en la poción 2 de superficie (justo delante)
  * @param d terreno que hay en la poción 3 de superficie (45dch)
+ * @param zap indica si tiene zapatillas
  * @return int 2 si es mejor WALK, 1 para TURN_SL y 3 para TURN_SR. 0 no hay nada interesante.
  */
 int VeoCasillaInteresanteI(char i, char c, char d, bool zap){
@@ -126,16 +127,9 @@ int VeoCasillaInteresanteIAmpliada(const vector<unsigned char> &v, bool zap){
   return 0;
 }
 
-/**
- * @brief Comprueba si el ingeniero puede ir a la casilla por la diferencia de altura
- * 
- * @param casilla a la que quiere moverse
- * @param dif diferencia de altura entre la casilla actual y a la que se va a mover
- * @param zap indica si el agente tiene o no zapatilla
- * @return char devuelve la casilla objetivo si es viable y P si no lo es
- */
+
 char ViablePorAlturaI(char casilla, int dif, bool zap){
-  if(abs(dif)<=1 or (zap and abs(dif) <= 2)){
+  if(abs(dif)<=1 || (zap && abs(dif) <= 2)){
     return casilla;
   }else{
     return 'P';
@@ -145,69 +139,96 @@ char ViablePorAlturaI(char casilla, int dif, bool zap){
 // Niveles iniciales (Comportamientos reactivos simples)
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_0(Sensores sensores)
 {
-
   int fil = sensores.posF;
   int col = sensores.posC;
   mapaVisitas[fil][col]++;
   Action accion = IDLE;
-
+  
   ActualizarMapa(sensores);
 
-  if(sensores.superficie[0]=='D') tiene_zapatillas = true;
-  if(sensores.superficie[0]=='U'){ //U es planta residuos, se cumple objetivo
-    cout << "REGLA: Meta encontrada (U)" << endl;
-    accion=IDLE;
-  }else if(girando>0){
-    cout << "REGLA: Girando contador=" << girando << endl;
-    accion=TURN_SL;
-    girando--;
-  } else if(sensores.agentes[2]=='t' && sensores.superficie[2]!='U'){
-    cout << "REGLA: Tecnico delante, no es meta" << endl;
-    accion=IDLE;
-  } else if(sensores.agentes[2]=='t' && sensores.superficie[2]=='U'){
-    cout << "REGLA: Tecnico delante con meta, activando giro" << endl;
-    accion=TURN_SL;
-    girando=2;
-  }/*else if(sensores.superficie[2]=='C'){
-    accion = WALK;
-  }else if(sensores.superficie[1]=='C'){
+  // ===== PRIORIDAD 1: ¿Estoy ya en la META? =====
+  if(sensores.superficie[0]=='U'){
+    cout << "PRIORIDAD 1: Meta conseguida (U)" << endl;
+    accion = IDLE;
+  }
+  // ===== PRIORIDAD 2: ¿Veo la META? =====
+  else if(sensores.superficie[2]=='U'){
+    cout << "PRIORIDAD 2: META delante" << endl;
+    if(sensores.agentes[2]=='t'){
+      cout << "  -> Técnico bloqueando, girando" << endl;
+      accion = TURN_SL;
+      girando = 2;
+    }else{
+      accion = WALK;
+    }
+  }
+  else if(sensores.superficie[1]=='U' || sensores.superficie[4]=='U' || sensores.superficie[5]=='U'){
+    cout << "PRIORIDAD 2: META a la izquierda" << endl;
     accion = TURN_SL;
-  }else if(sensores.superficie[3]=='C'){
+  }
+  else if(sensores.superficie[3]=='U' || sensores.superficie[7]=='U' || sensores.superficie[8]=='U'){
+    cout << "PRIORIDAD 2: META a la derecha" << endl;
     accion = TURN_SR;
-  }else{
+  }
+  // ===== PRIORIDAD 3: ¿Veo y necesito ZAPATILLAS? =====
+  else if(!tiene_zapatillas && sensores.superficie[2]=='D'){
+    cout << "PRIORIDAD 3: Zapatillas delante" << endl;
+    accion = WALK;
+  }
+  else if(!tiene_zapatillas && sensores.superficie[1]=='D'){
+    cout << "PRIORIDAD 3: Zapatillas a la izquierda" << endl;
     accion = TURN_SL;
-  }*/
-  else{
+  }
+  else if(!tiene_zapatillas && sensores.superficie[3]=='D'){
+    cout << "PRIORIDAD 3: Zapatillas a la derecha" << endl;
+    accion = TURN_SR;
+  }
+  // ===== PRIORIDAD 4: Seguir CAMINO =====
+  else {
+    // Si estoy en zapatillas, recogerlas
+    if(sensores.superficie[0]=='D'){
+      cout << "PRIORIDAD 3 (fallback): Zapatillas en mi casilla (recogidas)" << endl;
+      tiene_zapatillas = true;
+    }
+    
+    // Verificar viabilidad por altura
     char i = ViablePorAlturaI(sensores.superficie[1], sensores.cota[1]-sensores.cota[0], tiene_zapatillas);
     char c = ViablePorAlturaI(sensores.superficie[2], sensores.cota[2]-sensores.cota[0], tiene_zapatillas);
     char d = ViablePorAlturaI(sensores.superficie[3], sensores.cota[3]-sensores.cota[0], tiene_zapatillas);
     
-    cout << "REGLA: Decision normal. i='" << i << "' c='" << c << "' d='" << d << "'" << endl;
-    
-    int pos = VeoCasillaInteresanteI(i, c, d, tiene_zapatillas);
-    cout << "  -> VeoCasillaInteresante retorna: " << pos << endl;
-    
-    switch (pos)
-    {
-    case 2:
-      cout << "  -> ACCION: WALK (delante)" << endl;
-      accion = WALK;
-      break;
-    case 1:
-      cout << "  -> ACCION: TURN_SL (izquierda)" << endl;
+    // ===== PRIORIDAD 4a: ¿Hay camino delante? =====
+    if(c=='C' || c=='D' || c=='U'){
+      if(sensores.agentes[2] != 't'){
+        cout << "PRIORIDAD 4a: Camino viable delante, avanzando" << endl;
+        accion = WALK;
+      }else{
+        cout << "PRIORIDAD 4a: Técnico bloqueando camino, girando" << endl;
+        accion = TURN_SL;
+        girando = 2;
+      }
+    }
+    // ===== PRIORIDAD 4b: Buscar camino en los lados =====
+    else if(i=='C' || i=='D' || i=='U'){
+      cout << "PRIORIDAD 4b: Camino viable a la izquierda" << endl;
       accion = TURN_SL;
-      break;
-    case 3:
-      cout << "  -> ACCION: TURN_SR (derecha)" << endl;
+    }
+    else if(d=='C' || d=='D' || d=='U'){
+      cout << "PRIORIDAD 4b: Camino viable a la derecha" << endl;
       accion = TURN_SR;
-      break;
-    default:
-      cout << "  -> ACCION: TURN_SL por default (no hay nada interesante)" << endl;
+    }
+    // ===== PRIORIDAD 5: Explorar =====
+    else{
+      cout << "PRIORIDAD 5: Sin camino visible, girando para explorar" << endl;
       accion = TURN_SL;
-      break;
     }
   }
-  last_action=accion;
+  
+  // Manejo de giros continuos
+  if(girando > 0){
+    girando--;
+  }
+  
+  last_action = accion;
   return accion;
 }
 
