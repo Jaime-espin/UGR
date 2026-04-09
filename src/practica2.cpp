@@ -83,3 +83,14 @@ void Practica2::testProfe(){
     cout << "Test3 Pasado correctamente\n";
 
 }
+
+//Teniendo en cuenta que el vector está ordenado el indice de la 
+//posicón del vector debería corresponder con el número que se 
+//encuentra en ella. En la posición 0 debe haber un cero o en la
+//posición 3 debe haber un 3.
+//Teniendo eso en cuenta si el valor de una posición del vector es
+//mayor que el indice significa que falta un valor en una posición
+//anterior.
+int Practica2::DivideyVenceras(const std::vector<int>& vec) const{
+
+}
