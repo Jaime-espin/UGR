@@ -33,12 +33,11 @@ void Practica2::rellenarvector(vector<int>& vec, const int k, const int pivote){
 
 }
 
-void Practica2::crearTestAleatorioAlgoritmoBasico(const int min, const int max){
+void Practica2::crearTestAleatorioAlgoritmoBasico(const int min, const int k){
     MyTime timer; 
 
-    const int k = aleatorio(min, max);
     uniform_int_distribution<> dis(min, k);
-    const int pivote = aleatorio(min, k);
+    const int pivote = aleatorio(k/2, k); //Esto hay que mirarlo bien como elegir el pivote
     rellenarvector(v, k, pivote);
 
     timer.start();

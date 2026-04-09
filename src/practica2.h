@@ -4,7 +4,7 @@
 class Practica2 {
 public: 
     void testProfe();
-    void crearTestAleatorioAlgoritmoBasico(const int min, const int max);
+    void crearTestAleatorioAlgoritmoBasico(const int min, const int k);
     
 
 

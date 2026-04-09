@@ -22,10 +22,14 @@ using namespace std;
 
 
 int main(){
-    const int MIN_INTER = 0, MAX_INTER = 2500000;
+    [[maybe_unused]]  const int MIN_INTER = 0, MAX_INTER = 2500000;
     Practica2 p; 
     p.testProfe();
-    p.crearTestAleatorioAlgoritmoBasico(MIN_INTER, MAX_INTER);
+
+    for(int i = 10000; i < 500000; i+=10000){
+        cout << i << " ";
+        p.crearTestAleatorioAlgoritmoBasico(MIN_INTER, i);
+    }
     
     return 0;
 }
