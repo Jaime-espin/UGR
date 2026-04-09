@@ -11,7 +11,7 @@ public:
 private: 
     std::vector<int> v {};
 
-    int algoritmoObvio(const std::vector<int>& vec, const int k) const;
+    int algoritmoObvio(const std::vector<int>& vec) const;
     void rellenarvector(std::vector<int>& vec, const int k, const int pivote);
     int aleatorio(const int min, const int max) const;
    

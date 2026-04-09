@@ -26,9 +26,19 @@ int main(){
     Practica2 p; 
     p.testProfe();
 
-    for(int i = 10000; i < 500000; i+=10000){
-        cout << i << " ";
-        p.crearTestAleatorioAlgoritmoBasico(MIN_INTER, i);
+    vector<int> tams = {
+        100000,      // 100 mil 
+        500000,      // 500 mil
+        1000000,     // 1 millón
+        5000000,     // 5 millones
+        10000000,    // 10 millones
+        50000000,    // 50 millones
+        100000000,   // 100 millones
+        300000000    // 300 millones
+    };
+
+    for(const auto t : tams){
+        p.crearTestAleatorioAlgoritmoBasico(MIN_INTER, t);
     }
     
     return 0;
