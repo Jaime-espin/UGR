@@ -203,7 +203,7 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_0(Sensores sensores
       break;
     default:
       cout << "  -> ACCION: TURN_SL por default (no hay nada interesante)" << endl;
-      accion = TURN_SL;
+      accion = TURN_SR;
       break;
     }
   }
