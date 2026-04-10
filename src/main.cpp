@@ -37,6 +37,12 @@ int main(){
         300000000    // 300 millones
     };
 
+    
+    cout << "-----------------------ALGORTIMO BÁSICO--------------------------------\n";
+    for(const auto t : tams){
+        p.crearTestAleatorioAlgoritmoBasico(MIN_INTER, t);
+    }
+    cout << "-----------------------ALGORTIMO DIVIDE Y VENCERÁS--------------------------------\n";
     for(const auto t : tams){
         p.crearTestAleatorioAlgoritmoBasico(MIN_INTER, t);
     }

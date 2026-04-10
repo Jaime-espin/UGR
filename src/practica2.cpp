@@ -38,7 +38,7 @@ void Practica2::crearTestAleatorioAlgoritmoBasico(const int min, const int k){
     const int repeticiones = 50; 
     double sumador = 0.0;
 
-    uniform_int_distribution<> dis(min, k);
+    //uniform_int_distribution<> dis(min, k);
     const int pivote = k; //Esto hay que mirarlo bien como elegir el pivote
     rellenarvector(v, k, pivote);
 
@@ -72,14 +72,17 @@ int Practica2::aleatorio(const int min, const int max) const{
 void Practica2::testProfe(){
     const vector<int> v1 = {0, 1, 2, 6, 9, 11, 15};
     assert(algoritmoObvio(v1) == 3);
+    assert(DivideyVenceras(v1) == 3);
     cout << "Test1 Pasado correctamente\n";
 
     const vector<int> v2 = {1, 2, 3, 4, 6, 9, 11, 15};
     assert(algoritmoObvio(v2) == 0);
+    assert(DivideyVenceras(v2) == 0);
     cout << "Test2 Pasado correctamente\n";
 
     const vector<int> v3 = {0, 1, 2, 3, 4, 5, 6};
     assert(algoritmoObvio(v3) == 7);
+    assert(DivideyVenceras(v3) == 7);
     cout << "Test3 Pasado correctamente\n";
 
 }
@@ -91,16 +94,16 @@ void Practica2::testProfe(){
 //Teniendo eso en cuenta si el valor de una posición del vector es
 //mayor que el indice significa que falta un valor en una posición
 //anterior.
-int Practica2::DivideyVenceras(const std::vector<int>& vec) const{
+int Practica2::DivideyVenceras(const std::vector<int>& vec){
     //Primero dividimos
-    const int size = vec.size();
-    int mitad = size/2;
+    const int size = vec.size(); //Declaras esto pero nunca lo usas!!!!
+    int mitad = size/2; //Declaras esto pero nunca lo usas!!!!!
 
     return recursiva(vec, 0, size);
 }
 
-int recursiva(const std::vector<int>& vec, int izq, int drch){
-    int tam = drch - izq;
+int Practica2::recursiva(const std::vector<int>& vec, int izq, int drch){
+    int tam = drch - izq; 
     int mitad = (izq + drch) / 2;
 
     if (izq == drch) { //El rango se ha cerrado en una sola posición. Los límites coinciden.
@@ -111,4 +114,27 @@ int recursiva(const std::vector<int>& vec, int izq, int drch){
     }else{  //en este aso el nº que falta está a la derecha
         return recursiva(vec, mitad+1, drch);
     }
+}
+
+void Practica2::crearTestAleatorioAlgoritmoDivideVenceras(const int min, const int k){
+    MyTime timer;
+    const int repeticiones = 50; 
+    double sumador = 0.0;
+
+    //uniform_int_distribution<> dis(min, k);
+    const int pivote = k; //Esto hay que mirarlo bien como elegir el pivote
+    rellenarvector(v, k, pivote);
+
+    int r;
+    for(int i = 0; i < repeticiones; i++){
+        timer.start();
+        r = DivideyVenceras(v);
+        timer.end();
+        sumador += *timer;
+
+    }
+
+    assert(r == pivote);
+    cout << "Test Pasado correctamente (k, pivote) " << k << " " << pivote << " en " << sumador/double(repeticiones) << endl; 
+
 }
