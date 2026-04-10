@@ -4,8 +4,8 @@
 class Practica2 {
 public: 
     void testProfe();
-    void crearTestAleatorioAlgoritmoBasico(const int min, const int k);
-    void crearTestAleatorioAlgoritmoDivideVenceras(const int min, const int k);
+    [[nodiscard ]] double crearTestAleatorioAlgoritmoBasico(const int min, const int k);
+    [[nodiscard ]] double crearTestAleatorioAlgoritmoDivideVenceras(const int min, const int k);
     
 
 

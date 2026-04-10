@@ -1,0 +1,80 @@
+
+
+*******************************************************************************
+Fri Apr 10 10:19:33 2026
+
+
+FIT:    data read from "data/algoritmoDivideVenceras.dat"
+        format = z
+        x range restricted to [0.00000 : 3.00000e+08]
+        #datapoints = 8
+        residuals are weighted equally (unit weight)
+
+function used for fitting: f(x)
+	f(x) = log(x)
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   a0           
+   0 2.0279239339e+03   0.00e+00  0.00e+00    1.000000e+00
+BREAK: Singular matrix in Givens()
+
+*******************************************************************************
+Fri Apr 10 10:20:53 2026
+
+
+FIT:    data read from "data/algoritmoDivideVenceras.dat"
+        format = z
+        x range restricted to [0.00000 : 3.00000e+08]
+        #datapoints = 8
+        residuals are weighted equally (unit weight)
+
+function used for fitting: f(x)
+	f(x) = a0*log(x)
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   a0           
+   0 2.0319818097e+03   0.00e+00  1.59e+01    1.001000e+00
+   5 6.5020252848e-15  -1.46e-09  1.59e-04    9.856923e-09
+
+After 5 iterations the fit converged.
+final sum of squares of residuals : 6.50203e-15
+rel. change during last iteration : -1.4559e-14
+
+degrees of freedom    (FIT_NDF)                        : 7
+rms of residuals      (FIT_STDFIT) = sqrt(WSSR/ndf)    : 3.04772e-08
+variance of residuals (reduced chisquare) = WSSR/ndf   : 9.28861e-16
+
+Final set of parameters            Asymptotic Standard Error
+=======================            ==========================
+a0              = 9.85692e-09      +/- 6.768e-10    (6.866%)
+
+
+*******************************************************************************
+Fri Apr 10 10:23:50 2026
+
+
+FIT:    data read from "data/algoritmoDivideVenceras.dat"
+        format = z
+        x range restricted to [0.00000 : 3.00000e+08]
+        #datapoints = 8
+        residuals are weighted equally (unit weight)
+
+function used for fitting: f(x)
+	f(x) = a0*log(x)
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   a0           
+   0 1.4321884869e-14   0.00e+00  1.57e-07    9.856923e-09
+   2 1.4318946906e-14  -2.53e-01  1.57e-09    9.894980e-09
+
+After 2 iterations the fit converged.
+final sum of squares of residuals : 1.43189e-14
+rel. change during last iteration : -2.53308e-06
+
+degrees of freedom    (FIT_NDF)                        : 7
+rms of residuals      (FIT_STDFIT) = sqrt(WSSR/ndf)    : 4.52279e-08
+variance of residuals (reduced chisquare) = WSSR/ndf   : 2.04556e-15
+
+Final set of parameters            Asymptotic Standard Error
+=======================            ==========================
+a0              = 9.89498e-09      +/- 1.004e-09    (10.15%)

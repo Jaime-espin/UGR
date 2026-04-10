@@ -13,6 +13,7 @@ divide y venceras (justificad detalladamente su funcionamiento).
 */
 
 #include <iostream>
+#include <fstream>
 #include "practica2.h"
 using namespace std; 
 
@@ -37,15 +38,23 @@ int main(){
         300000000    // 300 millones
     };
 
+    ofstream basicoFile("data/algoritmoBasico.dat");
+    ofstream divideFile("data/algoritmoDivideVenceras.dat");
+
     
     cout << "-----------------------ALGORTIMO BÁSICO--------------------------------\n";
     for(const auto t : tams){
-        p.crearTestAleatorioAlgoritmoBasico(MIN_INTER, t);
+        const double time = p.crearTestAleatorioAlgoritmoBasico(MIN_INTER, t);
+        basicoFile << t << "\t" << time << endl;
     }
     cout << "-----------------------ALGORTIMO DIVIDE Y VENCERÁS--------------------------------\n";
     for(const auto t : tams){
-        p.crearTestAleatorioAlgoritmoBasico(MIN_INTER, t);
+        const double time = p.crearTestAleatorioAlgoritmoDivideVenceras(MIN_INTER, t);
+        divideFile << t << "\t" << time << endl;
     }
+
+    basicoFile.close();
+    divideFile.close();
     
     return 0;
 }

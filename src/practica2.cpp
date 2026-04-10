@@ -33,7 +33,7 @@ void Practica2::rellenarvector(vector<int>& vec, const int k, const int pivote){
 
 }
 
-void Practica2::crearTestAleatorioAlgoritmoBasico(const int min, const int k){
+double Practica2::crearTestAleatorioAlgoritmoBasico(const int min, const int k){
     MyTime timer;
     const int repeticiones = 50; 
     double sumador = 0.0;
@@ -52,7 +52,9 @@ void Practica2::crearTestAleatorioAlgoritmoBasico(const int min, const int k){
     }
 
     assert(r == pivote);
-    cout << "Test Pasado correctamente (k, pivote) " << k << " " << pivote << " en " << sumador/double(repeticiones) << endl; 
+    const double time = sumador/double(repeticiones);
+    cout << "Test Pasado correctamente (k, pivote) " << k << " " << pivote << " en " << time<< endl;
+    return time;
 
 }
 
@@ -116,9 +118,9 @@ int Practica2::recursiva(const std::vector<int>& vec, int izq, int drch){
     }
 }
 
-void Practica2::crearTestAleatorioAlgoritmoDivideVenceras(const int min, const int k){
+double Practica2::crearTestAleatorioAlgoritmoDivideVenceras(const int min, const int k){
     MyTime timer;
-    const int repeticiones = 50; 
+    const int repeticiones = 500; 
     double sumador = 0.0;
 
     //uniform_int_distribution<> dis(min, k);
@@ -135,6 +137,8 @@ void Practica2::crearTestAleatorioAlgoritmoDivideVenceras(const int min, const i
     }
 
     assert(r == pivote);
-    cout << "Test Pasado correctamente (k, pivote) " << k << " " << pivote << " en " << sumador/double(repeticiones) << endl; 
+    const double time = sumador/double(repeticiones);
+    cout << "Test Pasado correctamente (k, pivote) " << k << " " << pivote << " en " << time << endl; 
+    return time; 
 
 }
