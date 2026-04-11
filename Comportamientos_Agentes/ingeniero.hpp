@@ -26,7 +26,8 @@ public:
     tiene_zapatillas=false;
     giro45Izq=0;
     girando=0;
-    mapaVisitas.assign(200, vector<int>(200, 0));
+    iteracion_actual = 0;
+    mapaVisitas.assign(size, vector<int>(size,0));
   }
 
   /**
@@ -192,6 +193,7 @@ Action last_action;     //Almacena la última acción ejecutada
 bool tiene_zapatillas;  //Indica si el agente tiene las zapatillas
 int giro45Izq;          //Indica el número de giros a la izq que quedan por dar
 int girando;            //Para completar un giro si hay obstaculo
+int iteracion_actual; // Para saber en qué "momento" estamos
 vector<vector<int>> mapaVisitas; //Matriz para saber por donde ya pasó
 };
 
