@@ -28,14 +28,25 @@ int main(){
     p.testProfe();
 
     vector<int> tams = {
-        100000,      // 100 mil 
-        500000,      // 500 mil
-        1000000,     // 1 millón
-        5000000,     // 5 millones
-        10000000,    // 10 millones
-        50000000,    // 50 millones
-        100000000,   // 100 millones
-        300000000    // 300 millones
+        100,
+        500,
+        1000,
+        5000,
+        10000,
+        50000,
+        100000,     
+        500000,     
+        1000000,    
+        5000000,    
+        10000000,   
+        25000000,   // Nuevo
+        50000000,   
+        75000000,   // Nuevo
+        100000000,  
+        150000000,  // Nuevo
+        200000000,  // Nuevo
+        250000000,  // Nuevo
+        300000000   
     };
 
     ofstream basicoFile("data/algoritmoBasico.dat");

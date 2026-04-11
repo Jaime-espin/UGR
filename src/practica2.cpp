@@ -35,7 +35,7 @@ void Practica2::rellenarvector(vector<int>& vec, const int k, const int pivote){
 
 double Practica2::crearTestAleatorioAlgoritmoBasico(const int min, const int k){
     MyTime timer;
-    const int repeticiones = 50; 
+    const int repeticiones = 35; 
     double sumador = 0.0;
 
     //uniform_int_distribution<> dis(min, k);
@@ -120,24 +120,27 @@ int Practica2::recursiva(const std::vector<int>& vec, int izq, int drch){
 
 double Practica2::crearTestAleatorioAlgoritmoDivideVenceras(const int min, const int k){
     MyTime timer;
-    const int repeticiones = 500; 
-    double sumador = 0.0;
+    int repeticiones; 
+    if(k < 100000) repeticiones = 5000000; // pequeño
+    else if(k >= 100000 && k < 10000000) repeticiones = 2000000; // Medianos
+    else repeticiones = 500000; //grande
 
-    //uniform_int_distribution<> dis(min, k);
     const int pivote = k; //Esto hay que mirarlo bien como elegir el pivote
     rellenarvector(v, k, pivote);
 
     int r;
+    timer.start();
     for(int i = 0; i < repeticiones; i++){
-        timer.start();
+        //timer.start();
         r = DivideyVenceras(v);
-        timer.end();
-        sumador += *timer;
+        //timer.end();
+        //sumador += *timer;
 
     }
+    timer.end();
 
     assert(r == pivote);
-    const double time = sumador/double(repeticiones);
+    const double time = (*timer)/double(repeticiones);
     cout << "Test Pasado correctamente (k, pivote) " << k << " " << pivote << " en " << time << endl; 
     return time; 
 

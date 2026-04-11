@@ -32,7 +32,11 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 run: 
+	echo "Compilando..."
 	./$(BUILD_DIR)/main
+	echo "Generando imagenes"
+	gnuplot graficar_individuales.gnuplot
+	gnuplot graficar_comparacion.gnuplot
 
 # Evita conflictos si hay archivos que se llamen "all" o "clean"
 .PHONY: all clean
