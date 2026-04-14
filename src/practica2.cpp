@@ -2,8 +2,26 @@
 #include "myTime.h"
 #include <iostream>
 #include <cassert>
+#include <random>
 
 using namespace std; 
+
+//Núevo método para seleccionar el pivote si el escenario es medio
+int Practica2::seleccionarPivote(const int k, const EscenarioPivote escenario) const {
+    switch (escenario) {
+    case EscenarioPivote::MejorCaso:
+        return 0;
+    case EscenarioPivote::Medio: {
+        static random_device rd;
+        static mt19937 gen(rd());
+        uniform_int_distribution<int> distribucion(0, k);
+        return distribucion(gen);
+    }
+    case EscenarioPivote::PeorCaso:
+    default:
+        return k;
+    }
+}
 
 
 int Practica2::algoritmoObvio(const vector<int>& vec) const {
@@ -31,12 +49,12 @@ void Practica2::rellenarvector(vector<int>& vec, const int k, const int pivote){
     }
 }
 
-double Practica2::crearTestAlgoritmoBasico(const int k){
+double Practica2::crearTestAlgoritmoBasico(const int k, const EscenarioPivote escenario){
     MyTime timer; //Clase auxiliar para el tiempo
     const int repeticiones = 35; //35 repeticiones para el lineal está bien
     double sumador = 0.0; //Para calcular el tiempo promedio
 
-    const int pivote = k; // Siempre el último elemento
+    const int pivote = seleccionarPivote(k, escenario); //Nuevo
     rellenarvector(v, k, pivote); //Rellenamos sin el elemento pivote
 
     int r; //Para almacenar el resultado
@@ -89,14 +107,14 @@ int Practica2::DivideyVenceras(const std::vector<int>& vec, int izq, int drch){
     }
 }
 
-double Practica2::crearTestAleatorioAlgoritmoDivideVenceras(const int k){
+double Practica2::crearTestAleatorioAlgoritmoDivideVenceras(const int k, const EscenarioPivote escenario){
     MyTime timer;
     int repeticiones; 
     if(k < 100000) repeticiones = 5000000; // pequeño
     else if(k >= 100000 && k < 10000000) repeticiones = 2000000; // Medianos
     else repeticiones = 500000; //grande
 
-    const int pivote = k; 
+    const int pivote = seleccionarPivote(k, escenario); //Nuevo
     rellenarvector(v, k, pivote);
 
     int r;

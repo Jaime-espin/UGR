@@ -26,8 +26,9 @@ int main(){
     //[[maybe_unused]]  const int MIN_INTER = 0, MAX_INTER = 2500000;
     Practica2 p; 
     p.testProfe();
+    const EscenarioPivote escenario = EscenarioPivote::PeorCaso;
 
-    /*
+    
     vector<int> tams = {
         100,
         500,
@@ -51,25 +52,24 @@ int main(){
     };
 
     //ofstream basicoFile("data/algoritmoBasico.dat");
-    ofstream divideFile("data/algoritmoDivideVenceras.dat");
+    //ofstream divideFile("data/algoritmoDivideVenceras.dat");
 
-    /*
+    
     cout << "-----------------------ALGORTIMO BÁSICO--------------------------------\n";
     for(const auto t : tams){
-        const double time = p.crearTestAlgoritmoBasico(t);
-        basicoFile << t << "\t" << time << endl;
-    }*/
+        const double time = p.crearTestAlgoritmoBasico(t, escenario);
+        //basicoFile << t << "\t" << time << endl;
+    }
     
     
-    /*
     cout << "-----------------------ALGORTIMO DIVIDE Y VENCERÁS--------------------------------\n";
     for(const auto t : tams){
-        const double time = p.crearTestAleatorioAlgoritmoDivideVenceras(t);
-        divideFile << t << "\t" << time << endl;
+        const double time = p.crearTestAleatorioAlgoritmoDivideVenceras(t, escenario);
+        //divideFile << t << "\t" << time << endl;
     }
 
     //basicoFile.close();
-    divideFile.close();*/
+    //divideFile.close();
     
     
     return 0;
