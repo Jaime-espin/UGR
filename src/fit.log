@@ -178,3 +178,63 @@ variance of residuals (reduced chisquare) = WSSR/ndf   : 5.58855e-16
 Final set of parameters            Asymptotic Standard Error
 =======================            ==========================
 a0              = 7.94301e-09      +/- 3.682e-10    (4.635%)
+
+
+*******************************************************************************
+Mon Apr 13 10:19:04 2026
+
+
+FIT:    data read from "data/algoritmoDivideVenceras.dat"
+        format = z
+        #datapoints = 19
+        residuals are weighted equally (unit weight)
+
+function used for fitting: f(x)
+	f(x)=a0*log(x)
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   a0           
+   0 4.1225671011e+03   0.00e+00  1.47e+01    1.000000e+00
+   5 1.0059385490e-14   0.00e+00  1.47e-01    7.943014e-09
+
+After 5 iterations the fit converged.
+final sum of squares of residuals : 1.00594e-14
+rel. change during last iteration : 0
+
+degrees of freedom    (FIT_NDF)                        : 18
+rms of residuals      (FIT_STDFIT) = sqrt(WSSR/ndf)    : 2.36401e-08
+variance of residuals (reduced chisquare) = WSSR/ndf   : 5.58855e-16
+
+Final set of parameters            Asymptotic Standard Error
+=======================            ==========================
+a0              = 7.94301e-09      +/- 3.682e-10    (4.635%)
+
+
+*******************************************************************************
+Mon Apr 13 10:20:57 2026
+
+
+FIT:    data read from "data/algoritmoDivideVenceras.dat"
+        format = z
+        #datapoints = 19
+        residuals are weighted equally (unit weight)
+
+function used for fitting: f(x)
+	f(x)=a0*log(x)
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   a0           
+   0 4.1225671011e+03   0.00e+00  1.47e+01    1.000000e+00
+   5 1.0059385490e-14   0.00e+00  1.47e-01    7.943014e-09
+
+After 5 iterations the fit converged.
+final sum of squares of residuals : 1.00594e-14
+rel. change during last iteration : 0
+
+degrees of freedom    (FIT_NDF)                        : 18
+rms of residuals      (FIT_STDFIT) = sqrt(WSSR/ndf)    : 2.36401e-08
+variance of residuals (reduced chisquare) = WSSR/ndf   : 5.58855e-16
+
+Final set of parameters            Asymptotic Standard Error
+=======================            ==========================
+a0              = 7.94301e-09      +/- 3.682e-10    (4.635%)

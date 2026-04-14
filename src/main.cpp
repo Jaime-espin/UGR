@@ -23,10 +23,11 @@ using namespace std;
 
 
 int main(){
-    [[maybe_unused]]  const int MIN_INTER = 0, MAX_INTER = 2500000;
+    //[[maybe_unused]]  const int MIN_INTER = 0, MAX_INTER = 2500000;
     Practica2 p; 
     p.testProfe();
 
+    /*
     vector<int> tams = {
         100,
         500,
@@ -39,33 +40,37 @@ int main(){
         1000000,    
         5000000,    
         10000000,   
-        25000000,   // Nuevo
-        50000000,   
-        75000000,   // Nuevo
+        25000000,   
+        50000000,  
+        75000000,   
         100000000,  
-        150000000,  // Nuevo
-        200000000,  // Nuevo
-        250000000,  // Nuevo
+        150000000,  
+        200000000,  
+        250000000,  
         300000000   
     };
 
-    ofstream basicoFile("data/algoritmoBasico.dat");
+    //ofstream basicoFile("data/algoritmoBasico.dat");
     ofstream divideFile("data/algoritmoDivideVenceras.dat");
 
-    
+    /*
     cout << "-----------------------ALGORTIMO BÁSICO--------------------------------\n";
     for(const auto t : tams){
-        const double time = p.crearTestAleatorioAlgoritmoBasico(MIN_INTER, t);
+        const double time = p.crearTestAlgoritmoBasico(t);
         basicoFile << t << "\t" << time << endl;
-    }
+    }*/
+    
+    
+    /*
     cout << "-----------------------ALGORTIMO DIVIDE Y VENCERÁS--------------------------------\n";
     for(const auto t : tams){
-        const double time = p.crearTestAleatorioAlgoritmoDivideVenceras(MIN_INTER, t);
+        const double time = p.crearTestAleatorioAlgoritmoDivideVenceras(t);
         divideFile << t << "\t" << time << endl;
     }
 
-    basicoFile.close();
-    divideFile.close();
+    //basicoFile.close();
+    divideFile.close();*/
+    
     
     return 0;
 }

@@ -32,9 +32,9 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 run: 
-	echo "Compilando..."
+	@echo "Compilando..."
 	./$(BUILD_DIR)/main
-	echo "Generando imagenes"
+	@echo "Generando imagenes"
 	gnuplot graficar_individuales.gnuplot
 	gnuplot graficar_comparacion.gnuplot
 
