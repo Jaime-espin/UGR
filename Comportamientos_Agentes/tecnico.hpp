@@ -190,6 +190,24 @@ protected:
   void VisualizaPlan(const ubicacion &st, const list<Action> &plan);
 
 private:
+  // funciones auxiliare nivel 0
+
+  /**
+   * @brief Evalúa la visión cercana y aplica memoria para elegir la mejor opción.
+   * @param vision_segura Vector de visión filtrado por altura
+   * @param mem1, mem2, mem3 Valores de memoria de las 3 casillas adyacentes
+   * @return Acción a realizar
+   */
+  Action EvaluarOpcionesAdyacentes(const vector<unsigned char> &vision_segura,
+                                   int mem1, int mem2, int mem3);
+
+  /**
+   * @brief Evalúa el radar ampliado cuando no hay opciones claras adyacentes.
+   * @param vision_segura Vector de visión filtrado por altura
+   * @return Acción a realizar basada en el radar lejano
+   */
+  Action EvaluarRadarAmpliado(const vector<unsigned char> &vision_segura);
+
   // =========================================================================
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
   // =========================================================================

@@ -103,23 +103,143 @@ void ObtenerCoordenadasAdyacentesT(int f, int c, int rumbo, int &f1, int &c1, in
 
 
 /**
- * @brief Comprueba si el ingeniero puede ir a la casilla por la diferencia de altura
+ * @brief Comprueba si el técnico puede ir a la casilla por la diferencia de altura.
+ * Si tiene zapatillas, el bosque ('B') es transitable como camino.
  * 
  * @param casilla a la que quiere moverse
  * @param dif diferencia de altura entre la casilla actual y a la que se va a mover
+ * @param tiene_zapatillas indica si el técnico tiene zapatillas
  * @return char devuelve la casilla objetivo si es viable y P si no lo es
  */
 
-char ViablePorAlturaT(char casilla, int dif){
+char ViablePorAlturaT(char casilla, int dif, bool tiene_zapatillas){
+  // Si el desnivel es viable (máximo 1 para técnico)
   if(abs(dif)<=1){
+    // Si es bosque y no tiene zapatillas, es un obstáculo infranqueable
+    if(casilla == 'B' && !tiene_zapatillas){
+      return 'P';
+    }
     return casilla;
   }else{
     return 'P';
   }
 }
 
+// funciones auxiliares del nivel 0
 
+/**
+ * @brief Evalúa las opciones adyacentes (visión cercana) considerando prioridades y memoria.
+ * @param vision_segura Vector de visión filtrado por altura
+ * @param mem1, mem2, mem3 Contadores de visitas de las casillas izq, frente, dch
+ * @return Acción a realizar
+ */
+Action ComportamientoTecnico::EvaluarOpcionesAdyacentes(const vector<unsigned char> &vision_segura, int mem1, int mem2, int mem3)
+{
+  char cellLeft = vision_segura[1];    // Casilla izquierda
+  char cellCenter = vision_segura[2];  // Casilla frontal
+  char cellRight = vision_segura[3];   // Casilla derecha
 
+  // PRIORIDAD 1: Meta muy cerca
+  if (cellCenter == 'U') {
+    cout << "  -> ACCION: WALK (Meta al frente)" << endl;
+    return WALK;
+  }
+  else if (cellLeft == 'U') {
+    cout << "  -> ACCION: TURN_SL (Meta a la izq)" << endl;
+    return TURN_SL;
+  }
+  else if (cellRight == 'U') {
+    cout << "  -> ACCION: TURN_SR (Meta a la dch)" << endl;
+    return TURN_SR;
+  }
+
+  // PRIORIDAD 2: Hay caminos viables - elegir el menos visitado
+  // Para el Técnico: 'C' (camino) y 'D' (zapatillas) se tratan por igual como navegables
+  bool hasPathLeft = (cellLeft == 'C' || cellLeft == 'D');
+  bool hasPathCenter = (cellCenter == 'C' || cellCenter == 'D');
+  bool hasPathRight = (cellRight == 'C' || cellRight == 'D');
+
+  if (hasPathLeft || hasPathCenter || hasPathRight) {
+    int minMemory = 999999;
+    int bestOption = 0; // 1=izq, 2=frente, 3=dch
+
+    // Evaluamos de frente primero
+    if (hasPathCenter) {
+      minMemory = mem2;
+      bestOption = 2;
+    }
+    // Evaluamos izquierda
+    if (hasPathLeft && mem1 < minMemory) {
+      minMemory = mem1;
+      bestOption = 1;
+    }
+    // Evaluamos derecha
+    if (hasPathRight && mem3 < minMemory) {
+      minMemory = mem3;
+      bestOption = 3;
+    }
+
+    // Aplicamos la mejor decisión basada en la memoria
+    if (bestOption == 2) {
+      cout << "  -> ACCION: WALK (Camino menos visitado, mem=" << minMemory << ")" << endl;
+      return WALK;
+    } else if (bestOption == 1) {
+      cout << "  -> ACCION: TURN_SL (Camino menos visitado, mem=" << minMemory << ")" << endl;
+      return TURN_SL;
+    } else if (bestOption == 3) {
+      cout << "  -> ACCION: TURN_SR (Camino menos visitado, mem=" << minMemory << ")" << endl;
+      return TURN_SR;
+    }
+  }
+
+  // No hay opción viable en visión cercana
+  return IDLE;
+}
+
+/**
+ * @brief Evalúa el radar ampliado cuando no hay opciones claras adyacentes.
+ * @param vision_segura Vector de visión filtrado por altura
+ * @return Acción a realizar basada en el radar ampliado
+ */
+Action ComportamientoTecnico::EvaluarRadarAmpliado(const vector<unsigned char> &vision_segura)
+{
+  cout << "  -> Bloqueado o sin opciones inmediatas. Consultando radar ampliado..." << endl;
+  int pos = VeoCasillaInteresanteTAmpliada(vision_segura);
+
+  switch (pos) {
+    case 2: // Meta o camino al frente (lejano)
+      cout << "  -> ACCION: WALK (Radar lejano frente)" << endl;
+      return WALK;
+
+    case 1: // Meta o camino a la izquierda (lejano)
+      // Alternamos para evitar quedarse bloqueado girando
+      if (last_action == TURN_SR) {
+        cout << "  -> ACCION: TURN_SR (Alternancia)" << endl;
+        return TURN_SR;
+      } else {
+        cout << "  -> ACCION: TURN_SL" << endl;
+        return TURN_SL;
+      }
+
+    case 3: // Meta o camino a la derecha (lejano)
+      // Alternamos para evitar quedarse bloqueado girando
+      if (last_action == TURN_SL) {
+        cout << "  -> ACCION: TURN_SL (Alternancia)" << endl;
+        return TURN_SL;
+      } else {
+        cout << "  -> ACCION: TURN_SR" << endl;
+        return TURN_SR;
+      }
+
+    default: // Nada interesante en el radar
+      cout << "  -> ACCION: TURN_SL por default (Radar vacío, explorando...)" << endl;
+      return TURN_SL;
+  }
+}
+
+// =========================================================================
+// NIVELES DE COMPORTAMIENTO
+// =========================================================================
 
 // Niveles del técnico
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_0(Sensores sensores) {
@@ -131,121 +251,61 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_0(Sensores sensores) {
 
   ActualizarMapa(sensores);
   
+  // Detectamos si hemos encontrado zapatillas
   if(sensores.superficie[0]=='D') tiene_zapatillas = true;
   
-  if(sensores.superficie[0]=='U'){ //U es planta residuoa, se cumple objetivo
+  // =========================================================================
+  // CASOS ESPECIALES (Prioridad máxima)
+  // =========================================================================
+  
+  // CASO 1: Hemos alcanzado la meta
+  if(sensores.superficie[0]=='U'){
     accion=IDLE;
-  }else if(girando>0){
+  }
+  // CASO 2: Estamos en medio de un giro forzado
+  else if(girando>0){
     accion=TURN_SL;
     girando--;
-  }/*else if(sensores.superficie[2]=='C'){
-    accion = WALK;
-  }else if(sensores.superficie[1]=='C'){
-    accion = TURN_SL;
-  }else if(sensores.superficie[3]=='C'){
-    accion = TURN_SR;
-  }else{
-    accion = TURN_SL;
-  }*/
-  /*else if (sensores.agentes[2] == 'i') {
-    girando = 3; // Forzar un giro de 180 grados para buscar otro camino
-    accion = TURN_SL;
-  }*/ else{
+  }
+  // =========================================================================
+  // CASO PRINCIPAL: Navegación normal
+  // =========================================================================
+  else {
+    cout << "REGLA: Evaluando opciones con Memoria y Vision Ampliada." << endl;
+
     // 1. CREAR EL VECTOR DE VISIÓN filtrado usando la altura
     vector<unsigned char> vision_segura = sensores.superficie;
     for(int i = 1; i <= 15; i++) { 
-        vision_segura[i] = ViablePorAlturaT(sensores.superficie[i], sensores.cota[i] - sensores.cota[0]);
+      vision_segura[i] = ViablePorAlturaT(sensores.superficie[i], sensores.cota[i] - sensores.cota[0], tiene_zapatillas);
 
-        // Si vemos al Ingeniero ('i') en CUALQUIER casilla de nuestro radar, 
-        // la marcamos temporalmente como un Muro ('M').
-        if (sensores.agentes[i] == 'i') {
-            vision_segura[i] = 'M';
-        }
+      // Si vemos al Ingeniero ('i') en CUALQUIER casilla de nuestro radar, 
+      // la marcamos temporalmente como un Muro ('M').
+      if (sensores.agentes[i] == 'i') {
+        vision_segura[i] = 'M';
+      }
     }
 
-    cout << "REGLA: Evaluando opciones con Memoria y Vision Ampliada." << endl;
-
-    // 2. OBTENER COORDENADAS Y LEER MEMORIA (Casillas 1, 2 y 3)
+    // 2. OBTENER COORDENADAS Y LEER MEMORIA de las 3 casillas adyacentes
     int f1, c1, f2, c2, f3, c3;
-    ObtenerCoordenadasAdyacentesT(sensores.posF, sensores.posC, sensores.rumbo, f1, c1, f2, c2, f3, c3);
+    ObtenerCoordenadasAdyacentesT(sensores.posF, sensores.posC, sensores.rumbo, 
+                                  f1, c1, f2, c2, f3, c3);
 
-    // Leemos la matriz. Si está fuera de los bordes del mapa, asignamos un valor enorme (999999) para ignorarla
-    int mem1 = (f1 >= 0 && f1 < mapaVisitas.size() && c1 >= 0 && c1 < mapaVisitas[0].size()) ? mapaVisitas[f1][c1] : 999999;
-    int mem2 = (f2 >= 0 && f2 < mapaVisitas.size() && c2 >= 0 && c2 < mapaVisitas[0].size()) ? mapaVisitas[f2][c2] : 999999;
-    int mem3 = (f3 >= 0 && f3 < mapaVisitas.size() && c3 >= 0 && c3 < mapaVisitas[0].size()) ? mapaVisitas[f3][c3] : 999999;
+    // Leemos la matriz de visitas. Si está fuera de los bordes del mapa, 
+    // asignamos un valor enorme (999999) para ignorarla
+    int mem1 = (f1 >= 0 && f1 < mapaVisitas.size() && c1 >= 0 && c1 < mapaVisitas[0].size()) 
+               ? mapaVisitas[f1][c1] : 999999;
+    int mem2 = (f2 >= 0 && f2 < mapaVisitas.size() && c2 >= 0 && c2 < mapaVisitas[0].size()) 
+               ? mapaVisitas[f2][c2] : 999999;
+    int mem3 = (f3 >= 0 && f3 < mapaVisitas.size() && c3 >= 0 && c3 < mapaVisitas[0].size()) 
+               ? mapaVisitas[f3][c3] : 999999;
 
-    char i = vision_segura[1];
-    char c = vision_segura[2];
-    char d = vision_segura[3];
+    // 3. EVALUAR OPCIONES ADYACENTES (visión cercana)
+    // Resuelve: meta muy cerca + camino menos visitado
+    accion = EvaluarOpcionesAdyacentes(vision_segura, mem1, mem2, mem3);
 
-    // 3. PRIORIDAD ABSOLUTA INMEDIATA: Meta muy cerca
-    if (c == 'U') { accion = WALK; cout << "  -> ACCION: WALK (Meta al frente)" << endl; }
-    else if (i == 'U') { accion = TURN_SL; cout << "  -> ACCION: TURN_SL (Meta a la izq)" << endl; }
-    else if (d == 'U') { accion = TURN_SR; cout << "  -> ACCION: TURN_SR (Meta a la dch)" << endl; }
-
-    // 4. MEMORIA: Elegir el camino transitable menos visitado. Tratamos 'C' (Camino) y 'D' (Zapatillas) como rutas válidas por igual.
-    else if ( (i == 'C' || i == 'D') || 
-              (c == 'C' || c == 'D') || 
-              (d == 'C' || d == 'D') ) {
-        
-        int min_memoria = 999999;
-        int mejor_opcion = 0; // 1=izq, 2=frente, 3=dch
-
-        // Evaluamos de frente
-        if (c == 'C' || c == 'D') {
-            min_memoria = mem2;
-            mejor_opcion = 2;
-        }
-        // Evaluamos izquierda
-        if ((i == 'C' || i == 'D') && mem1 < min_memoria) {
-            min_memoria = mem1;
-            mejor_opcion = 1;
-        }
-        // Evaluamos derecha
-        if ((d == 'C' || d == 'D') && mem3 < min_memoria) {
-            min_memoria = mem3;
-            mejor_opcion = 3;
-        }
-
-        // Aplicamos la mejor decisión basada en la memoria
-        if (mejor_opcion == 2) { accion = WALK; cout << "  -> ACCION: WALK (Camino menos visitado, mem=" << min_memoria << ")" << endl; }
-        else if (mejor_opcion == 1) { accion = TURN_SL; cout << "  -> ACCION: TURN_SL (Camino menos visitado, mem=" << min_memoria << ")" << endl; }
-        else if (mejor_opcion == 3) { accion = TURN_SR; cout << "  -> ACCION: TURN_SR (Camino menos visitado, mem=" << min_memoria << ")" << endl; }
-    }
-
-    // 5. VISIÓN AMPLIADA: Si no hay caminos adyacentes viables, usamos el radar lejano
-    else {
-        cout << "  -> Bloqueado o sin opciones inmediatas. Consultando radar ampliado..." << endl;
-        int pos = VeoCasillaInteresanteTAmpliada(vision_segura);
-        
-        switch (pos) {
-          case 2:
-            cout << "  -> ACCION: WALK (Radar lejano frente)" << endl;
-            accion = WALK;
-            break;
-          case 1:
-            if (last_action == TURN_SR) {
-                cout << "  -> ACCION: TURN_SR" << endl; //Para que no se quede bloqueado
-                accion = TURN_SR;
-            } else {
-                cout << "  -> ACCION: TURN_SL" << endl;
-                accion = TURN_SL;
-            }
-            break;
-          case 3:
-            if (last_action == TURN_SL) {
-                cout << "  -> ACCION: TURN_SL" << endl; //Para que no se quede bloqueado
-                accion = TURN_SL;
-            } else {
-                cout << "  -> ACCION: TURN_SR" << endl;
-                accion = TURN_SR;
-            }
-            break;
-          default:
-            cout << "  -> ACCION: TURN_SL por default (Radar vacio, buscando...)" << endl;
-            accion = TURN_SL;
-            break;
-        }
+    // 4. Si no hay opciones claras adyacentes, consultar radar ampliado
+    if (accion == IDLE) {
+      accion = EvaluarRadarAmpliado(vision_segura);
     }
   }
   
@@ -259,7 +319,7 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_0(Sensores sensores) {
  * @return true si es camino ('C'), zapatillas ('D') o meta ('U').
  */
 bool ComportamientoTecnico::es_camino(unsigned char c) const {
-  return (c == 'C' || c == 'D' || c == 'U');
+  return (c == 'C' || c == 'D' || c == 'U' || c == 'S');
 }
 
 
@@ -269,7 +329,98 @@ bool ComportamientoTecnico::es_camino(unsigned char c) const {
  * @return Acción a realizar.
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_1(Sensores sensores) {
-  return IDLE;
+  // Incrementamos el reloj interno
+  iteracion_actual++;
+  // Marcamos la casilla actual con el instante de tiempo actual
+  mapaVisitas[sensores.posF][sensores.posC] = iteracion_actual;
+  
+  Action accion = IDLE;
+  ActualizarMapa(sensores);
+
+  // Detectamos si hemos encontrado zapatillas
+  if(sensores.superficie[0]=='D') tiene_zapatillas = true;
+  
+  // CASO 1: Hay un ingeniero delante.
+  if(sensores.agentes[2]=='i'){
+    cout << "REGLA: Ingeniero delante, girando" << endl;
+    girando = 3;
+    accion=TURN_SL;
+  } else if(girando > 0){
+    accion=TURN_SL;
+    girando--;
+  }
+  // CASO PRINCIPAL: Navegación normal basada en memoria de visitas
+  else {
+    cout << "REGLA: Navegación reactiva con memoria de visitas." << endl;
+
+    // 1. CREAR EL VECTOR DE VISIÓN filtrado usando la altura
+    vector<unsigned char> vision_segura = sensores.superficie;
+    for(int i = 1; i <= 15; i++) { 
+      vision_segura[i] = ViablePorAlturaT(sensores.superficie[i], sensores.cota[i] - sensores.cota[0], tiene_zapatillas);
+    }
+
+    // 2. OBTENER COORDENADAS Y LEER MEMORIA de las 3 casillas adyacentes
+    int f1, c1, f2, c2, f3, c3;
+    ObtenerCoordenadasAdyacentesT(sensores.posF, sensores.posC, sensores.rumbo, f1, c1, f2, c2, f3, c3);
+
+    // Leemos la matriz de visitas
+    int mem1 = (f1 >= 0 && f1 < mapaVisitas.size() && c1 >= 0 && c1 < mapaVisitas[0].size()) 
+               ? mapaVisitas[f1][c1] : 999999;
+    int mem2 = (f2 >= 0 && f2 < mapaVisitas.size() && c2 >= 0 && c2 < mapaVisitas[0].size()) 
+               ? mapaVisitas[f2][c2] : 999999;
+    int mem3 = (f3 >= 0 && f3 < mapaVisitas.size() && c3 >= 0 && c3 < mapaVisitas[0].size()) 
+               ? mapaVisitas[f3][c3] : 999999;
+
+    // 3. EVALUAR OPCIONES CON MEMORIA (preferir caminos menos visitados)
+    char cellLeft = vision_segura[1];
+    char cellCenter = vision_segura[2];
+    char cellRight = vision_segura[3];
+
+    // Hay caminos viables - elegir el menos visitado (sin prioridad de meta)
+    bool hasPathLeft = es_camino(cellLeft);
+    bool hasPathCenter = es_camino(cellCenter);
+    bool hasPathRight = es_camino(cellRight);
+
+    if (hasPathLeft || hasPathCenter || hasPathRight) {
+      int minMemory = 999999;
+      int bestOption = 0; // 1=izq, 2=frente, 3=dch
+
+      // Evaluamos de frente primero
+      if (hasPathCenter) {
+        minMemory = mem2;
+        bestOption = 2;
+      }
+      // Evaluamos izquierda
+      if (hasPathLeft && mem1 < minMemory) {
+        minMemory = mem1;
+        bestOption = 1;
+      }
+      // Evaluamos derecha
+      if (hasPathRight && mem3 < minMemory) {
+        minMemory = mem3;
+        bestOption = 3;
+      }
+
+      // Aplicamos la mejor decisión basada en la memoria
+      if (bestOption == 2) {
+        cout << "  -> ACCION: WALK (Camino menos visitado, mem=" << minMemory << ")" << endl;
+        accion = WALK;
+      } else if (bestOption == 1) {
+        cout << "  -> ACCION: TURN_SL (Camino menos visitado, mem=" << minMemory << ")" << endl;
+        accion = TURN_SL;
+      } else if (bestOption == 3) {
+        cout << "  -> ACCION: TURN_SR (Camino menos visitado, mem=" << minMemory << ")" << endl;
+        accion = TURN_SR;
+      }
+    } else {
+      // No hay opciones, girar para explorar
+      cout << "  -> ACCION: TURN_SL (Sin opciones)" << endl;
+      accion = TURN_SL;
+    }
+  }
+
+  last_action = accion;
+  return accion;
 }
 
 /**
@@ -505,7 +656,12 @@ void ComportamientoTecnico::ActualizarMapa(Sensores sensores) {
  */
 bool ComportamientoTecnico::EsCasillaTransitableLevel0(int f, int c, bool tieneZapatillas) {
   if (f < 0 || f >= mapaResultado.size() || c < 0 || c >= mapaResultado[0].size()) return false;
-  return es_camino(mapaResultado[f][c]);  // Solo 'C', 'S', 'D', 'U' son transitables en Nivel 0
+  unsigned char terreno = mapaResultado[f][c];
+  // Caminos normales: 'C', 'S', 'D', 'U'
+  if (es_camino(terreno)) return true;
+  // Bosque es transitable solo si tiene zapatillas
+  if (terreno == 'B' && tieneZapatillas) return true;
+  return false;
 }
 
 /**
