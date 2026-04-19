@@ -113,19 +113,40 @@ void ObtenerCoordenadasAdyacentesT(int f, int c, int rumbo, int &f1, int &c1, in
  */
 
 char ViablePorAlturaT(char casilla, int dif, bool tiene_zapatillas){
-  // Si el desnivel es viable (máximo 1 para técnico)
-  if(abs(dif)<=1){
-    // Si es bosque y no tiene zapatillas, es un obstáculo infranqueable
-    if(casilla == 'B' && !tiene_zapatillas){
-      return 'P';
-    }
-    return casilla;
-  }else{
-    return 'P';
-  }
+  return (abs(dif) <= 1 && (casilla != 'B' || tiene_zapatillas)) ? casilla : 'P';
 }
 
 // funciones auxiliares del nivel 0
+
+/**
+ * @brief Extrae los datos de visión segura y memoria de las celdas adyacentes
+ */
+void ComportamientoTecnico::ExtraerDatosDeZonaYMemoria(const Sensores &sensores, vector<unsigned char> &vision_segura, int &mem1, int &mem2, int &mem3) {
+  // 1. CREAR EL VECTOR DE VISIÓN filtrado usando la altura
+  vision_segura = sensores.superficie;
+  for(int i = 1; i <= 15; i++) { 
+    vision_segura[i] = ViablePorAlturaT(sensores.superficie[i], sensores.cota[i] - sensores.cota[0], tiene_zapatillas);
+
+    // Si vemos al Ingeniero ('i') en CUALQUIER casilla de nuestro radar, 
+    // la marcamos temporalmente como un Muro ('M').
+    if (sensores.agentes[i] == 'i') {
+      vision_segura[i] = 'M';
+    }
+  }
+
+  // 2. OBTENER COORDENADAS Y LEER MEMORIA de las 3 casillas adyacentes
+  int f1, c1, f2, c2, f3, c3;
+  ObtenerCoordenadasAdyacentesT(sensores.posF, sensores.posC, sensores.rumbo, f1, c1, f2, c2, f3, c3);
+
+  // Leemos la matriz de visitas. Si está fuera de los bordes del mapa, 
+  // asignamos un valor enorme (999999) para ignorarla
+  mem1 = (f1 >= 0 && f1 < mapaVisitas.size() && c1 >= 0 && c1 < mapaVisitas[0].size()) 
+             ? mapaVisitas[f1][c1] : 999999;
+  mem2 = (f2 >= 0 && f2 < mapaVisitas.size() && c2 >= 0 && c2 < mapaVisitas[0].size()) 
+             ? mapaVisitas[f2][c2] : 999999;
+  mem3 = (f3 >= 0 && f3 < mapaVisitas.size() && c3 >= 0 && c3 < mapaVisitas[0].size()) 
+             ? mapaVisitas[f3][c3] : 999999;
+}
 
 /**
  * @brief Evalúa las opciones adyacentes (visión cercana) considerando prioridades y memoria.
@@ -273,31 +294,9 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_0(Sensores sensores) {
   else {
     cout << "REGLA: Evaluando opciones con Memoria y Vision Ampliada." << endl;
 
-    // 1. CREAR EL VECTOR DE VISIÓN filtrado usando la altura
-    vector<unsigned char> vision_segura = sensores.superficie;
-    for(int i = 1; i <= 15; i++) { 
-      vision_segura[i] = ViablePorAlturaT(sensores.superficie[i], sensores.cota[i] - sensores.cota[0], tiene_zapatillas);
-
-      // Si vemos al Ingeniero ('i') en CUALQUIER casilla de nuestro radar, 
-      // la marcamos temporalmente como un Muro ('M').
-      if (sensores.agentes[i] == 'i') {
-        vision_segura[i] = 'M';
-      }
-    }
-
-    // 2. OBTENER COORDENADAS Y LEER MEMORIA de las 3 casillas adyacentes
-    int f1, c1, f2, c2, f3, c3;
-    ObtenerCoordenadasAdyacentesT(sensores.posF, sensores.posC, sensores.rumbo, 
-                                  f1, c1, f2, c2, f3, c3);
-
-    // Leemos la matriz de visitas. Si está fuera de los bordes del mapa, 
-    // asignamos un valor enorme (999999) para ignorarla
-    int mem1 = (f1 >= 0 && f1 < mapaVisitas.size() && c1 >= 0 && c1 < mapaVisitas[0].size()) 
-               ? mapaVisitas[f1][c1] : 999999;
-    int mem2 = (f2 >= 0 && f2 < mapaVisitas.size() && c2 >= 0 && c2 < mapaVisitas[0].size()) 
-               ? mapaVisitas[f2][c2] : 999999;
-    int mem3 = (f3 >= 0 && f3 < mapaVisitas.size() && c3 >= 0 && c3 < mapaVisitas[0].size()) 
-               ? mapaVisitas[f3][c3] : 999999;
+    vector<unsigned char> vision_segura;
+    int mem1, mem2, mem3;
+    ExtraerDatosDeZonaYMemoria(sensores, vision_segura, mem1, mem2, mem3);
 
     // 3. EVALUAR OPCIONES ADYACENTES (visión cercana)
     // Resuelve: meta muy cerca + camino menos visitado
@@ -353,23 +352,9 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_1(Sensores sensores) {
   else {
     cout << "REGLA: Navegación reactiva con memoria de visitas." << endl;
 
-    // 1. CREAR EL VECTOR DE VISIÓN filtrado usando la altura
-    vector<unsigned char> vision_segura = sensores.superficie;
-    for(int i = 1; i <= 15; i++) { 
-      vision_segura[i] = ViablePorAlturaT(sensores.superficie[i], sensores.cota[i] - sensores.cota[0], tiene_zapatillas);
-    }
-
-    // 2. OBTENER COORDENADAS Y LEER MEMORIA de las 3 casillas adyacentes
-    int f1, c1, f2, c2, f3, c3;
-    ObtenerCoordenadasAdyacentesT(sensores.posF, sensores.posC, sensores.rumbo, f1, c1, f2, c2, f3, c3);
-
-    // Leemos la matriz de visitas
-    int mem1 = (f1 >= 0 && f1 < mapaVisitas.size() && c1 >= 0 && c1 < mapaVisitas[0].size()) 
-               ? mapaVisitas[f1][c1] : 999999;
-    int mem2 = (f2 >= 0 && f2 < mapaVisitas.size() && c2 >= 0 && c2 < mapaVisitas[0].size()) 
-               ? mapaVisitas[f2][c2] : 999999;
-    int mem3 = (f3 >= 0 && f3 < mapaVisitas.size() && c3 >= 0 && c3 < mapaVisitas[0].size()) 
-               ? mapaVisitas[f3][c3] : 999999;
+    vector<unsigned char> vision_segura;
+    int mem1, mem2, mem3;
+    ExtraerDatosDeZonaYMemoria(sensores, vision_segura, mem1, mem2, mem3);
 
     // 3. EVALUAR OPCIONES CON MEMORIA (preferir caminos menos visitados)
     char cellLeft = vision_segura[1];
@@ -800,6 +785,7 @@ void ComportamientoTecnico::VisualizaPlan(const ubicacion &st,
       if (cst.f >= 0 && cst.f < mapaResultado.size() &&
           cst.c >= 0 && cst.c < mapaResultado[0].size())
         listaPlanCasillas.push_back({cst.f, cst.c, JUMP});
+      break;
     case WALK:
       switch (cst.brujula)
       {

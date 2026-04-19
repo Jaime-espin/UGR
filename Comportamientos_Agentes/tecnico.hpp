@@ -208,6 +208,16 @@ private:
    */
   Action EvaluarRadarAmpliado(const vector<unsigned char> &vision_segura);
 
+  /**
+   * @brief Extrae los datos de visión segura y memoria de las celdas adyacentes
+   * @param sensores Datos actuales de los sensores
+   * @param vision_segura Salida: Vector de visión filtrado por altura
+   * @param mem1 Salida: Memoria de la casilla izquierda
+   * @param mem2 Salida: Memoria de la casilla frontal
+   * @param mem3 Salida: Memoria de la casilla derecha
+   */
+  void ExtraerDatosDeZonaYMemoria(const Sensores &sensores, vector<unsigned char> &vision_segura, int &mem1, int &mem2, int &mem3);
+
   // =========================================================================
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
   // =========================================================================
