@@ -40,7 +40,7 @@ double encuentraIntersecciones(set<pair<double,double>> &subconjunto, double cot
 
 int main(int argc, char const *argv[]) {
 
-    srand(time(NULL));
+    srand(time(nullptr));
 
     int n;
     double rango_min;
@@ -67,7 +67,7 @@ int main(int argc, char const *argv[]) {
 
     cout << endl << "La cantidad minima de frecuencias es de " << num_frecuencias << endl;
     cout << "El conjunto F de frecuencias es: " << endl << "F = {";
-
+    //mejorando el formato
     for (size_t i = 0; i < F.size(); ++i) {
         cout << F[i];
         if (i < F.size() - 1)
