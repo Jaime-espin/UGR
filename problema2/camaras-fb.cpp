@@ -51,6 +51,44 @@ void fb_recursivo(int k){ //genera todas las combinaciones posibles de poner y n
     }
 }
 
+//////////////////
+//Solución greedy
+
+//Para condición de parada
+bool quedanPasillosSinVigilar(vector<vector<int>> m){
+//Recorrer la matriz. Si encuentra al menos un 1 (un pasillo sin vigilar),
+// devuelve true. Si revisa toda la matriz y son todo ceros, devuelve false.
+}
+
+//devuelve el índice de la intersección elegida
+int verticeMayorGrado(vector<vector<int>> m, int n){
+
+}
+
+//Ir a la fila y a la columna correspondientes a esa intersección 
+//y poner todos sus valores a 0. Esto "borra" los pasillos de la matriz, 
+//simulando que ya están vigilados.
+void marcarPasillosVigilados(vector<vector<int>> &m, int indice){
+
+}
+//El procedimiento es que se debe buscar el lugar con mayor intersección de pasillos
+//En ese lugar se colocará la cámara y así sucesivamente. Buscamos el vertice con mayor grado.
+//Cuando coloquemos una camara eliminemos los pasillos del grafo a los que vigila esta
+//nueva camara para que no interfiera en el resto de decisiones.
+//Si no entendeis el planteamiento me podeis preguntar ;)
+void greedy(){
+   vector<vector<int>> aux = m; //Lo copiamos para no perder la info original
+   vector<int> intersecciones; //Donde guardaremos las intersecciones con camara
+   
+   while(quedanPasillosSinVigilar(aux)){
+
+   }
+
+}
+
+
+
+
 /////////////// Para generar grafos aleatoriamente
 double uniforme() //Genera un número uniformemente distribuido en el intervalo [0,1) 
 {
@@ -79,55 +117,55 @@ void generamatriz(vector<vector<int> > & matriz, int n) {
 
 int main (int argc, char *argv[]){
 
-if(argc == 3){
-    n = atoi(argv[1]);
-    m.resize(n);
-    for (int i=0; i<n; i++) m[i].resize(n);
-//////////////////lectura del fichero
-    ifstream f (argv[2]);
-    if (!f){
-        cout << "Archivo no valido" << endl;
-        return -1;
-    }
-    m.resize(n);
-    for (int i=0; i<n; i++) m[i].resize(n);
-    int l=0;
-    while (!f.eof()){
-        for (int j=0;j<n; j++) f >> m[l][j];
-        l++;
-    }
-////////////////////////////
-}
-else if(argc == 2) {
-        n = atoi(argv[1]);
-        m.resize(n);
-        for (int i=0; i<n; i++) m[i].resize(n);
-        generamatriz(m,n);
+   if(argc == 3){
+      n = atoi(argv[1]);
+      m.resize(n);
+      for (int i=0; i<n; i++) m[i].resize(n);
+   //////////////////lectura del fichero
+      ifstream f (argv[2]);
+      if (!f){
+         cout << "Archivo no valido" << endl;
+         return -1;
       }
-      else {
-            cout << argv[0] << " tamanio " << "fichero"<<endl;
-            cout << "O "<<argv[0] << " tamanio " <<endl;
-            return -1;
+      m.resize(n);
+      for (int i=0; i<n; i++) m[i].resize(n);
+      int l=0;
+      while (!f.eof()){
+         for (int j=0;j<n; j++) f >> m[l][j];
+         l++;
       }
+   ////////////////////////////
+   }
+   else if(argc == 2) {
+         n = atoi(argv[1]);
+         m.resize(n);
+         for (int i=0; i<n; i++) m[i].resize(n);
+         generamatriz(m,n);
+         }
+         else {
+               cout << argv[0] << " tamanio " << "fichero"<<endl;
+               cout << "O "<<argv[0] << " tamanio " <<endl;
+               return -1;
+         }
 
-cout<<"La matriz de adyacencia del grafo es:"<<endl;
-for (int i=0; i<n; i++) {
-   for (int j=0; j<n; j++)
-           cout<<m[i][j]<<" ";
-   cout<<endl;
-}
+   cout<<"La matriz de adyacencia del grafo es:"<<endl;
+   for (int i=0; i<n; i++) {
+      for (int j=0; j<n; j++)
+            cout<<m[i][j]<<" ";
+      cout<<endl;
+   }
 
-clock_t tantes;
-clock_t tdespues;
-X.resize(n);
-solucion.resize(n);
-for (int i=0; i<n; i++)
-    X[i] = -1; //-1 significa no asignado aun, ni pongo camara ni no pongo camara
-tantes = clock();
-fb_recursivo(0);
-tdespues = clock();
-cout<<"La solucion con valor "<<mejorvalor<<" es:"<<endl;
-MuestraSolucion();
-cout << n << " tiempo: " << (double)(tdespues - tantes) / CLOCKS_PER_SEC << endl;
-return 0;
+   clock_t tantes;
+   clock_t tdespues;
+   X.resize(n);
+   solucion.resize(n);
+   for (int i=0; i<n; i++)
+      X[i] = -1; //-1 significa no asignado aun, ni pongo camara ni no pongo camara
+   tantes = clock();
+   fb_recursivo(0);
+   tdespues = clock();
+   cout<<"La solucion con valor "<<mejorvalor<<" es:"<<endl;
+   MuestraSolucion();
+   cout << n << " tiempo: " << (double)(tdespues - tantes) / CLOCKS_PER_SEC << endl;
+   return 0;
 }
