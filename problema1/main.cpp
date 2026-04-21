@@ -1,61 +1,86 @@
 #include <iostream>
 #include <set>
-#include <list>
+#include <vector>
 #include <cassert>
 
 using namespace std;
 
 /**
+ * @brief Genera un número aleatorio de tipo double en un rango específico.
+ * @param min Límite inferior del rango.
+ * @param max Límite superior del rango.
+ * @return Un número aleatorio entre min y max.
+ */
+double generarAleatorioDouble(double min, double max);
+
+/**
+ * @brief Genera N intervalos aleatorios dentro de un rango de valores global.
+ * @param n Número de intervalos a generar.
+ * @param min Límite inferior global permitido para los intervalos.
+ * @param max Límite superior global permitido para los intervalos.
+ * @return Vector de pares [l_i, h_i] representando los intervalos válidos.
+ */
+vector<pair<double, double>> generarIntervalosAleatorios(int n, double min, double max);
+
+/**
  * @brief Calcula el conjunto mínimo de frecuencias láser necesarias para que todas las sustancias reaccionen.
- * @param intervalos list de pares [l_i, h_i] que representan los rangos de reacción de cada sustancia.
- * @param frecuencias list de salida donde se almacenan las frecuencias de disparo elegidas.
+ * @param intervalos vector de pares [l_i, h_i] que representan los rangos de reacción de cada sustancia.
+ * @param frecuencias vector de salida donde se almacenan las frecuencias de disparo elegidas.
  * @return Número total de disparos láser a realizar (tamaño de la solución).
  */
-int frecuencias(const list<pair<double,double>> &intervalos, list<double> &frecuencias);
+int minFrecuencias(const vector<pair<double,double>> &intervalos, vector<double> &frecuencias);
 
 /**
  * @brief Determina la frecuencia de disparo del laser óptima para un grupo de sustancias con rangos solapados.
  * @param subconjunto Set de rangos de sustancias pendientes (se eliminan del set conforme quedan cubiertas por un láser).
  * @param cota_sup Frecuencia candidata actual (el límite superior de la sustancia evaluada).
- * @return list con la frecuencia exacta calculada para hacer reaccionar a este grupo de sustancias.
+ * @return double con la frecuencia exacta calculada para hacer reaccionar a este grupo de sustancias.
  */
 double encuentraIntersecciones(set<pair<double,double>> &subconjunto, double cota_sup);
 
 int main(int argc, char const *argv[]) {
 
-    list<pair<double,double>> intervalos1 = {{1, 3}, {2, 5}, {4, 7}};
-    list<double> resultado1;
-    frecuencias(intervalos1, resultado1);
+    srand(time(NULL));
 
-    cout << "Test 1 - Intervalos: [1,3], [2,5], [4,7]" << endl;
-    cout << "Frecuencias optimas: ";
-    for (double val : resultado1) cout << val << " ";
-    cout << "\nTotal: " << resultado1.size() << endl << endl;
+    int n;
+    double rango_min;
+    double rango_max;
+    cout << "Introduzca el numero de intervalos: " << endl;
+    cin >> n;
+    cout << "Introduzca el rango minimo: " << endl;
+    cin >> rango_min;
+    cout << "Introduzca el rango maximo: " << endl;
+    cin >> rango_max;
 
-    list<pair<double,double>> intervalos2 = {{1, 2}, {5, 6}, {10, 11}};
-    list<double> resultado2;
+    assert(rango_min < rango_max);
+    assert(n > 0);
 
-    frecuencias(intervalos2, resultado2);
+    vector<pair<double, double>> intervalos = generarIntervalosAleatorios(n, rango_min, rango_max);
 
-    cout << "Test 2 - Intervalos disjuntos: [1,2], [5,6], [10,11]" << endl;
-    cout << "Frecuencias optimas: ";
-    for (double val : resultado2) cout << val << " ";
-    cout << "\nTotal: " << resultado2.size() << endl << endl;
+    cout << endl << "...Los intervalos a probar son..." << endl;
 
-    list<pair<double,double>> intervalos3 = {{1, 10}, {2, 8}, {3, 6}, {4, 5}};
-    list<double> resultado3;
-    frecuencias(intervalos3, resultado3);
+    for (const auto& intervalo : intervalos)
+        cout << "[" << intervalo.first << ",  " << intervalo.second << "]" << endl;
 
-    cout << "Test 3 - Intervalos anidados: [1,10], [2,8], [3,6], [4,5]" << endl;
-    cout << "Frecuencias optimas: ";
-    for (double val : resultado3) cout << val << " ";
-    cout << "\nTotal: " << resultado3.size() << endl;
+    vector<double> F;
+    int num_frecuencias = minFrecuencias(intervalos,F);
+
+    cout << endl << "La cantidad minima de frecuencias es de " << num_frecuencias << endl;
+    cout << "El conjunto F de frecuencias es: " << endl << "F = {";
+
+    for (size_t i = 0; i < F.size(); ++i) {
+        cout << F[i];
+        if (i < F.size() - 1)
+            cout << ", ";
+    }
+    cout << "}" << endl;
 
     return 0;
 }
 
-int frecuencias(const list<pair<double,double>> &intervalos, list<double> &frecuencias) {
+int minFrecuencias(const vector<pair<double,double>> &intervalos, vector<double> &frecuencias) {
 
+    //se usa un set y no multiset porque no nos importa que elimine los valores de los intervalos repetidos
     set<pair<double,double>> subconjuntos(intervalos.begin(), intervalos.end());
     double interseccion;
 
@@ -78,9 +103,8 @@ double encuentraIntersecciones(set<pair<double,double>> &subconjunto, double cot
 
     }else{ //si hay mas de 1 elemento
 
-        auto siguiente = subconjunto.begin();
-        siguiente++;
-
+        auto siguiente = next(subconjunto.begin());
+        
         if (cota_sup < siguiente->first) { //si nos pasamos
 
             subconjunto.erase(subconjunto.begin());
@@ -93,4 +117,30 @@ double encuentraIntersecciones(set<pair<double,double>> &subconjunto, double cot
             return encuentraIntersecciones(subconjunto, cota_sup);
         }
     }
+}
+
+double generarAleatorioDouble(double min, double max) {
+
+    double factor = (double)rand() / RAND_MAX;
+    return min + factor * (max - min);
+}
+
+vector<pair<double, double>> generarIntervalosAleatorios(int n, double min, double max) {
+    
+    vector<pair<double, double>> intervalos;
+    
+    intervalos.reserve(n); 
+
+    for (int i = 0; i < n; ++i) {
+
+        double p1 = generarAleatorioDouble(min, max);
+        double p2 = generarAleatorioDouble(min, max);
+
+        double l_i = (p1 > p2) ?  p2: p1;
+        double h_i = (p1 < p2) ?  p2: p1;
+
+        intervalos.emplace_back(l_i, h_i);
+    }
+
+    return intervalos;
 }
