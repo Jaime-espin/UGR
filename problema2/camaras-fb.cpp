@@ -9,19 +9,20 @@ using namespace std;
 
 int n;
 vector<vector<int> > m; //matriz de adyacencia del grafo
-vector<int> X;
+//Si m[i][j]=1 hay un pasillo entre la instersección i y j
+vector<int> X; //Se guarda lo que prueba el algoritmo, 1 hay camara, 0 no hay y -1 no decidido
 vector<int> solucion;
 int mejorvalor = 10000;
 
-bool Factiblefb(){
+bool Factiblefb(){ //Recorre la matriz buscando pasillos reales
    for (int i=0; i<n-1; i++)
       for (int j=i+1; j<n; j++)
         if (m[i][j] == 1) //existe la arista
-           if (X[i]==0 && X[j]==0) return false;
+           if (X[i]==0 && X[j]==0) return false; //Si hay un pasillo donde ninguno de sus dos extremos tiene cámara, la combinación actual no sirve
    return true;
 }
 
-void ProcesaSolucionfb() {
+void ProcesaSolucionfb() { //Cuenta cuantas cámaras tiene la solución, si es la mejor la guarda
    bool essolucion = Factiblefb();
    if (essolucion) {
       int selecc = 0;
@@ -40,11 +41,11 @@ void MuestraSolucion(){
    cout<<endl;
 }
 
-void fb_recursivo(int k){
+void fb_recursivo(int k){ //genera todas las combinaciones posibles de poner y no poner cámaras.
    if (k==n) ProcesaSolucionfb();
    else {
        X[k]=1; //pongo cámara en interseccion k
-       fb_recursivo(k+1);
+       fb_recursivo(k+1); //llama a la recursividad para la siguiente intersección
        X[k]=0; //no pongo cámara en interseccion k
        fb_recursivo(k+1);
     }
