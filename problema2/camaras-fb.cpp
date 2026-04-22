@@ -55,21 +55,41 @@ void fb_recursivo(int k){ //genera todas las combinaciones posibles de poner y n
 //Solución greedy
 
 //Para condición de parada
-bool quedanPasillosSinVigilar(vector<vector<int>> m){
+bool quedanPasillosSinVigilar(vector<vector<int>> mapa){
 //Recorrer la matriz. Si encuentra al menos un 1 (un pasillo sin vigilar),
 // devuelve true. Si revisa toda la matriz y son todo ceros, devuelve false.
+   for (int i=0; i<n-1; i++)
+      for (int j=i+1; j<n; j++)
+        if (mapa[i][j] == 1) return true;
+   return false;
 }
 
 //devuelve el índice de la intersección elegida
-int verticeMayorGrado(vector<vector<int>> m, int n){
+int verticeMayorGrado(vector<vector<int>> mapa){
+   int max_grado_encontrado = 0;
+   int indice_ganador;
 
+   for(int i=0; i<n; i++){
+      int contador_pasillos = 0;
+      for(int j = 0; j<n; j++){
+         if(mapa[i][j]==1) contador_pasillos++;
+      }
+      if(contador_pasillos>max_grado_encontrado){
+         max_grado_encontrado = contador_pasillos;
+         indice_ganador=i;
+      }
+   }
+   return indice_ganador;
 }
 
 //Ir a la fila y a la columna correspondientes a esa intersección 
 //y poner todos sus valores a 0. Esto "borra" los pasillos de la matriz, 
 //simulando que ya están vigilados.
-void marcarPasillosVigilados(vector<vector<int>> &m, int indice){
-
+void marcarPasillosVigilados(vector<vector<int>> &mapa, int indice){
+   for(int i=0; i<n; i++){
+      mapa[indice][i]=0;
+      mapa[i][indice] = 0;
+   }
 }
 //El procedimiento es que se debe buscar el lugar con mayor intersección de pasillos
 //En ese lugar se colocará la cámara y así sucesivamente. Buscamos el vertice con mayor grado.
@@ -81,9 +101,12 @@ void greedy(){
    vector<int> intersecciones; //Donde guardaremos las intersecciones con camara
    
    while(quedanPasillosSinVigilar(aux)){
-
+      int mayor_grado = verticeMayorGrado(aux);
+      intersecciones.push_back(mayor_grado);
+      marcarPasillosVigilados(aux, mayor_grado);
    }
 
+   cout<<"Seran necesarias "<<intersecciones.size()<<" cámaras"<<endl;
 }
 
 
@@ -154,6 +177,15 @@ int main (int argc, char *argv[]){
             cout<<m[i][j]<<" ";
       cout<<endl;
    }
+
+// ---- Llamamos a nuestro algoritmo greedy ----
+   cout << "\n--- Ejecutando Algoritmo Voraz ---" << endl;
+   clock_t t_antes_voraz = clock();
+   greedy();
+   clock_t t_despues_voraz = clock();
+   cout << "Tiempo Voraz: " << (double)(t_despues_voraz - t_antes_voraz) / CLOCKS_PER_SEC << " segundos." << endl;
+   cout << "----------------------------------\n" << endl;
+
 
    clock_t tantes;
    clock_t tdespues;
