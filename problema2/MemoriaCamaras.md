@@ -95,3 +95,19 @@ Observando la tabla, se confirma que:
 1. El algoritmo Voraz acierta y da la solución óptima algunas veces, pero frecuentemente añade entre 1 y 2 cámaras adicionales en grafos tan complejos.
 2. La Fuerza Bruta para $n=28$ tarda más de 6 segundos completos. El Voraz tarda 0.000047 segundos. Es una prueba empírica contundente de la necesidad y bondad de utilizar algoritmos voraces para problemas NP-Completos de la vida real.
 
+Para tener mas muestras, veámos los resultados del ordenador de Fran:
+
+| Intersecciones ($n$) | Cámaras (Voraz) | Cámaras (Fuerza Bruta) | Tiempo Voraz (s) | Tiempo Fuerza Bruta (s) |
+|:---:|:---:|:---:|:---:|:---:|
+| **20** | 11 | 11 | 0.000221 | 0.2004 |
+| **22** | 15 | 15 | 0.000371 | 0.5047 |
+| **24** | 16 | 16 | 0.000420 | 1.9274 |
+| **25** | 16 | 16 | 0.000376 | 3.8893 |
+| **26** | 18 | 18 | 0.000515 | 7.5035 |
+| **27** | 19 | 18 | 0.000563 | 16.850 |
+| **28** | 19 | 18 | 0.000552 | 32.495 |
+
+Como podemos ver, para tamaños n = 27 y n = 28 el algoritmo voraz devuelve 19 cámaras, mientras que el óptimo real es 18. Esto prueba que la heurística no siempre es óptima. 
+Podemos ver un crecimiento exponencial del tiempo, lo que coincide con la estimación de la práctica(30s para n = 28).
+El tiempo de ejecución en el algoritmo Voraz se mantiene plano en el orden de microsegundos demostrando una eficiencia extrema.
+Por tanto, concluimos que el algoritmo vorazs sacrifica una fracción mínima de precisión a cambio de una reduccion extrema en el tiempo de ejecución.º
