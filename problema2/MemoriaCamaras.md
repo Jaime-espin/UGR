@@ -83,13 +83,13 @@ En cada ejecución:
 
 | Intersecciones ($n$) | Cámaras (Voraz) | Cámaras (Fuerza Bruta) | Tiempo Voraz (s) | Tiempo Fuerza Bruta (s) |
 |:---:|:---:|:---:|:---:|:---:|
-| **20** | 14 | 13 | 0.000015 | 0.0155 |
-| **22** | 15 | 15 | 0.000025 | 0.0738 |
-| **24** | 17 | 15 | 0.000027 | 0.3599 |
-| **25** | 17 | 16 | 0.000031 | 0.7635 |
-| **26** | 17 | 17 | 0.000032 | 1.5103 |
-| **27** | 19 | 19 | 0.000037 | 3.3663 |
-| **28** | 20 | 19 | 0.000047 | 6.1238 |
+| **20** | 12 | 11 | 0.000089 | 0.1118 |
+| **22** | 14 | 14 | 0.000134 | 0.4398 |
+| **24** | 17 | 16 | 0.000228 | 1.8788 |
+| **25** | 18 | 18 | 0.000183 | 3.4564 |
+| **26** | 18 | 17 | 0.000189 | 7.1207 |
+| **27** | 18 | 18 | 0.000206 | 15.4157 |
+| **28** | 21 | 20 | 0.000611 | 28.7832 |
 
 Observando la tabla, se confirma que:
 1. El algoritmo Voraz acierta y da la solución óptima algunas veces, pero frecuentemente añade entre 1 y 2 cámaras adicionales en grafos tan complejos.
