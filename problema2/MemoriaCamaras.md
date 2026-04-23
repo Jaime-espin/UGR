@@ -110,4 +110,4 @@ Para tener mas muestras, veámos los resultados del ordenador de Fran:
 Como podemos ver, para tamaños n = 27 y n = 28 el algoritmo voraz devuelve 19 cámaras, mientras que el óptimo real es 18. Esto prueba que la heurística no siempre es óptima. 
 Podemos ver un crecimiento exponencial del tiempo, lo que coincide con la estimación de la práctica(30s para n = 28).
 El tiempo de ejecución en el algoritmo Voraz se mantiene plano en el orden de microsegundos demostrando una eficiencia extrema.
-Por tanto, concluimos que el algoritmo vorazs sacrifica una fracción mínima de precisión a cambio de una reduccion extrema en el tiempo de ejecución.º
+Por tanto, concluimos que dicho algoritmo sacrifica una fracción mínima de precisión a cambio de una reduccion extrema en el tiempo de ejecución.
