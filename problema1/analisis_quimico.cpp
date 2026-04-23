@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include <set>
 #include <vector>
 #include <cassert>
@@ -38,6 +39,8 @@ int minFrecuencias(const vector<pair<double,double>> &intervalos, vector<double>
  */
 double encuentraIntersecciones(set<pair<double,double>> &subconjunto, double cota_sup);
 
+int minFrecuenciasGreedySuboptimo(const vector<pair<double, double>>& intervalos, vector<double> &frecuencias);
+
 int main(int argc, char const *argv[]) {
 
     srand(time(nullptr));
@@ -65,6 +68,19 @@ int main(int argc, char const *argv[]) {
     vector<double> F;
     int num_frecuencias = minFrecuencias(intervalos,F);
 
+    cout << "--------- Algoritmo Voraz Óptimo ----------" << endl;
+    cout << endl << "La cantidad minima de frecuencias es de " << num_frecuencias << endl;
+    cout << "El conjunto F de frecuencias es: " << endl << "F = {";
+    //mejorando el formato
+    for (size_t i = 0; i < F.size(); ++i) {
+        cout << F[i];
+        if (i < F.size() - 1)
+            cout << ", ";
+    }
+    cout << "}" << endl;
+
+    cout << "\n\n--------- Algoritmo Voraz Subóptimo ----------" << endl;
+    num_frecuencias = minFrecuenciasGreedySuboptimo(intervalos, F);
     cout << endl << "La cantidad minima de frecuencias es de " << num_frecuencias << endl;
     cout << "El conjunto F de frecuencias es: " << endl << "F = {";
     //mejorando el formato
@@ -143,4 +159,37 @@ vector<pair<double, double>> generarIntervalosAleatorios(int n, double min, doub
     }
 
     return intervalos;
+}
+
+bool ordenarInicio(const pair<double, double>& a, const pair<double, double>& b){
+    if(a.first == b.first){ //Si el primer componente es igual miramos el segundo
+        return a.second < b.second; 
+    }
+
+    return a.first < a.second;
+}
+//Mi idea es disparar por donde empieza directamente la sustancia
+int minFrecuenciasGreedySuboptimo(const vector<pair<double, double>>& intervalosOriginales, vector<double> &frecuencias){
+    vector<pair<double, double>> intervalos = intervalosOriginales;
+    frecuencias.clear(); //Por si tenía la ejecución optima
+
+    //Ordenamos por el inicio
+    sort(intervalos.begin(), intervalos.end(), ordenarInicio);
+
+    //Para cada intervalo tomamos la decisión de disparar al principio
+    for(const auto& intervalo : intervalos){
+        bool alcanzado = false;
+        //Vemos si tenemos una frecuencia que sirva
+        for(int i = 0; i < frecuencias.size() && !alcanzado; i++){
+            const auto& f = frecuencias[i];
+            if(f >= intervalo.first && f <= intervalo.second) alcanzado = true;
+        }
+
+        //Si no lo hemos alcanzado con ninguna frecuencia pues tenemos que disparar al inicio
+        if(!alcanzado){
+            frecuencias.push_back(intervalo.first);
+        }
+    }
+
+    return frecuencias.size();
 }
