@@ -16,6 +16,9 @@ Para poder analizar mejor el problema, lo hemos dividido en dos soluciones muy d
     - No garantiza la solución óptima.
     - Es mucho más rápido que el algoritmo de fuerza bruta.
     - Garantiza una solución "suficientemente" buena (muy cercana a la óptima).
+3. Optimización para arboles. (Greedy) - Opcional
+   - Garanatiza la solución más optima
+   - Es mucho más rápido que el algoritmo de fuerza bruta.
 
 ## Algoritmo de fuerza bruta
 El algoritmo de fuerza bruta se basa en la idea de probar de forma recursiva todas las combinaciones posibles de colocar cámaras o no en las intersecciones.
@@ -111,3 +114,13 @@ Como podemos ver, para tamaños n = 27 y n = 28 el algoritmo voraz devuelve 19 c
 Podemos ver un crecimiento exponencial del tiempo, lo que coincide con la estimación de la práctica(30s para n = 28).
 El tiempo de ejecución en el algoritmo Voraz se mantiene plano en el orden de microsegundos demostrando una eficiencia extrema.
 Por tanto, concluimos que dicho algoritmo sacrifica una fracción mínima de precisión a cambio de una reduccion extrema en el tiempo de ejecución.
+
+## Optimización para arboles (Greedy) - Opcional
+El algoritmo voraz optimizado para arboles busca las hojas (nodos con una única conexión) y coloca una camara en el nodo padre de esa forma te aseguras de cubrir los dos nodos mencionados y los hermanos del primer nodo y el padre del segundo.
+
+Sigue el siguiente esquema:
+1. Se crea una matriz auxiliar `aux` que se copiará, para no perder la información original.
+2. Comienza un bucle que se repite mientras sigan quedando pasillos sin vigilar en la matriz.
+3. Se recorre la matriz para buscar una hoja y se obtiene su nodo padre.
+4. Se guarda esa intersección como parte de la solución.
+5. Se marcan como "vigilados" todos los pasillos de esa intersección (borrando su respectiva fila y columna de la matriz `aux`).
