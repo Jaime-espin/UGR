@@ -156,13 +156,14 @@ char ViablePorAlturaI(char casilla, int dif, bool zap){
  * @brief Extrae los datos de visión segura y memoria de las celdas adyacentes
  */
 void ComportamientoIngeniero::ExtraerDatosDeZonaYMemoria(const Sensores &sensores, vector<unsigned char> &vision_segura, int &mem1, int &mem2, int &mem3) {
-  // 1. CREAR EL VECTOR DE VISIÓN filtrado usando la altura
+  // 1. crear vector filtrado usando la altura
   vision_segura = sensores.superficie;
   for(int i = 1; i <= 15; i++) { 
     vision_segura[i] = ViablePorAlturaI(sensores.superficie[i], sensores.cota[i] - sensores.cota[0], tiene_zapatillas);
   }
 
-  // 2. OBTENER COORDENADAS Y LEER MEMORIA de las 3 casillas adyacentes
+  // 2. obtener coordenadas y memoria de las 3 casillas adyacentes
+  //Tengo que hacerlo con las 6 casillas 
   int f1, c1, f2, c2, f3, c3;
   ObtenerCoordenadasAdyacentesI(sensores.posF, sensores.posC, sensores.rumbo, f1, c1, f2, c2, f3, c3);
 
@@ -183,43 +184,43 @@ void ComportamientoIngeniero::ExtraerDatosDeZonaYMemoria(const Sensores &sensore
  * @return Acción a realizar
  */
 Action ComportamientoIngeniero::EvaluarOpcionesAdyacentes(const vector<unsigned char> &vision_segura, int mem1, int mem2, int mem3){
-  char cellLeft = vision_segura[1];    // Casilla izquierda
-  char cellCenter = vision_segura[2];  // Casilla frontal
-  char cellRight = vision_segura[3];   // Casilla derecha
+  char Left = vision_segura[1];    // Casilla izquierda
+  char Center = vision_segura[2];  // Casilla frontal
+  char Right = vision_segura[3];   // Casilla derecha
 
   // PRIORIDAD 1: Meta muy cerca
-  if (cellCenter == 'U') {
+  if (Center == 'U') {
     cout << "  -> ACCION: WALK (Meta al frente)" << endl;
     return WALK;
-  }else if (cellLeft == 'U') {
+  }else if (Left == 'U') {
     cout << "  -> ACCION: TURN_SL (Meta a la izq)" << endl;
     return TURN_SL;
-  }else if (cellRight == 'U') {
+  }else if (Right == 'U') {
     cout << "  -> ACCION: TURN_SR (Meta a la dch)" << endl;
     return TURN_SR;
   }
 
   // PRIORIDAD 2: Hay caminos o zapatillas viables - elegir el menos visitado
-  bool hasPathLeft = (cellLeft == 'C' || (!tiene_zapatillas && cellLeft == 'D'));
-  bool hasPathCenter = (cellCenter == 'C' || (!tiene_zapatillas && cellCenter == 'D'));
-  bool hasPathRight = (cellRight == 'C' || (!tiene_zapatillas && cellRight == 'D'));
+  bool caminoLeft = (Left == 'C' || (!tiene_zapatillas && Left == 'D'));
+  bool caminoCenter = (Center == 'C' || (!tiene_zapatillas && Center == 'D'));
+  bool caminoRight = (Right == 'C' || (!tiene_zapatillas && Right == 'D'));
 
-  if (hasPathLeft || hasPathCenter || hasPathRight) {
+  if (caminoLeft || caminoCenter || caminoRight) {
     int minMemory = 999999;
     int bestOption = 0; // 1=izq, 2=frente, 3=dch
 
     // Evaluamos de frente primero
-    if (hasPathCenter) {
+    if (caminoCenter) {
       minMemory = mem2;
       bestOption = 2;
     }
     // Evaluamos izquierda
-    if (hasPathLeft && mem1 < minMemory) {
+    if (caminoLeft && mem1 < minMemory) {
       minMemory = mem1;
       bestOption = 1;
     }
     // Evaluamos derecha
-    if (hasPathRight && mem3 < minMemory) {
+    if (caminoRight && mem3 < minMemory) {
       minMemory = mem3;
       bestOption = 3;
     }
@@ -389,31 +390,31 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
     ExtraerDatosDeZonaYMemoria(sensores, vision_segura, mem1, mem2, mem3);
 
     // 3. EVALUAR OPCIONES CON MEMORIA (preferir caminos menos visitados)
-    char cellLeft = vision_segura[1];
-    char cellCenter = vision_segura[2];
-    char cellRight = vision_segura[3];
+    char Left = vision_segura[1];
+    char Center = vision_segura[2];
+    char Right = vision_segura[3];
 
     // Hay caminos viables - elegir el menos visitado (sin prioridad de meta)
-    bool hasPathLeft = es_camino(cellLeft);
-    bool hasPathCenter = es_camino(cellCenter);
-    bool hasPathRight = es_camino(cellRight);
+    bool caminoLeft = es_camino(Left);
+    bool caminoCenter = es_camino(Center);
+    bool caminoRight = es_camino(Right);
 
-    if (hasPathLeft || hasPathCenter || hasPathRight) {
+    if (caminoLeft || caminoCenter || caminoRight) {
       int minMemory = 999999;
       int bestOption = 0; // 1=izq, 2=frente, 3=dch
 
       // Evaluamos de frente primero
-      if (hasPathCenter) {
+      if (caminoCenter) {
         minMemory = mem2;
         bestOption = 2;
       }
       // Evaluamos izquierda
-      if (hasPathLeft && mem1 < minMemory) {
+      if (caminoLeft && mem1 < minMemory) {
         minMemory = mem1;
         bestOption = 1;
       }
       // Evaluamos derecha
-      if (hasPathRight && mem3 < minMemory) {
+      if (caminoRight && mem3 < minMemory) {
         minMemory = mem3;
         bestOption = 3;
       }

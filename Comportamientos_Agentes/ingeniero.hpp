@@ -217,12 +217,15 @@ private:
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
   // =========================================================================
 
-Action last_action;     //Almacena la última acción ejecutada
-bool tiene_zapatillas;  //Indica si el agente tiene las zapatillas
-int giro45Izq;          //Indica el número de giros a la izq que quedan por dar
-int girando;            //Para completar un giro si hay obstaculo
-int iteracion_actual; // Para saber en qué "momento" estamos
-vector<vector<int>> mapaVisitas; //Matriz para saber por donde ya pasó
+  Action last_action;     //Almacena la última acción ejecutada
+  bool tiene_zapatillas;  //Indica si el agente tiene las zapatillas
+  int giro45Izq;          //Indica el número de giros a la izq que quedan por dar
+  int girando;            //Para completar un giro si hay obstaculo
+  int iteracion_actual; // Para saber en qué "momento" estamos
+  vector<vector<int>> mapaVisitas; //Matriz para saber por donde ya pasó
+
+  //Segunda parte
+  
 };
 
 #endif

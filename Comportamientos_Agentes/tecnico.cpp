@@ -23,6 +23,7 @@ Action ComportamientoTecnico::think(Sensores sensores) {
     case 4: accion = ComportamientoTecnicoNivel_4(sensores); break;
     case 5: accion = ComportamientoTecnicoNivel_5(sensores); break;
     case 6: accion = ComportamientoTecnicoNivel_6(sensores); break;
+    case 10: accion = ComportamientoTecnicoNivel_E(sensores); break;
   }
 
   return accion;
@@ -156,46 +157,46 @@ void ComportamientoTecnico::ExtraerDatosDeZonaYMemoria(const Sensores &sensores,
  */
 Action ComportamientoTecnico::EvaluarOpcionesAdyacentes(const vector<unsigned char> &vision_segura, int mem1, int mem2, int mem3)
 {
-  char cellLeft = vision_segura[1];    // Casilla izquierda
-  char cellCenter = vision_segura[2];  // Casilla frontal
-  char cellRight = vision_segura[3];   // Casilla derecha
+  char Left = vision_segura[1];    // Casilla izquierda
+  char Center = vision_segura[2];  // Casilla frontal
+  char Right = vision_segura[3];   // Casilla derecha
 
   // PRIORIDAD 1: Meta muy cerca
-  if (cellCenter == 'U') {
+  if (Center == 'U') {
     cout << "  -> ACCION: WALK (Meta al frente)" << endl;
     return WALK;
   }
-  else if (cellLeft == 'U') {
+  else if (Left == 'U') {
     cout << "  -> ACCION: TURN_SL (Meta a la izq)" << endl;
     return TURN_SL;
   }
-  else if (cellRight == 'U') {
+  else if (Right == 'U') {
     cout << "  -> ACCION: TURN_SR (Meta a la dch)" << endl;
     return TURN_SR;
   }
 
   // PRIORIDAD 2: Hay caminos viables - elegir el menos visitado
   // Para el Técnico: 'C' (camino) y 'D' (zapatillas) se tratan por igual como navegables
-  bool hasPathLeft = (cellLeft == 'C' || cellLeft == 'D');
-  bool hasPathCenter = (cellCenter == 'C' || cellCenter == 'D');
-  bool hasPathRight = (cellRight == 'C' || cellRight == 'D');
+  bool caminoLeft = (Left == 'C' || Left == 'D');
+  bool caminoCenter = (Center == 'C' || Center == 'D');
+  bool caminoRight = (Right == 'C' || Right == 'D');
 
-  if (hasPathLeft || hasPathCenter || hasPathRight) {
+  if (caminoLeft || caminoCenter || caminoRight) {
     int minMemory = 999999;
     int bestOption = 0; // 1=izq, 2=frente, 3=dch
 
     // Evaluamos de frente primero
-    if (hasPathCenter) {
+    if (caminoCenter) {
       minMemory = mem2;
       bestOption = 2;
     }
     // Evaluamos izquierda
-    if (hasPathLeft && mem1 < minMemory) {
+    if (caminoLeft && mem1 < minMemory) {
       minMemory = mem1;
       bestOption = 1;
     }
     // Evaluamos derecha
-    if (hasPathRight && mem3 < minMemory) {
+    if (caminoRight && mem3 < minMemory) {
       minMemory = mem3;
       bestOption = 3;
     }
@@ -357,31 +358,31 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_1(Sensores sensores) {
     ExtraerDatosDeZonaYMemoria(sensores, vision_segura, mem1, mem2, mem3);
 
     // 3. EVALUAR OPCIONES CON MEMORIA (preferir caminos menos visitados)
-    char cellLeft = vision_segura[1];
-    char cellCenter = vision_segura[2];
-    char cellRight = vision_segura[3];
+    char Left = vision_segura[1];
+    char Center = vision_segura[2];
+    char Right = vision_segura[3];
 
     // Hay caminos viables - elegir el menos visitado (sin prioridad de meta)
-    bool hasPathLeft = es_camino(cellLeft);
-    bool hasPathCenter = es_camino(cellCenter);
-    bool hasPathRight = es_camino(cellRight);
+    bool caminoLeft = es_camino(Left);
+    bool caminoCenter = es_camino(Center);
+    bool caminoRight = es_camino(Right);
 
-    if (hasPathLeft || hasPathCenter || hasPathRight) {
+    if (caminoLeft || caminoCenter || caminoRight) {
       int minMemory = 999999;
       int bestOption = 0; // 1=izq, 2=frente, 3=dch
 
       // Evaluamos de frente primero
-      if (hasPathCenter) {
+      if (caminoCenter) {
         minMemory = mem2;
         bestOption = 2;
       }
       // Evaluamos izquierda
-      if (hasPathLeft && mem1 < minMemory) {
+      if (caminoLeft && mem1 < minMemory) {
         minMemory = mem1;
         bestOption = 1;
       }
       // Evaluamos derecha
-      if (hasPathRight && mem3 < minMemory) {
+      if (caminoRight && mem3 < minMemory) {
         minMemory = mem3;
         bestOption = 3;
       }
@@ -408,13 +409,155 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_1(Sensores sensores) {
   return accion;
 }
 
+list<Action> AvanzaASaltosDeCaballo(){
+  list<Action> secuencia;
+  secuencia.push_back(WALK);
+  secuencia.push_back(WALK);
+  secuencia.push_back(TURN_SR);
+  secuencia.push_back(TURN_SR);
+  secuencia.push_back(WALK);
+  return secuencia;
+}
+
+EstadoT NextCasillaTecnico(const EstadoT &st){
+    EstadoT siguiente = st;
+    switch (st.site.brujula) {
+        case norte: siguiente.site.f = st.site.f - 1; break;
+        case noreste: siguiente.site.f = st.site.f - 1; siguiente.site.c = st.site.c + 1; break;
+        case este: siguiente.site.c = st.site.c + 1; break;
+        case sureste: siguiente.site.f = st.site.f + 1; siguiente.site.c = st.site.c + 1; break;
+        case sur: siguiente.site.f = st.site.f + 1; break;
+        case suroeste: siguiente.site.f = st.site.f + 1; siguiente.site.c = st.site.c - 1; break;
+        case oeste: siguiente.site.c = st.site.c - 1; break;
+        case noroeste: siguiente.site.f = st.site.f - 1; siguiente.site.c = st.site.c - 1; break;
+    }
+    return siguiente;
+}
+
+bool CasillaAccesibleTecnico (const EstadoT &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura){
+    EstadoT next = NextCasillaTecnico(st);
+    bool noObstaculo = terreno[next.site.f][next.site.c] != 'P' and terreno[next.site.f][next.site.c] != 'M';
+    bool bosqueValido = terreno[next.site.f][next.site.c] != 'B' or (terreno[next.site.f][next.site.c] == 'B' and st.zapatillas);
+    bool alturaValida = abs(altura[next.site.f][next.site.c] - altura[st.site.f][st.site.c]) <= 1;
+    
+    return noObstaculo and bosqueValido and alturaValida;
+}
+
+EstadoT applyT(Action accion, const EstadoT & st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura){
+    EstadoT next = st;
+    switch(accion){
+        case WALK:
+            if (CasillaAccesibleTecnico (st, terreno, altura)){
+                next = NextCasillaTecnico(st);
+                if (terreno[next.site.f][next.site.c] == 'D') next.zapatillas = true;
+            }
+            break;
+        case TURN_SR:
+            next.site.brujula = (Orientacion) ((next.site.brujula+1)%8);
+            break;
+        case TURN_SL:
+            next.site.brujula = (Orientacion) ((next.site.brujula+7)%8);
+            break;
+    }
+    return next;
+}
+
+list<Action> B_Anchura(EstadoT inicio, EstadoT fin, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura) {
+    list<NodoT> frontier;
+    set<NodoT> explored;
+    list<Action> plan;
+    bool SolutionFound = (inicio.site.f == fin.site.f and inicio.site.c == fin.site.c);
+    
+    NodoT current_node;
+    current_node.estado = inicio;
+    frontier.push_back(current_node);
+
+    while (!frontier.empty() and !SolutionFound) {
+        // Extraer el primer nodo de la frontera
+        current_node = frontier.front();
+        frontier.pop_front();
+        
+        // Añadir a explorados
+        explored.insert(current_node);
+
+        // Generar hijos (solo movimientos posibles para el técnico)
+        vector<Action> acciones = {WALK, TURN_SR, TURN_SL};
+        
+        for (Action acc : acciones) {
+            if (SolutionFound) break; // Si ya encontramos solución, paramos de expandir
+
+            EstadoT nuevo_estado = applyT(acc, current_node.estado, terreno, altura);
+            
+            // Comprobar si es solución (solo tiene sentido al hacer WALK)
+            if (acc == WALK and nuevo_estado.site.f == fin.site.f and nuevo_estado.site.c == fin.site.c) {
+                plan = current_node.secuencia;
+                plan.push_back(acc);
+                SolutionFound = true;
+            }
+            // Si no es solución y no lo hemos explorado, lo añadimos a la frontera
+            else if (explored.find(NodoT{nuevo_estado, {}}) == explored.end()) {
+                NodoT child;
+                child.estado = nuevo_estado;
+                child.secuencia = current_node.secuencia;
+                child.secuencia.push_back(acc);
+                frontier.push_back(child);
+            }
+        }
+    }
+    
+    return plan;
+}
+
+Action ComportamientoTecnico::ComportamientoTecnicoNivel_E(Sensores sensores) {
+    Action accion = IDLE;
+    if (!hayPlan){
+        // Invocar al método de búsqueda
+        EstadoT inicio, fin;
+        inicio.site.f = sensores.posF;
+        inicio.site.c = sensores.posC;
+        inicio.site.brujula = sensores.rumbo;
+        inicio.zapatillas = tiene_zapatillas;
+        
+        fin.site.f = sensores.BelPosF;
+        fin.site.c = sensores.BelPosC;
+        
+        plan = B_Anchura(inicio, fin, mapaResultado, mapaCotas);
+        VisualizaPlan(inicio.site, plan);
+        hayPlan = plan.size() != 0;
+    }
+    
+    if (hayPlan and plan.size()>0){
+        accion = plan.front();
+        plan.pop_front();
+    }
+    
+    if (plan.size() == 0){
+        hayPlan = false;
+    }
+    
+    return accion;
+}
+
 /**
  * @brief Comportamiento del técnico para el Nivel 2.
  * @param sensores Datos actuales de los sensores.
  * @return Acción a realizar.
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_2(Sensores sensores) {
-  return IDLE;
+  Action accion = IDLE;
+  if (!hayPlan){
+    // Invocar al método de búsqueda
+    plan = AvanzaASaltosDeCaballo();
+    hayPlan = true;
+  }
+  if (hayPlan and plan.size()>0){
+    accion = plan.front();
+    plan.pop_front();
+  }
+  if (plan.size()== 0){
+    hayPlan = false;
+  }
+  return accion;
 }
 
 /**

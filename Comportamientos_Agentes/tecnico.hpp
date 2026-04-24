@@ -19,7 +19,30 @@
  * El técnico colabora con el ingeniero para resolver el problema de instalación de tuberías
  */
 
+struct EstadoT {
+    ubicacion site; //// Contiene fila (f), columna (c) y orientación (brujula)
+    bool zapatillas;
+    bool operator==(const EstadoT &st) const{
+        return site == st.site && zapatillas == st.zapatillas;
+    }
+};
 
+struct NodoT{
+    EstadoT estado;
+    list<Action> secuencia;
+    
+    bool operator==(const NodoT &node) const{
+        return estado == node.estado;
+    }
+    
+    bool operator<(const NodoT &node) const{
+        if (estado.site.f < node.estado.site.f) return true;
+        else if (estado.site.f == node.estado.site.f && estado.site.c < node.estado.site.c) return true;
+        else if (estado.site.f == node.estado.site.f && estado.site.c == node.estado.site.c && estado.site.brujula < node.estado.site.brujula) return true;
+        else if (estado.site.f == node.estado.site.f && estado.site.c == node.estado.site.c && estado.site.brujula == node.estado.site.brujula && estado.zapatillas < node.estado.zapatillas) return true;
+        else return false;
+    }
+};
 
 class ComportamientoTecnico : public Comportamiento {
 public:
@@ -50,7 +73,9 @@ public:
                        std::vector<std::vector<unsigned char>> mapaC): 
                        Comportamiento(mapaR, mapaC) {
     // Inicializar Variables de Estado
-
+    plan.clear();
+    hayPlan = false;
+    tiene_zapatillas = false;
   }
 
   ComportamientoTecnico(const ComportamientoTecnico &comport): Comportamiento(comport) {}
@@ -88,6 +113,13 @@ public:
  */
   Action ComportamientoTecnicoNivel_1(Sensores sensores);
   
+/**
+ * @brief Comportamiento del técnico para el Nivel 2.
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
+  Action ComportamientoTecnicoNivel_E(Sensores sensores);
+
 /**
  * @brief Comportamiento del técnico para el Nivel 2.
  * @param sensores Datos actuales de los sensores.
@@ -228,6 +260,10 @@ private:
   int girando;            //Para completar un giro si hay obstaculo
   int iteracion_actual; // Para saber en qué "momento" estamos
   vector<vector<int>> mapaVisitas; //Matriz para saber por donde ya pasó
+
+  //Segunda parte
+  list<Action> plan;
+  bool hayPlan;
 };
 
 #endif
