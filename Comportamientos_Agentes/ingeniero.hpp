@@ -10,6 +10,33 @@
 
 #include "comportamientos/comportamiento.hpp"
 
+struct EstadoI {
+    ubicacion site;
+    bool zapatillas;
+    
+    bool operator==(const EstadoI &st) const {
+        return site == st.site and zapatillas == st.zapatillas;
+    }
+};
+
+struct NodoI {
+    EstadoI estado;
+    list<Action> secuencia;
+    
+    bool operator==(const NodoI &node) const {
+        return estado == node.estado;
+    }
+    
+    // Operador < para poder usar std::set y hacer la búsqueda eficiente
+    bool operator<(const NodoI &node) const {
+        if (estado.site.f < node.estado.site.f) return true;
+        if (estado.site.f == node.estado.site.f and estado.site.c < node.estado.site.c) return true;
+        if (estado.site.f == node.estado.site.f and estado.site.c == node.estado.site.c and estado.site.brujula < node.estado.site.brujula) return true;
+        if (estado.site.f == node.estado.site.f and estado.site.c == node.estado.site.c and estado.site.brujula == node.estado.site.brujula and estado.zapatillas < node.estado.zapatillas) return true;
+        return false;
+    }
+};
+
 class ComportamientoIngeniero : public Comportamiento {
 public:
   // =========================================================================
@@ -39,6 +66,9 @@ public:
                          std::vector<std::vector<unsigned char>> mapaC): 
                          Comportamiento(mapaR, mapaC) {
     // Inicializar Variables de Estado
+    plan.clear();
+    hayPlan = false;
+    tiene_zapatillas = false;
   }
 
   ComportamientoIngeniero(const ComportamientoIngeniero &comport)
@@ -225,7 +255,8 @@ private:
   vector<vector<int>> mapaVisitas; //Matriz para saber por donde ya pasó
 
   //Segunda parte
-  
+  list<Action> plan;
+  bool hayPlan;
 };
 
 #endif

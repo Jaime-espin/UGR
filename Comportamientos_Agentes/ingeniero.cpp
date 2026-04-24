@@ -441,6 +441,142 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
   return accion;
 }
 
+// --- Añadir en ingeniero.cpp, debajo de los includes ---
+ubicacion DelanteSt(const ubicacion &actual) {
+    ubicacion delante = actual;
+    switch (actual.brujula) {
+        case 0: delante.f--; break;
+        case 1: delante.f--; delante.c++; break;
+        case 2: delante.c++; break;
+        case 3: delante.f++; delante.c++; break;
+        case 4: delante.f++; break;
+        case 5: delante.f++; delante.c--; break;
+        case 6: delante.c--; break;
+        case 7: delante.f--; delante.c--; break;
+    }
+    return delante;
+}
+
+// Calcula la casilla a 2 pasos de distancia
+ubicacion Delante2(const ubicacion &actual) {
+    ubicacion sig = actual;
+    switch (actual.brujula) {
+        case norte: sig.f -= 2; break;
+        case noreste: sig.f -= 2; sig.c += 2; break;
+        case este: sig.c += 2; break;
+        case sureste: sig.f += 2; sig.c += 2; break;
+        case sur: sig.f += 2; break;
+        case suroeste: sig.f += 2; sig.c -= 2; break;
+        case oeste: sig.c -= 2; break;
+        case noroeste: sig.f -= 2; sig.c -= 2; break;
+    }
+    return sig;
+}
+
+// Comprueba si el WALK es válido
+bool EsAccesibleWalkI(const EstadoI &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura) {
+    ubicacion sig = DelanteSt(st.site); // Función dada en el tutorial
+    if (sig.f < 0 || sig.c < 0 || sig.f >= terreno.size() || sig.c >= terreno[0].size()) return false;
+    
+    bool noObstaculo = terreno[sig.f][sig.c] != 'P' and terreno[sig.f][sig.c] != 'M' and terreno[sig.f][sig.c] != 'B';
+    int maxDif = st.zapatillas ? 2 : 1;
+    bool alturaValida = abs(altura[sig.f][sig.c] - altura[st.site.f][st.site.c]) <= maxDif;
+    
+    return noObstaculo and alturaValida;
+}
+
+// Comprueba si el JUMP es válido
+bool EsAccesibleJumpI(const EstadoI &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura) {
+    ubicacion intermedia = DelanteSt(st.site);
+    ubicacion destino = Delante2(st.site);
+    
+    // Comprobar límites del mapa para ambas casillas
+    if (destino.f < 0 || destino.c < 0 || destino.f >= terreno.size() || destino.c >= terreno[0].size()) return false;
+    if (intermedia.f < 0 || intermedia.c < 0 || intermedia.f >= terreno.size() || intermedia.c >= terreno[0].size()) return false;
+
+    // La intermedia no puede ser P, M, B
+    bool intermediaValida = terreno[intermedia.f][intermedia.c] != 'P' and terreno[intermedia.f][intermedia.c] != 'M' and terreno[intermedia.f][intermedia.c] != 'B';
+    // El destino no puede ser P, M, B
+    bool destNoObstaculo = terreno[destino.f][destino.c] != 'P' and terreno[destino.f][destino.c] != 'M' and terreno[destino.f][destino.c] != 'B';
+    
+    // La altura se comprueba solo entre inicio y destino
+    int maxDif = st.zapatillas ? 2 : 1;
+    bool alturaValida = abs(altura[destino.f][destino.c] - altura[st.site.f][st.site.c]) <= maxDif;
+
+    return intermediaValida and destNoObstaculo and alturaValida;
+}
+EstadoI applyI(Action accion, const EstadoI &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura) {
+    EstadoI next = st;
+    switch(accion) {
+        case WALK:
+            if (EsAccesibleWalkI(st, terreno, altura)) {
+                next.site = DelanteSt(st.site);
+                if (terreno[next.site.f][next.site.c] == 'D') next.zapatillas = true;
+            }
+            break;
+        case JUMP:
+            if (EsAccesibleJumpI(st, terreno, altura)) {
+                next.site = Delante2(st.site);
+                if (terreno[next.site.f][next.site.c] == 'D') next.zapatillas = true;
+            }
+            break;
+        case TURN_SR:
+            next.site.brujula = (Orientacion) ((next.site.brujula + 1) % 8);
+            break;
+        case TURN_SL:
+            next.site.brujula = (Orientacion) ((next.site.brujula + 7) % 8);
+            break;
+    }
+    return next;
+}
+
+list<Action> BFS_Ingeniero(EstadoI inicio, EstadoI fin, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura) {
+    list<NodoI> frontier;
+    set<NodoI> explored;
+  set<NodoI> discovered;
+    list<Action> plan;
+    bool SolutionFound = (inicio.site.f == fin.site.f and inicio.site.c == fin.site.c);
+    
+    NodoI current_node;
+    current_node.estado = inicio;
+    frontier.push_back(current_node);
+    discovered.insert(NodoI{inicio, {}});
+
+    while (!frontier.empty() and !SolutionFound) {
+        current_node = frontier.front();
+        frontier.pop_front();
+        explored.insert(current_node);
+
+        // ¡Ahora el ingeniero tiene 4 acciones posibles!
+        vector<Action> acciones = {WALK, JUMP, TURN_SR, TURN_SL};
+        
+        for (Action acc : acciones) {
+            if (SolutionFound) break;
+
+            EstadoI nuevo_estado = applyI(acc, current_node.estado, terreno, altura);
+            
+            // Comprobamos si es solución (al moverse, no al girar)
+            if ((acc == WALK || acc == JUMP) && 
+                nuevo_estado.site.f == fin.site.f && nuevo_estado.site.c == fin.site.c) {
+                
+                plan = current_node.secuencia;
+                plan.push_back(acc);
+                SolutionFound = true;
+            }
+            else if (explored.find(NodoI{nuevo_estado, {}}) == explored.end() &&
+                 discovered.find(NodoI{nuevo_estado, {}}) == discovered.end()) {
+                NodoI child;
+                child.estado = nuevo_estado;
+                child.secuencia = current_node.secuencia;
+                child.secuencia.push_back(acc);
+                frontier.push_back(child);
+              discovered.insert(NodoI{nuevo_estado, {}});
+            }
+        }
+    }
+    return plan;
+}
+
 // Niveles avanzados (Uso de búsqueda)
 /**
  * @brief Comportamiento del ingeniero para el Nivel 2 (búsqueda).
@@ -449,8 +585,42 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_2(Sensores sensores)
 {
-  // TODO: Implementar búsqueda para el Nivel 2.
-  return IDLE;
+  Action accion = IDLE;
+
+  // Sincronizar estado persistente de zapatillas con la casilla actual.
+  if (sensores.superficie[0] == 'D') {
+    tiene_zapatillas = true;
+  }
+
+  // Si la última acción no pudo ejecutarse, invalidar el plan actual.
+  if (sensores.choque || sensores.reset) {
+    hayPlan = false;
+    plan.clear();
+  }
+
+    if (!hayPlan) {
+        EstadoI inicio, fin;
+        inicio.site.f = sensores.posF;
+        inicio.site.c = sensores.posC;
+        inicio.site.brujula = sensores.rumbo;
+        inicio.zapatillas = tiene_zapatillas; // Debes controlar esta variable de estado
+        
+        fin.site.f = sensores.BelPosF;
+        fin.site.c = sensores.BelPosC;
+        
+        plan = BFS_Ingeniero(inicio, fin, mapaResultado, mapaCotas);
+        VisualizaPlan(inicio.site, plan);
+        hayPlan = (plan.size() > 0);
+    }
+
+    if (hayPlan and plan.size() > 0) {
+        accion = plan.front();
+        plan.pop_front();
+    }
+
+    if (plan.size() == 0) hayPlan = false;
+
+    return accion;
 }
 
 /**

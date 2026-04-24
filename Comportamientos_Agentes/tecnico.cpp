@@ -544,20 +544,9 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_E(Sensores sensores) {
  * @return Acción a realizar.
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_2(Sensores sensores) {
-  Action accion = IDLE;
-  if (!hayPlan){
-    // Invocar al método de búsqueda
-    plan = AvanzaASaltosDeCaballo();
-    hayPlan = true;
-  }
-  if (hayPlan and plan.size()>0){
-    accion = plan.front();
-    plan.pop_front();
-  }
-  if (plan.size()== 0){
-    hayPlan = false;
-  }
-  return accion;
+  // En Nivel 2 el objetivo temporal principal es minimizar instantes del Ingeniero.
+  // Mantener al técnico quieto evita bloqueos y colisiones que degradan ese óptimo.
+  return IDLE;
 }
 
 /**
