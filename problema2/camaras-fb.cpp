@@ -109,7 +109,37 @@ void greedy(){
    cout<<"Seran necesarias "<<intersecciones.size()<<" cámaras"<<endl;
 }
 
+//Esta función busca una hoja y devuelve a su nodo padre
+int BuscamosHoja(vector<vector<int>> &mapa){
+   for(int i = 0; i<n; i++){//Buscamos hojas
+      int grado = 0;
+      int padre = -1;
+      for(int j = 0; j<n; j++){
+         if(mapa[i][j]==1){
+            grado++; 
+            padre=j;
+         }
+      }
+      if(grado==1) return padre; //Hoja encontrada
+   }
+   return -1;
+}
 
+//(Opcional) Algoritmo voraz para encontrar la solución optima para arboles.
+//El procedimiento consistirá en buscar los callejones sin salida (hojas)
+//Y colocar la camara en el nodo padre de estas intersecciones.
+void greedyArbol(){
+   vector<vector<int>> aux = m; //Lo copiamos para no perder la info original
+   vector<int> intersecciones; //Donde guardaremos las intersecciones con camara
+   
+   while(quedanPasillosSinVigilar(aux)){
+      int padre_hoja=BuscamosHoja(aux);
+      if(padre_hoja == -1) break;
+      intersecciones.push_back(padre_hoja);
+      marcarPasillosVigilados(aux, padre_hoja);
+   }
+   cout << "Solucion OPTIMA para ARBOL: Seran necesarias " << intersecciones.size() << " camaras." << endl;
+}
 
 
 /////////////// Para generar grafos aleatoriamente
@@ -136,40 +166,94 @@ void generamatriz(vector<vector<int> > & matriz, int n) {
      }
  for (int i = 0; i < n; i++) matriz[i][i]=0;
 }
+
+//Para generar arboles
+void generarArbol(vector<vector<int> > & matriz, int n){
+   srand(time(0));
+   // 1. Primero, nos aseguramos de que la matriz esté completamente a 0
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < n; j++){
+            matriz[i][j] = 0;
+        }
+    }
+    
+    vector<int> conectados;
+    vector<int> no_conectados;
+    
+    // 2. Empezamos con el nodo 0 en el árbol
+    conectados.push_back(0);
+    
+    // 3. El resto de nodos (1 a n-1) están fuera del árbol inicialmente
+    for(int i = 1; i < n; i++){
+        no_conectados.push_back(i);
+    }
+    
+    // 4. Vamos uniendo nodos uno a uno hasta que todos estén en el árbol
+    while(!no_conectados.empty()){
+        // Elegimos un nodo aleatorio de los que YA están en el árbol
+        int indice_conectado = rand() % conectados.size();
+        int nodo_u = conectados[indice_conectado];
+        
+        // Elegimos un nodo aleatorio de los que AÚN NO están en el árbol
+        int indice_no_conectado = rand() % no_conectados.size();
+        int nodo_v = no_conectados[indice_no_conectado];
+        
+        // Creamos el pasillo (arista) entre ellos en la matriz
+        matriz[nodo_u][nodo_v] = 1;
+        matriz[nodo_v][nodo_u] = 1;
+        
+        // Añadimos el nuevo nodo a la lista de conectados
+        conectados.push_back(nodo_v);
+        
+        // Lo borramos de la lista de no conectados
+        no_conectados.erase(no_conectados.begin() + indice_no_conectado);
+    }
+}
 //////////////////
 
 int main (int argc, char *argv[]){
-
-   if(argc == 3){
+   bool es_arbol = false;
+   if(argc > 1 && string(argv[argc-1]) == "arbol"){
+       es_arbol = true;
+   }
+   if(argc >= 3){
       n = atoi(argv[1]);
       m.resize(n);
       for (int i=0; i<n; i++) m[i].resize(n);
    //////////////////lectura del fichero
       ifstream f (argv[2]);
-      if (!f){
-         cout << "Archivo no valido" << endl;
-         return -1;
-      }
-      m.resize(n);
-      for (int i=0; i<n; i++) m[i].resize(n);
-      int l=0;
-      while (!f.eof()){
-         for (int j=0;j<n; j++) f >> m[l][j];
-         l++;
+      string parametro2 = argv[2]; // Guardamos el segundo parámetro
+        
+      if(parametro2 == "arbol"){
+         // Generamos un árbol
+         generarArbol(m, n);
+         es_arbol = true;
+      } else {
+         // Lectura del fichero (tu código original)
+         ifstream f (argv[2]);
+         if (!f){
+            cout << "Archivo no valido" << endl;
+            return -1;
+         }
+         int l=0;
+         while (!f.eof()){
+            for (int j=0;j<n; j++) f >> m[l][j];
+            l++;
+         }
       }
    ////////////////////////////
    }
    else if(argc == 2) {
-         n = atoi(argv[1]);
-         m.resize(n);
-         for (int i=0; i<n; i++) m[i].resize(n);
-         generamatriz(m,n);
-         }
-         else {
-               cout << argv[0] << " tamanio " << "fichero"<<endl;
-               cout << "O "<<argv[0] << " tamanio " <<endl;
-               return -1;
-         }
+      n = atoi(argv[1]);
+      m.resize(n);
+      for (int i=0; i<n; i++) m[i].resize(n);
+      generamatriz(m,n);
+   }
+   else {
+      cout << argv[0] << " tamanio " << "fichero"<<endl;
+      cout << "O "<<argv[0] << " tamanio " <<endl;
+      return -1;
+   }
 
    cout<<"La matriz de adyacencia del grafo es:"<<endl;
    for (int i=0; i<n; i++) {
@@ -177,27 +261,36 @@ int main (int argc, char *argv[]){
             cout<<m[i][j]<<" ";
       cout<<endl;
    }
-
-// ---- Llamamos a nuestro algoritmo greedy ----
-   cout << "\n--- Ejecutando Algoritmo Voraz ---" << endl;
-   clock_t t_antes_voraz = clock();
-   greedy();
-   clock_t t_despues_voraz = clock();
-   cout << "Tiempo Voraz: " << (double)(t_despues_voraz - t_antes_voraz) / CLOCKS_PER_SEC << " segundos." << endl;
-   cout << "----------------------------------\n" << endl;
-
-
+   // 1. Ejecución de Fuerza Bruta (Original del profe)
    clock_t tantes;
    clock_t tdespues;
    X.resize(n);
    solucion.resize(n);
    for (int i=0; i<n; i++)
-      X[i] = -1; //-1 significa no asignado aun, ni pongo camara ni no pongo camara
+      X[i] = -1; 
    tantes = clock();
    fb_recursivo(0);
    tdespues = clock();
-   cout<<"La solucion con valor "<<mejorvalor<<" es:"<<endl;
+   cout << "\n--- Fuerza Bruta ---" << endl;
+   cout << "La solucion con valor " << mejorvalor << " es:" << endl;
    MuestraSolucion();
-   cout << n << " tiempo: " << (double)(tdespues - tantes) / CLOCKS_PER_SEC << endl;
+   cout << "Tiempo FB: " << (double)(tdespues - tantes) / CLOCKS_PER_SEC << " segs.\n" << endl;
+
+   // 2. Ejecución del Algoritmo Voraz General (Para todo tipo de grafos)
+   cout << "--- Algoritmo Voraz (Nodo con mayor grado) ---" << endl;
+   clock_t tantes_v = clock();
+   greedy();
+   clock_t tdespues_v = clock();
+   cout << "Tiempo Voraz: " << (double)(tdespues_v - tantes_v) / CLOCKS_PER_SEC << " segs.\n" << endl;
+
+   // 3. Ejecución del Algoritmo Voraz de Árboles (SOLO si hemos generado un árbol)
+   if (es_arbol) {
+      cout << "--- Algoritmo Voraz OPTIMO para Arboles ---" << endl;
+      clock_t tantes_a = clock();
+      greedyArbol();
+      clock_t tdespues_a = clock();
+      cout << "Tiempo Voraz Arbol: " << (double)(tdespues_a - tantes_a) / CLOCKS_PER_SEC << " segs.\n" << endl;
+   }
+
    return 0;
 }
