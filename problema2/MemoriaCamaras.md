@@ -95,6 +95,10 @@ Observando la tabla, se confirma que:
 1. El algoritmo Voraz acierta y da la solución óptima algunas veces, pero frecuentemente añade entre 1 y 2 cámaras adicionales en grafos tan complejos.
 2. La Fuerza Bruta para $n=28$ tarda más de 6 segundos completos. El Voraz tarda 0.000047 segundos. Es una prueba empírica contundente de la necesidad y bondad de utilizar algoritmos voraces para problemas NP-Completos de la vida real.
 
+### Representación gráfica (Grafos generales)
+![Comparación de Tiempos (General)](DatosMemoria/grafica_tiempos_general.png)
+![Comparación de Cámaras (General)](DatosMemoria/grafica_camaras_general.png)
+
 Para tener mas muestras, veámos los resultados del ordenador de Fran:
 
 | Intersecciones ($n$) | Cámaras (Voraz) | Cámaras (Fuerza Bruta) | Tiempo Voraz (s) | Tiempo Fuerza Bruta (s) |
@@ -148,3 +152,8 @@ Se ha utilizado el generador de árboles implementado en el código para compara
 Como se puede observar en la tabla:
 1. El **Algoritmo Voraz Específico para Árboles encuentra sistemáticamente la solución óptima absoluta**, coincidiendo exactamente con la aportada por la fuerza bruta en todos los casos evaluados (incluidos aquellos donde el Voraz genérico falló añadiendo más cámaras, como en $n=22$ y $n=24$).
 2. Respecto a los tiempos de ejecución, la **variante adaptada a árboles es consistentemente más rápida** que la variante voraz genérica (entre el doble y el triple de velocidad), debido a la optimización mencionada previamente de romper el bucle anticipadamente al encontrar hojas.
+
+### Representación gráfica (Árboles)
+![Comparación de Tiempos (Árboles)](DatosMemoria/grafica_tiempos_arbol.png)
+![Comparación de Tiempos Voraces (Árboles)](DatosMemoria/grafica_tiempos_voraces_arbol.png)
+![Comparación de Cámaras (Árboles)](DatosMemoria/grafica_camaras_arbol.png)
