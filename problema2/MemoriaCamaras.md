@@ -16,9 +16,6 @@ Para poder analizar mejor el problema, lo hemos dividido en dos soluciones muy d
     - No garantiza la solución óptima.
     - Es mucho más rápido que el algoritmo de fuerza bruta.
     - Garantiza una solución "suficientemente" buena (muy cercana a la óptima).
-3. Optimización para arboles. (Greedy) - Opcional
-   - Garanatiza la solución más optima
-   - Es mucho más rápido que el algoritmo de fuerza bruta.
 
 ## Algoritmo de fuerza bruta
 El algoritmo de fuerza bruta se basa en la idea de probar de forma recursiva todas las combinaciones posibles de colocar cámaras o no en las intersecciones.
@@ -91,8 +88,8 @@ En cada ejecución:
 | **24** | 17 | 16 | 0.000228 | 1.8788 |
 | **25** | 18 | 18 | 0.000183 | 3.4564 |
 | **26** | 18 | 17 | 0.000189 | 7.1207 |
-| **27** | 18 | 18 | 0.000206 | 15.4157 |
-| **28** | 21 | 20 | 0.000611 | 28.7832 |
+| **27** | 18 | 18 | 0.000236 | 15.4157 |
+| **28** | 21 | 20 | 0.000511 | 28.7832 |
 
 Observando la tabla, se confirma que:
 1. El algoritmo Voraz acierta y da la solución óptima algunas veces, pero frecuentemente añade entre 1 y 2 cámaras adicionales en grafos tan complejos.
@@ -124,3 +121,30 @@ Sigue el siguiente esquema:
 3. Se recorre la matriz para buscar una hoja y se obtiene su nodo padre.
 4. Se guarda esa intersección como parte de la solución.
 5. Se marcan como "vigilados" todos los pasillos de esa intersección (borrando su respectiva fila y columna de la matriz `aux`).
+
+### Análisis de eficiencia teórica (Voraz en Árboles)
+Dentro de la función `greedyArbol()`, observamos el siguiente comportamiento:
+1. **Bucle `while`**: Al igual que el algoritmo voraz general, iterará como máximo $n$ veces.
+2. **`quedanPasillosSinVigilar(aux)`**: Comprueba toda la matriz. Coste: $\mathcal{O}(n^2)$.
+3. **`BuscamosHoja(aux)`**: Recorre la matriz contabilizando las conexiones (grado) de cada vértice. Devuelve el padre cuando encuentra un nodo con grado 1. En el peor caso, recorre toda la matriz. Coste: $\mathcal{O}(n^2)$.
+4. **`marcarPasillosVigilados(aux, padre_hoja)`**: Pone a $0$ todos los elementos de la fila y columna del vértice seleccionado. Coste: $\mathcal{O}(n)$.
+
+El coste de cada iteración del bucle es $\mathcal{O}(n^2) + \mathcal{O}(n^2) + \mathcal{O}(n) = \mathcal{O}(n^2)$. 
+Dado que el bucle se ejecuta un máximo de $n$ veces, la **complejidad temporal final sigue siendo $\mathcal{O}(n^3)$**, al igual que el voraz genérico. Sin embargo, en la práctica suele ser ligeramente más rápido porque `BuscamosHoja` se detiene tan pronto como encuentra la primera hoja, no necesitando evaluar el grafo entero a diferencia de `verticeMayorGrado`.
+
+### Análisis empírico
+Se ha utilizado el generador de árboles implementado en el código para comparar el rendimiento de las tres variantes del algoritmo (Fuerza Bruta, Voraz Genérico y Voraz Específico para Árboles).
+
+| Intersecciones ($n$) | Cámaras (Voraz Genérico) | Cámaras (Voraz Árbol) | Cámaras (Fuerza Bruta) | Tiempo Voraz Genérico (s) | Tiempo Voraz Árbol (s) | Tiempo FB (s) |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **20** | 8 | 8 | 8 | 0.000017 | 0.000007 | 0.023677 |
+| **22** | 10 | 9 | 9 | 0.000027 | 0.000007 | 0.092646 |
+| **24** | 11 | 10 | 10 | 0.000043 | 0.000010 | 0.500536 |
+| **25** | 10 | 10 | 10 | 0.000027 | 0.000009 | 1.795116 |
+| **26** | 11 | 11 | 11 | 0.000036 | 0.000011 | 3.198420 |
+| **27** | 12 | 12 | 12 | 0.000037 | 0.000013 | 6.182430 |
+| **28** | 10 | 10 | 10 | 0.000026 | 0.000011 | 10.649700 |
+
+Como se puede observar en la tabla:
+1. El **Algoritmo Voraz Específico para Árboles encuentra sistemáticamente la solución óptima absoluta**, coincidiendo exactamente con la aportada por la fuerza bruta en todos los casos evaluados (incluidos aquellos donde el Voraz genérico falló añadiendo más cámaras, como en $n=22$ y $n=24$).
+2. Respecto a los tiempos de ejecución, la **variante adaptada a árboles es consistentemente más rápida** que la variante voraz genérica (entre el doble y el triple de velocidad), debido a la optimización mencionada previamente de romper el bucle anticipadamente al encontrar hojas.
