@@ -441,8 +441,8 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
   return accion;
 }
 
-// --- Añadir en ingeniero.cpp, debajo de los includes ---
 ubicacion DelanteSt(const ubicacion &actual) {
+  // Devuelve la casilla inmediatamente frontal en función de la brújula.
     ubicacion delante = actual;
     switch (actual.brujula) {
         case 0: delante.f--; break;
@@ -459,6 +459,7 @@ ubicacion DelanteSt(const ubicacion &actual) {
 
 // Calcula la casilla a 2 pasos de distancia
 ubicacion Delante2(const ubicacion &actual) {
+  // Se usa para simular JUMP: misma dirección, dos celdas por delante.
     ubicacion sig = actual;
     switch (actual.brujula) {
         case norte: sig.f -= 2; break;
@@ -478,6 +479,7 @@ bool EsAccesibleWalkI(const EstadoI &st, const vector<vector<unsigned char>> &te
     ubicacion sig = DelanteSt(st.site); // Función dada en el tutorial
     if (sig.f < 0 || sig.c < 0 || sig.f >= terreno.size() || sig.c >= terreno[0].size()) return false;
     
+    // WALK exige celda destino no bloqueante y desnivel admisible.
     bool noObstaculo = terreno[sig.f][sig.c] != 'P' and terreno[sig.f][sig.c] != 'M' and terreno[sig.f][sig.c] != 'B';
     int maxDif = st.zapatillas ? 2 : 1;
     bool alturaValida = abs(altura[sig.f][sig.c] - altura[st.site.f][st.site.c]) <= maxDif;
@@ -494,7 +496,7 @@ bool EsAccesibleJumpI(const EstadoI &st, const vector<vector<unsigned char>> &te
     if (destino.f < 0 || destino.c < 0 || destino.f >= terreno.size() || destino.c >= terreno[0].size()) return false;
     if (intermedia.f < 0 || intermedia.c < 0 || intermedia.f >= terreno.size() || intermedia.c >= terreno[0].size()) return false;
 
-    // La intermedia no puede ser P, M, B
+    // JUMP requiere que la casilla intermedia también sea transitable.
     bool intermediaValida = terreno[intermedia.f][intermedia.c] != 'P' and terreno[intermedia.f][intermedia.c] != 'M' and terreno[intermedia.f][intermedia.c] != 'B';
     // El destino no puede ser P, M, B
     bool destNoObstaculo = terreno[destino.f][destino.c] != 'P' and terreno[destino.f][destino.c] != 'M' and terreno[destino.f][destino.c] != 'B';
@@ -505,7 +507,9 @@ bool EsAccesibleJumpI(const EstadoI &st, const vector<vector<unsigned char>> &te
 
     return intermediaValida and destNoObstaculo and alturaValida;
 }
+
 EstadoI applyI(Action accion, const EstadoI &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura) {
+  // Transición de estados para el planificador: si la acción no es viable, el estado no avanza.
     EstadoI next = st;
     switch(accion) {
         case WALK:
@@ -531,7 +535,9 @@ EstadoI applyI(Action accion, const EstadoI &st, const vector<vector<unsigned ch
 }
 
 list<Action> BFS_Ingeniero(EstadoI inicio, EstadoI fin, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura) {
+    // frontier: cola FIFO de expansión BFS (camino con menos acciones primero).
     list<NodoI> frontier;
+    // explored: nodos ya expandidos; discovered: nodos ya vistos (evita duplicados en cola).
     set<NodoI> explored;
   set<NodoI> discovered;
     list<Action> plan;
@@ -547,7 +553,7 @@ list<Action> BFS_Ingeniero(EstadoI inicio, EstadoI fin, const vector<vector<unsi
         frontier.pop_front();
         explored.insert(current_node);
 
-        // ¡Ahora el ingeniero tiene 4 acciones posibles!
+        // Espacio de acciones del Ingeniero para nivel 2.
         vector<Action> acciones = {WALK, JUMP, TURN_SR, TURN_SL};
         
         for (Action acc : acciones) {
@@ -555,7 +561,8 @@ list<Action> BFS_Ingeniero(EstadoI inicio, EstadoI fin, const vector<vector<unsi
 
             EstadoI nuevo_estado = applyI(acc, current_node.estado, terreno, altura);
             
-            // Comprobamos si es solución (al moverse, no al girar)
+            // Solo comprobamos objetivo tras acciones de movimiento.
+            // Girar puede alinear al agente, pero no cambia su casilla.
             if ((acc == WALK || acc == JUMP) && 
                 nuevo_estado.site.f == fin.site.f && nuevo_estado.site.c == fin.site.c) {
                 
@@ -563,8 +570,7 @@ list<Action> BFS_Ingeniero(EstadoI inicio, EstadoI fin, const vector<vector<unsi
                 plan.push_back(acc);
                 SolutionFound = true;
             }
-            else if (explored.find(NodoI{nuevo_estado, {}}) == explored.end() &&
-                 discovered.find(NodoI{nuevo_estado, {}}) == discovered.end()) {
+            else if (explored.find(NodoI{nuevo_estado, {}}) == explored.end() && discovered.find(NodoI{nuevo_estado, {}}) == discovered.end()) {
                 NodoI child;
                 child.estado = nuevo_estado;
                 child.secuencia = current_node.secuencia;
@@ -587,11 +593,13 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_2(Sensores sensores
 {
   Action accion = IDLE;
 
+  // 1) Estado interno persistente: mantener si ya obtuvo zapatillas.
   // Sincronizar estado persistente de zapatillas con la casilla actual.
   if (sensores.superficie[0] == 'D') {
     tiene_zapatillas = true;
   }
 
+  // 2) Replanificar si el mundo real invalida la ejecución prevista.
   // Si la última acción no pudo ejecutarse, invalidar el plan actual.
   if (sensores.choque || sensores.reset) {
     hayPlan = false;
@@ -599,6 +607,7 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_2(Sensores sensores
   }
 
     if (!hayPlan) {
+        // 3) Construir estado inicial/objetivo y lanzar BFS sobre mapa conocido.
         EstadoI inicio, fin;
         inicio.site.f = sensores.posF;
         inicio.site.c = sensores.posC;
@@ -614,10 +623,12 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_2(Sensores sensores
     }
 
     if (hayPlan and plan.size() > 0) {
+        // 4) Política de ejecución: consumir una acción por ciclo de think().
         accion = plan.front();
         plan.pop_front();
     }
 
+      // 5) Si el plan se agotó, en el próximo ciclo se replantea desde el estado actual.
     if (plan.size() == 0) hayPlan = false;
 
     return accion;
@@ -630,7 +641,67 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_2(Sensores sensores
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_3(Sensores sensores)
 {
-  return IDLE;
+  if (sensores.superficie[0] == 'D') {
+    tiene_zapatillas = true;
+  }
+
+  // Si el estado real invalida el plan en curso, lo descartamos.
+  if (sensores.choque || sensores.reset) {
+    hayPlan = false;
+    plan.clear();
+  }
+
+  if (!hayPlan && sensores.agentes[2] == 't') {
+    EstadoI estado_actual;
+    estado_actual.site.f = sensores.posF;
+    estado_actual.site.c = sensores.posC;
+    estado_actual.site.brujula = sensores.rumbo;
+    estado_actual.zapatillas = tiene_zapatillas;
+
+    EstadoI estado_izq = estado_actual;
+    estado_izq.site.brujula = (Orientacion) ((estado_izq.site.brujula + 7) % 8);
+
+    EstadoI estado_dch = estado_actual;
+    estado_dch.site.brujula = (Orientacion) ((estado_dch.site.brujula + 1) % 8);
+
+    bool izquierda_viable = EsAccesibleWalkI(estado_izq, mapaResultado, mapaCotas) && sensores.agentes[1] == '_';
+    bool derecha_viable = EsAccesibleWalkI(estado_dch, mapaResultado, mapaCotas) && sensores.agentes[3] == '_';
+      // Plan de evasión: girar hacia lateral libre y avanzar para apartarse.
+      if (izquierda_viable || derecha_viable) {
+        if (izquierda_viable && derecha_viable) {
+          Action giro = (last_action == TURN_SL) ? TURN_SR : TURN_SL;
+          plan.push_back(giro);
+        } else if (izquierda_viable) {
+          plan.push_back(TURN_SL);
+        } else {
+          plan.push_back(TURN_SR);
+        }
+        plan.push_back(WALK);
+      } else {
+        // Sin huecos laterales: intentar saltar por encima y, si no, girar.
+        bool salto_viable = EsAccesibleJumpI(estado_actual, mapaResultado, mapaCotas) && sensores.agentes[6] == '_';
+        if (salto_viable) {
+          plan.push_back(JUMP);
+        } else {
+          plan.push_back(TURN_SR);
+        }
+      }
+      plan.push_back(WALK);
+      hayPlan = !plan.empty();
+    }
+
+  Action accion = TURN_SR;
+  if(!plan.empty()) {
+    accion = plan.front();
+    plan.pop_front();
+  }
+
+  if (plan.empty()) {
+    hayPlan = false;
+  }
+
+  last_action = accion;
+  return accion;
 }
 
 /**

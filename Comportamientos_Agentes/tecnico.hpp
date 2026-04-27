@@ -25,22 +25,27 @@ struct EstadoT {
     bool operator==(const EstadoT &st) const{
         return site == st.site && zapatillas == st.zapatillas;
     }
+    bool operator<(const EstadoT &st) const{
+        if (site.f < st.site.f) return true;
+        if (site.f == st.site.f && site.c < st.site.c) return true;
+        if (site.f == st.site.f && site.c == st.site.c && site.brujula < st.site.brujula) return true;
+        if (site.f == st.site.f && site.c == st.site.c && site.brujula == st.site.brujula && zapatillas < st.zapatillas) return true;
+        return false;
+    }
 };
 
 struct NodoT{
     EstadoT estado;
     list<Action> secuencia;
+    int g_cost; // Energía REAL consumida hasta aquí
+    int f_cost; // g_cost + Heurística (estimación hasta la meta)
     
     bool operator==(const NodoT &node) const{
         return estado == node.estado;
     }
     
     bool operator<(const NodoT &node) const{
-        if (estado.site.f < node.estado.site.f) return true;
-        else if (estado.site.f == node.estado.site.f && estado.site.c < node.estado.site.c) return true;
-        else if (estado.site.f == node.estado.site.f && estado.site.c == node.estado.site.c && estado.site.brujula < node.estado.site.brujula) return true;
-        else if (estado.site.f == node.estado.site.f && estado.site.c == node.estado.site.c && estado.site.brujula == node.estado.site.brujula && estado.zapatillas < node.estado.zapatillas) return true;
-        else return false;
+      return f_cost > node.f_cost;
     }
 };
 

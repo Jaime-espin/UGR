@@ -3,6 +3,7 @@
 #include <iostream>
 #include <queue>
 #include <set>
+#include <map>
 
 using namespace std;
 
@@ -436,6 +437,12 @@ EstadoT NextCasillaTecnico(const EstadoT &st){
 
 bool CasillaAccesibleTecnico (const EstadoT &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura){
     EstadoT next = NextCasillaTecnico(st);
+    // Evita accesos fuera de rango al evaluar movimientos en bordes del mapa.
+    if (next.site.f < 0 || next.site.f >= (int)terreno.size() ||
+        next.site.c < 0 || next.site.c >= (int)terreno[0].size()) {
+      return false;
+    }
+
     bool noObstaculo = terreno[next.site.f][next.site.c] != 'P' and terreno[next.site.f][next.site.c] != 'M';
     bool bosqueValido = terreno[next.site.f][next.site.c] != 'B' or (terreno[next.site.f][next.site.c] == 'B' and st.zapatillas);
     bool alturaValida = abs(altura[next.site.f][next.site.c] - altura[st.site.f][st.site.c]) <= 1;
@@ -464,7 +471,7 @@ EstadoT applyT(Action accion, const EstadoT & st, const vector<vector<unsigned c
 
 list<Action> B_Anchura(EstadoT inicio, EstadoT fin, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura) {
     list<NodoT> frontier;
-    set<NodoT> explored;
+    set<EstadoT> explored;
     list<Action> plan;
     bool SolutionFound = (inicio.site.f == fin.site.f and inicio.site.c == fin.site.c);
     
@@ -478,7 +485,7 @@ list<Action> B_Anchura(EstadoT inicio, EstadoT fin, const vector<vector<unsigned
         frontier.pop_front();
         
         // Añadir a explorados
-        explored.insert(current_node);
+        explored.insert(current_node.estado);
 
         // Generar hijos (solo movimientos posibles para el técnico)
         vector<Action> acciones = {WALK, TURN_SR, TURN_SL};
@@ -495,7 +502,7 @@ list<Action> B_Anchura(EstadoT inicio, EstadoT fin, const vector<vector<unsigned
                 SolutionFound = true;
             }
             // Si no es solución y no lo hemos explorado, lo añadimos a la frontera
-            else if (explored.find(NodoT{nuevo_estado, {}}) == explored.end()) {
+            else if (explored.find(nuevo_estado) == explored.end()) {
                 NodoT child;
                 child.estado = nuevo_estado;
                 child.secuencia = current_node.secuencia;
@@ -549,13 +556,187 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_2(Sensores sensores) {
   return IDLE;
 }
 
+int Heuristica(const EstadoT &actual, const EstadoT &meta) {
+  // Movimiento en 8 direcciones: cota inferior admisible = distancia de Chebyshev.
+  return max(abs(actual.site.f - meta.site.f), abs(actual.site.c - meta.site.c));
+}
+
+int CalcularCosteEnergia(Action accion, char terreno_inicio, int altura_inicio, int altura_destino) {
+  int coste_base = 1;
+  if (accion == WALK) {
+    int mod_altura = 0;
+    bool aplica_mod_altura = false;
+    switch (terreno_inicio) {
+      case 'A': coste_base = 60; aplica_mod_altura = true; break;
+      case 'H': coste_base = 6;  aplica_mod_altura = true; break;
+      case 'S': coste_base = 3;  aplica_mod_altura = true; break;
+    }
+
+    if (aplica_mod_altura) {
+      int dif = altura_destino - altura_inicio;
+      if (dif > 0) mod_altura = 5;
+      else if (dif < 0) mod_altura = -2;
+
+      coste_base += mod_altura;
+    }
+  }else if (accion == TURN_SL || accion == TURN_SR) {
+    switch (terreno_inicio) {
+      case 'A': coste_base= 5; break;
+      case 'H': coste_base= 2; break;
+      case 'S': coste_base= 1; break;
+    }
+  }
+    
+  return coste_base;
+}
+
+list<Action> A_Star_Tecnico(EstadoT inicio, EstadoT fin, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura) {
+  priority_queue<NodoT> frontier; 
+  map<EstadoT, int> best_g_cost;
+  list<Action> plan;
+    
+  bool SolutionFound = false;
+
+  NodoT start_node;
+  start_node.estado = inicio;
+  start_node.g_cost = 0;
+  start_node.f_cost = Heuristica(inicio, fin);
+  frontier.push(start_node);
+
+  best_g_cost[inicio] = 0; // Coste de llegar al inicio es 0
+
+  while (!frontier.empty() and !SolutionFound) {
+    NodoT current_node = frontier.top();
+    frontier.pop();      
+    EstadoT estado_actual = current_node.estado;
+
+    //Comprobamos si hemos llegado a la meta
+    if (estado_actual.site.f == fin.site.f && estado_actual.site.c == fin.site.c) {
+      plan = current_node.secuencia;
+      SolutionFound = true;
+      break;
+    }
+
+    // Si ya lo exploramos con un coste menor, lo saltamos
+    if (current_node.g_cost > best_g_cost[estado_actual]) {
+      continue; 
+    }
+
+    // Generar hijos
+    vector<Action> acciones = {WALK, TURN_SR, TURN_SL};
+        
+    for (Action acc : acciones) {
+      EstadoT nuevo_estado = applyT(acc, estado_actual, terreno, altura);
+            
+      // Verificamos que la acción haya tenido efecto
+      if (!(nuevo_estado == estado_actual) || acc == TURN_SR || acc == TURN_SL) {
+                
+        int coste_paso = 0;
+        char terr_inicio = terreno[estado_actual.site.f][estado_actual.site.c];
+
+        if (acc == WALK) {
+          int alt_inicio = altura[estado_actual.site.f][estado_actual.site.c];
+          int alt_destino = altura[nuevo_estado.site.f][nuevo_estado.site.c];
+          coste_paso = CalcularCosteEnergia(acc, terr_inicio, alt_inicio, alt_destino);
+        } else {
+          coste_paso = CalcularCosteEnergia(acc, terr_inicio, 0, 0);
+        }
+
+        int nuevo_g = current_node.g_cost + coste_paso;
+        // SOLO añadimos el hijo si nunca hemos estado ahí, o si hemos encontrado un camino MÁS BARATO
+        if (best_g_cost.find(nuevo_estado) == best_g_cost.end() || nuevo_g < best_g_cost[nuevo_estado]) {
+                  
+          best_g_cost[nuevo_estado] = nuevo_g; // Actualizamos el récord
+          int nuevo_f = nuevo_g + Heuristica(nuevo_estado, fin);
+
+          NodoT child;
+          child.estado = nuevo_estado;
+          child.secuencia = current_node.secuencia; 
+          child.secuencia.push_back(acc);
+          child.g_cost = nuevo_g;
+          child.f_cost = nuevo_f;
+                    
+          frontier.push(child);
+        }
+      }
+    }
+  }
+  return plan;
+}
+
+
 /**
  * @brief Comportamiento del técnico para el Nivel 3.
  * @param sensores Datos actuales de los sensores.
  * @return Acción a realizar.
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_3(Sensores sensores) {
-  return IDLE;
+  Action accion = IDLE;
+
+  // 1) Mantener estado interno sincronizado en cada tick.
+  ActualizarMapa(sensores);
+  if (sensores.superficie[0] == 'D') {
+    tiene_zapatillas = true;
+  }
+
+  // 2) Si hay Ingeniero delante, invalidamos plan para forzar replanificación.
+  bool ingeniero_delante = (sensores.agentes[2] == 'i');
+  /*if (sensores.choque || sensores.reset) {
+    plan.clear();
+    hayPlan = false;
+  }*/
+
+  // 3) Planificar cuando no haya plan activo.
+  // Si el Ingeniero está justo delante, esa casilla se bloquea temporalmente
+  // en el mapa usado por A* para evitar choques.
+  if (!hayPlan) {
+    EstadoT inicio, fin;
+    inicio.site.f = sensores.posF;
+    inicio.site.c = sensores.posC;
+    inicio.site.brujula = sensores.rumbo;
+    inicio.zapatillas = tiene_zapatillas;
+
+    fin.site.f = sensores.BelPosF;
+    fin.site.c = sensores.BelPosC;
+
+    vector<vector<unsigned char>> mapaPlan = mapaResultado;
+    if (ingeniero_delante) {
+      return IDLE;
+        /*ubicacion actual;
+        actual.f = sensores.posF;
+        actual.c = sensores.posC;
+        actual.brujula = (Orientacion)sensores.rumbo;
+        ubicacion frente = Delante(actual);
+
+        if (frente.f >= 0 && frente.f < mapaPlan.size() &&
+            frente.c >= 0 && frente.c < mapaPlan[0].size()) {
+          mapaPlan[frente.f][frente.c] = 'P';
+        }*/
+    }
+
+    plan = A_Star_Tecnico(inicio, fin, mapaPlan, mapaCotas);
+    VisualizaPlan(inicio.site, plan);
+    hayPlan = (plan.size() > 0);
+  }
+
+  // 4) Ejecutar acción del plan (si existe), manteniendo salvaguarda anti-choque.
+  if (hayPlan && plan.size() > 0) {
+    accion = plan.front();
+
+    // Red de seguridad: si aparece un Ingeniero delante al avanzar, no chocamos.
+    if (accion == WALK && (sensores.agentes[2] == 'i')) {
+      /*plan.clear();
+      hayPlan = false;*/
+      accion = IDLE;
+    } else {
+      plan.pop_front();
+    }
+  }
+
+  // 5) Si se agota el plan, forzar planificación en el próximo ciclo.
+  if (plan.size() == 0) hayPlan = false;
+
+  return accion;
 }
 
 /**
