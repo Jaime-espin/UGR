@@ -201,6 +201,8 @@ A partir de los datos obtenidos, y utilizando la herramienta Gnuplot, hemos podi
 
 ![Gráfica del algoritmo Voraz Óptimo](./datosMemoria/algoritmoOptimo.png)
 
+En esta gráfica se representa el crecimiento del tiempo de ejecución del algoritmo óptimo (en escala lineal). Como se puede apreciar, el comportamiento del tiempo es extremadamente contenido; incluso al someter al algoritmo a una carga de 128.000 intervalos, el tiempo de procesamiento se mantiene por debajo de las 0.08 décimas de segundo, demostrando una altísima eficiencia en la práctica.
+
 #### Análisis Empírico (Subóptimo)
 Para el algoritmo subóptimo hemos obtenido los siguientes tiempos:
 
@@ -222,6 +224,8 @@ A partir de los datos obtenidos, y utilizando la herramienta Gnuplot, hemos podi
 
 ![Gráfica del algoritmo Voraz Subóptimo](./datosMemoria/algoritmoSuboptimo.png)
 **NOTA:** En esta gráfica se ha empleado escala logarítmica.
+
+A diferencia del algoritmo óptimo, esta gráfica refleja un crecimiento mucho más agresivo del tiempo de ejecución frente al aumento del tamaño de la entrada. Para la misma carga máxima de 128.000 intervalos, el algoritmo requiere casi 26 segundos en finalizar. 
 
 #### Comparación Empírica
 
