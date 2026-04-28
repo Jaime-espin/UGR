@@ -3,7 +3,7 @@
 ## Descripción del problema
 El objetivo de este problema es buscar la mejor solución para garantizar la seguridad de un complejo formado por intersecciones y pasillos.
 Una cámara colocada en una intersección es capaz de vigilar todos los pasillos que llegan a ella.
-Se busca una solución óptima, es decir, que minimice el número de cámaras instaladas.
+Se busca una solución óptima. Como aclaración, cuando hablamos de óptimo no solo nos referimos a que el algoritmo tarde menos tiempo en ejecutarse, sino principalmente a que encuentre una solución que requiera el menor número de cámaras instaladas posible.
 
 ## Partes del problema
 Para poder analizar mejor el problema, lo hemos dividido en dos soluciones muy diferentes entre sí:
@@ -117,6 +117,8 @@ El tiempo de ejecución en el algoritmo Voraz se mantiene plano en el orden de m
 Por tanto, concluimos que dicho algoritmo sacrifica una fracción mínima de precisión a cambio de una reduccion extrema en el tiempo de ejecución.
 
 ## Optimización para arboles (Greedy) - Opcional
+Es importante destacar que este algoritmo está diseñado específicamente para resolver problemas sobre grafos que son árboles. Para grafos generales (que no son árboles y pueden contener ciclos), este algoritmo no funciona correctamente. Por este motivo, las gráficas de la sección anterior solo comparan el algoritmo Voraz Genérico con Fuerza Bruta. En esta sección, compararemos los tres algoritmos exclusivamente para árboles.
+
 El algoritmo voraz optimizado para arboles busca las hojas (nodos con una única conexión) y coloca una camara en el nodo padre de esa forma te aseguras de cubrir los dos nodos mencionados y los hermanos del primer nodo y el padre del segundo.
 
 Sigue el siguiente esquema:
