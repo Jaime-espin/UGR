@@ -704,6 +704,266 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_3(Sensores sensores
   return accion;
 }
 
+int CalcularImpactoEcologico(char terreno, int operacion){
+  int impacto = 0;
+    
+  // Coste base por INSTALAR la tubería
+  switch (terreno) {
+    case 'A': impacto += 50; break;
+    case 'H': impacto += 45; break;
+    case 'S': impacto += 25; break;
+    case 'C': case 'U': impacto += 15; break;
+    default: impacto += 30; break;
+  }
+
+  // Coste extra por MODIFICAR el terreno (operacion: 1 = RAISE, -1 = DIG)
+  if (operacion == 1) { // RAISE
+    switch (terreno) {
+      case 'H': impacto += 55; break;
+      case 'S': impacto += 30; break;
+      case 'C': case 'U': impacto += 10; break;
+      default: impacto += 40; break; // "Resto"
+    }
+  } else if (operacion == -1) { // DIG
+    switch (terreno) {
+      case 'H': impacto += 65; break;
+      case 'S': impacto += 40; break;
+      case 'C': case 'U': impacto += 25; break;
+      default: impacto += 50; break; // "Resto"
+    }
+  }
+
+  return impacto;
+}
+
+int CosteInstalacionTuberia(char terreno)
+{
+  switch (terreno) {
+    case 'A': return 50;
+    case 'H': return 45;
+    case 'S': return 25;
+    case 'C': return 15;
+    case 'U': return 15;
+    default: return 30;
+  }
+}
+
+vector<NodoTuberia> GenerarSucesoresTuberia(const NodoTuberia &nodo_actual, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura, int limite_eco){
+  vector<NodoTuberia> sucesores;
+
+  int f_actual = nodo_actual.estado_tub.site.f;
+  int c_actual = nodo_actual.estado_tub.site.c;
+  int h_actual = nodo_actual.estado_tub.altura_tuberia;
+
+  int df[] = {-1, 1, 0, 0}; // Cambios en fila
+  int dc[] = {0, 0, 1, -1}; // Cambios en columna
+
+  for (int i = 0; i < 4; i++) {
+    int nf = f_actual + df[i];
+    int nc = c_actual + dc[i];
+
+    // 1. Limites del mapa
+    if (nf < 0 || nf >= terreno.size() || nc < 0 || nc >= terreno[0].size()) continue;
+
+    char tipo_terreno = terreno[nf][nc];
+        
+    // 2. Obstáculos duros: Muros, Precipicios y Bosques no se pueden transitar
+    if (tipo_terreno == 'P' || tipo_terreno == 'M' || tipo_terreno == 'B') continue;
+
+    int h_mapa = altura[nf][nc];
+
+    // OPCIÓN 1: La tubería sigue plana (misma altura que la actual)
+    
+    int op_plana = h_actual - h_mapa;
+
+    // Comprobamos si esta opción plana es legal
+    if (abs(op_plana) <= 1) { // Regla de modificación +-1
+      if (tipo_terreno == 'A' && op_plana != 0) continue; // Si es agua, op_plana debe ser 0
+        int impacto_sucesor = CosteInstalacionTuberia(tipo_terreno);
+        bool operacion_altura_valida = true;
+
+    
+        // 2. Coste de MODIFICAR el terreno de esta casilla (RAISE o DIG)
+        if (op_plana == 1) { // RAISE
+            if (h_mapa < 9) { // Precondición: no se puede RAISE si altura es 9
+                impacto_sucesor += CalcularImpactoEcologico(tipo_terreno, 1);
+            } else {
+                operacion_altura_valida = false; // Ilegal
+            }
+        } else if (op_plana == -1) { // DIG
+            if (h_mapa > 1) { // Precondición: no se puede DIG si altura es 0 o 1
+                impacto_sucesor += CalcularImpactoEcologico(tipo_terreno, -1);
+            } else {
+                operacion_altura_valida = false; // Ilegal
+            }
+        }
+
+        // Si la operación de altura es válida y no superamos el límite ecológico
+        if (operacion_altura_valida && nodo_actual.impacto + impacto_sucesor <= limite_eco) {
+          
+          NodoTuberia sucesor_plano = nodo_actual;
+          sucesor_plano.estado_tub.site.f = nf;
+          sucesor_plano.estado_tub.site.c = nc;
+          sucesor_plano.estado_tub.altura_tuberia = h_actual;
+          sucesor_plano.secuencia.push_back(Paso{nf, nc, op_plana});
+          sucesor_plano.g_cost++;
+          sucesor_plano.impacto += impacto_sucesor;
+                      
+          sucesores.push_back(sucesor_plano);
+        }
+      
+    }
+  
+
+    // OPCIÓN 2: La tubería baja un nivel por gravedad
+    int h_bajada = h_actual - 1;
+    int op_bajada = h_bajada - h_mapa;
+
+    // Comprobamos si esta opción en bajada es legal
+    if (abs(op_bajada) <= 1) { // Regla de modificación +-1
+      if (tipo_terreno == 'A' && op_bajada != 0) continue; // Si es agua, op_bajada debe ser 0
+        int impacto_sucesor = CosteInstalacionTuberia(tipo_terreno);
+        bool operacion_altura_valida = true;
+
+        
+        // 2. Coste de MODIFICAR el terreno de esta casilla (RAISE o DIG)
+        if (op_bajada == 1) { // RAISE
+            if (h_bajada < 9) { // Precondición: no se puede RAISE si altura es 9
+                impacto_sucesor += CalcularImpactoEcologico(tipo_terreno, 1);
+            } else {
+                operacion_altura_valida = false; // Ilegal
+            }
+        } else if (op_bajada == -1) { // DIG
+            if (h_bajada > 1) { // Precondición: no se puede DIG si altura es 0 o 1
+                impacto_sucesor += CalcularImpactoEcologico(tipo_terreno, -1);
+            } else {
+                operacion_altura_valida = false; // Ilegal
+            }
+        }
+
+        // Si la operación de altura es válida y no superamos el límite ecológico
+        if (operacion_altura_valida && nodo_actual.impacto + impacto_sucesor <= limite_eco) {
+          
+          NodoTuberia sucesor_bajada = nodo_actual;
+          sucesor_bajada.estado_tub.site.f = nf;
+          sucesor_bajada.estado_tub.site.c = nc;
+          sucesor_bajada.estado_tub.altura_tuberia = h_bajada;
+          sucesor_bajada.secuencia.push_back(Paso{nf, nc, op_bajada});
+          sucesor_bajada.g_cost++;
+          sucesor_bajada.impacto += impacto_sucesor;
+                      
+          sucesores.push_back(sucesor_bajada);
+        }
+      
+    }
+  }
+  return sucesores;
+}
+
+int HeuristicaTuberias(int f_actual, int c_actual, const vector<pair<int, int>> &metas_U){
+  int min_dist = 999999;
+  //Recorremos mapa en busca de todas las metas y devolvemos la que esté más cerca
+  for (auto meta : metas_U) {
+    int dist = abs(f_actual - meta.first) + abs(c_actual - meta.second);
+    if (dist < min_dist) {
+      min_dist = dist;
+    }
+  }
+  return min_dist;
+}
+
+list<Paso> A_Star_Tuberias(EstadoTuberia inicio, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura, int limite_eco){
+    // 1. Encontrar todas las plantas de tratamiento ('U') en el mapa
+    vector<pair<int, int>> plantas_U;
+    for (int f = 0; f < terreno.size(); f++) {
+        for (int c = 0; c < terreno[0].size(); c++) {
+            if (terreno[f][c] == 'U') {
+                plantas_U.push_back({f, c});
+            }
+        }
+    }
+
+    priority_queue<NodoTuberia> frontier; 
+    map<EstadoTuberia, vector<pair<int, int>>> explorados;
+    list<Paso> plan_final;
+
+    // 2. Inicializar los nodos raíz (¡Teniendo en cuenta RAISE y DIG en la salida!)
+    char tipo_inicio = terreno[inicio.site.f][inicio.site.c];
+    int h_mapa_inicio = altura[inicio.site.f][inicio.site.c];
+
+    // Evaluamos las 3 opciones iniciales: 0 (Plana), 1 (RAISE), -1 (DIG)
+    int opciones_inicio[] = {0, 1, -1};
+
+    for (int op : opciones_inicio) {
+        // Reglas físicas: No se puede alterar el agua, ni superar los límites del cielo/suelo
+        if (tipo_inicio == 'A' && op != 0) continue; 
+        if (op == 1 && h_mapa_inicio >= 9) continue; 
+        if (op == -1 && h_mapa_inicio <= 1) continue; 
+
+        NodoTuberia start_node;
+        start_node.estado_tub = inicio;
+        // ¡La altura inicial de la tubería ahora depende de si hemos modificado el terreno!
+        start_node.estado_tub.altura_tuberia = h_mapa_inicio + op; 
+        start_node.g_cost = 0;
+        
+        start_node.impacto = (op == 0) ? 0 : CalcularImpactoEcologico(tipo_inicio, op);
+
+        // Si solo modificar la salida ya revienta el presupuesto, la descartamos
+        if (start_node.impacto > limite_eco) continue;
+
+        start_node.f_cost = start_node.g_cost + HeuristicaTuberias(inicio.site.f, inicio.site.c, plantas_U);
+        start_node.secuencia.push_back(Paso{inicio.site.f, inicio.site.c, op});
+
+        frontier.push(start_node);
+        explorados[start_node.estado_tub].push_back({start_node.g_cost, start_node.impacto});
+    }
+
+    // 3. Bucle principal
+    while (!frontier.empty()) {
+        NodoTuberia current = frontier.top();
+        frontier.pop();
+
+        int f = current.estado_tub.site.f;
+        int c = current.estado_tub.site.c;
+
+        // CONDICIÓN DE ÉXITO:
+        // Como la cola prioriza el f_cost más bajo y la ecología, la primera 'U' 
+        // que sacamos es matemáticamente la ruta más óptima y físicamente legal.
+        if (terreno[f][c] == 'U') {
+            plan_final = current.secuencia;
+            break; // Detenemos la búsqueda de inmediato
+        }
+
+        // 4. Generar sucesores
+        vector<NodoTuberia> sucesores = GenerarSucesoresTuberia(current, terreno, altura, limite_eco);
+
+        for (NodoTuberia sucesor : sucesores) {
+          EstadoTuberia estado_suc = sucesor.estado_tub;
+          int nuevo_g = sucesor.g_cost;
+          int nuevo_impacto = sucesor.impacto;
+          bool dominado = false;
+            
+          // Solo añadimos a la cola si NO ha sido cerrado ya
+            if (explorados.find(estado_suc) != explorados.end()) {
+                for (auto p : explorados[estado_suc]) {
+                    // Si ya existe una ruta de igual/menor longitud Y de igual/menor impacto, descartamos
+                    if (p.first <= nuevo_g && p.second <= nuevo_impacto) {
+                        dominado = true;
+                        break;
+                    }
+                }
+            }
+            if (!dominado) {
+                explorados[estado_suc].push_back({nuevo_g, nuevo_impacto}); 
+                sucesor.f_cost = sucesor.g_cost + HeuristicaTuberias(estado_suc.site.f, estado_suc.site.c, plantas_U);
+                frontier.push(sucesor);
+            }
+        }
+    }
+
+    return plan_final;
+}
+  
 /**
  * @brief Comportamiento del ingeniero para el Nivel 4.
  * @param sensores Datos actuales de los sensores.
@@ -711,7 +971,30 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_3(Sensores sensores
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores)
 {
-  return IDLE;
+  // Nivel 4: no ejecutamos pasos aquí; solo generamos y publicamos la red de tuberías.
+  if (!hayPlan) {
+        EstadoTuberia inicio;
+        inicio.site.f = sensores.BelPosF;
+        inicio.site.c = sensores.BelPosC;
+    // La red arranca en la altura natural de la casilla de inicio.
+        inicio.altura_tuberia = mapaCotas[sensores.BelPosF][sensores.BelPosC];
+
+    // El presupuesto real es el impacto restante disponible para esta planificación.
+    int limite_eco = sensores.max_ecologico;
+
+    // Lanzamos la búsqueda sobre el mapa completo conocido.
+        list<Paso> plan_tub = A_Star_Tuberias(inicio, mapaResultado, mapaCotas, limite_eco);
+
+    // Si encontró solución, la guardamos en la estructura que lee el monitor.
+        if (plan_tub.size() > 0) {
+            VisualizaRedTuberias(plan_tub);
+            hayPlan = true;
+            cout << "Plan de tuberías trazado con éxito!" << endl;
+        } else {
+            cout << "No se encontró un camino válido para las tuberías." << endl;
+        }
+    }
+    return IDLE;
 }
 
 /**
@@ -1164,6 +1447,8 @@ void ComportamientoIngeniero::VisualizaRedTuberias(const list<Paso> &plan)
   auto it = plan.begin();
   while (it != plan.end())
   {
+    // 1. Imprimimos por pantalla el paso actual
+    cout << "Casilla [" << it->fil << ", " << it->col << "] -> Op: " << it->op << endl;
     listaCanalizacionTuberias.push_back({it->fil, it->col, it->op});
     it++;
   }

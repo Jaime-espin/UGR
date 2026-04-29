@@ -24,7 +24,7 @@ struct NodoI {
     list<Action> secuencia;
     
     bool operator==(const NodoI &node) const {
-        return estado == node.estado;
+      return estado == node.estado;
     }
     
     // Operador < para poder usar std::set y hacer la búsqueda eficiente
@@ -35,6 +35,46 @@ struct NodoI {
         if (estado.site.f == node.estado.site.f and estado.site.c == node.estado.site.c and estado.site.brujula == node.estado.site.brujula and estado.zapatillas < node.estado.zapatillas) return true;
         return false;
     }
+};
+
+struct EstadoTuberia{
+  ubicacion site;
+  int altura_tuberia;
+
+  bool operator==(const EstadoTuberia &est) const {
+    return site == est.site && altura_tuberia == est.altura_tuberia;
+  }
+
+  bool operator<(const EstadoTuberia &est) const {
+    if (site.f < est.site.f) return true;
+    if (site.f == est.site.f && site.c < est.site.c) return true;
+    if (site.f == est.site.f && site.c == est.site.c && altura_tuberia < est.altura_tuberia) return true;
+    return false;
+  }
+};
+
+struct NodoTuberia{
+  EstadoTuberia estado_tub;
+  list<Paso> secuencia;
+  int g_cost; //Longitud tubería
+  int f_cost; // g_cost + heuristica
+  int impacto;
+
+  bool operator<(const NodoTuberia &node) const {
+    // 1. Prioridad principal: El camino más corto estimado
+    if (f_cost == node.f_cost) {
+      
+      // 2. Primer desempate: El camino que menos contamine
+      if (impacto == node.impacto) {
+        
+        // 3. SEGUNDO DESEMPATE (Tu intuición): Preferir la mayor altura (seguir plano)
+        // Como es una cola de prioridad max-heap, devolver '<' hace que el mayor suba.
+        return estado_tub.altura_tuberia < node.estado_tub.altura_tuberia; 
+      }
+      return impacto > node.impacto; 
+    }
+    return f_cost > node.f_cost;
+  }
 };
 
 class ComportamientoIngeniero : public Comportamiento {
