@@ -754,6 +754,127 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_4(Sensores sensores) {
  * @return Acción a realizar.
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores) {
+  Action accion = IDLE;
+  ActualizarMapa(sensores);
+
+  // Actualizar zapatillas
+  if (sensores.superficie[0] == 'D') tiene_zapatillas = true;
+
+  // REPLANIFICACIÓN POR CHOQUE: Si choca o se resetea, borra el plan de movimiento
+  if (sensores.choque || sensores.reset) {
+    hayPlan = false;
+    plan.clear();
+  }
+
+  // 2. Si el jefe lanza COME, actualizo mi destino
+  if (sensores.venpaca) {
+    targetF = sensores.GotoF;
+    targetC = sensores.GotoC;
+    hayPlan = false; 
+    plan.clear();
+    cout<<"Tec: Come recivido"<<endl;
+  }
+
+  // 1. Prioridad Absoluta: Si el jefe me está mirando a los ojos, ¡Instalo!
+  if (sensores.enfrente) {
+
+    hayPlan = false; 
+    plan.clear();
+    cout<<"Tec: Instalo, ingeniero enfrente"<<endl;
+    return INSTALL;
+  }
+
+  // 3. NAVEGAR HACIA LA ORDEN Y ENCARARSE
+  if (targetF != -1 && targetC != -1) {
+    cout<<"Tec: Navego al destino"<<endl;
+    // Si ya he llegado a la migita de pan
+    if (sensores.posF == targetF && sensores.posC == targetC) {
+      // Si el Ingeniero está justo delante mía, me quedo quieto
+      if (sensores.agentes[2] == 'i') return IDLE;
+
+      // Si no está delante, miro si está a izquierda (posición 1) o derecha (posición 3)
+      if (sensores.agentes[1] == 'i') return TURN_SL;
+      if (sensores.agentes[3] == 'i') return TURN_SR;
+
+      // Si no lo detecto en visión cercana, giro en el sentido que menos recorrido haga
+      // (no sabemos dónde está, así que seguimos girando a la derecha)
+      return TURN_SR;
+    }
+
+    int dist = abs(targetF - sensores.posF) + abs(targetC - sensores.posC);
+
+    if(dist>1){
+      // Si no he llegado, trazo mi ruta
+      if (!hayPlan) {
+        EstadoT start, goal;
+        start.site.f = sensores.posF; start.site.c = sensores.posC;
+        start.site.brujula = sensores.rumbo; start.zapatillas = tiene_zapatillas;
+        goal.site.f = targetF; goal.site.c = targetC;
+
+        // Crear copia del mapa para posible evitación del Ingeniero
+        vector<vector<unsigned char>> mapaPlan = mapaResultado;
+        if (bloqueoF != -1 && bloqueoC != -1) {
+          if (bloqueoF >= 0 && bloqueoF < mapaPlan.size() &&
+              bloqueoC >= 0 && bloqueoC < mapaPlan[0].size()) {
+            mapaPlan[bloqueoF][bloqueoC] = 'P'; // Marcar como intransitable
+          }
+          bloqueoF = -1; bloqueoC = -1; // Resetear para futuras planificaciones
+        }
+
+        plan = A_Star_Tecnico(start, goal, mapaPlan, mapaCotas);
+        VisualizaPlan(start.site, plan);
+        hayPlan = !plan.empty();
+      }
+
+      // Camino la ruta trazada
+      if (hayPlan && !plan.empty()) {
+        if (plan.front() == WALK && sensores.agentes[2] == 'i') {
+          // El Ingeniero bloquea el paso: guardar su posición y replanificar
+          EstadoT st_actual;
+          st_actual.site.f = sensores.posF;
+          st_actual.site.c = sensores.posC;
+          st_actual.site.brujula = (Orientacion)sensores.rumbo;
+          st_actual.zapatillas = tiene_zapatillas;
+          EstadoT st_frontal = NextCasillaTecnico(st_actual);
+          bloqueoF = st_frontal.site.f;
+          bloqueoC = st_frontal.site.c;
+          hayPlan = false;
+          plan.clear();
+          // No retornar IDLE; dejamos que más abajo se replanifique con evitación
+        } else {
+          Action a = plan.front();
+          plan.pop_front();
+          if (plan.empty()) hayPlan = false;
+          return a;
+        }
+      }
+    }else{
+      if (hayPlan) { hayPlan = false; plan.clear(); } // Limpiamos la memoria
+
+      int dF = targetF - sensores.posF;
+      int dC = targetC - sensores.posC;
+      Orientacion ideal;
+
+      if (dF < 0 && dC == 0) ideal = norte;
+      else if (dF == 0 && dC > 0) ideal = este;
+      else if (dF > 0 && dC == 0) ideal = sur;
+      else if (dF == 0 && dC < 0) ideal = oeste;
+      else ideal = (Orientacion)sensores.rumbo;
+
+      if (sensores.rumbo != ideal) {
+        int diff = (ideal - sensores.rumbo + 8) % 8;
+        if (diff <= 4) return TURN_SR;
+        else return TURN_SL;
+      } else {
+        // Si ya estamos mirando a la casilla, miramos si el Ingeniero sigue allí
+        if (sensores.agentes[2] == 'i') {
+            return IDLE; // El jefe sigue ahí, esperamos pacientemente
+        }
+        return WALK; // ¡Vía libre! Avanzamos
+      }
+    }
+  }
+
   return IDLE;
 }
 

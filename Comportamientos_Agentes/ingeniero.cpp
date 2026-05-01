@@ -706,18 +706,19 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_3(Sensores sensores
 
 int CalcularImpactoEcologico(char terreno, int operacion){
   int impacto = 0;
-    
-  // Coste base por INSTALAR la tubería
-  switch (terreno) {
-    case 'A': impacto += 50; break;
-    case 'H': impacto += 45; break;
-    case 'S': impacto += 25; break;
-    case 'C': case 'U': impacto += 15; break;
-    default: impacto += 30; break;
+  
+  if(operacion == 0){
+    // Coste base por INSTALAR la tubería
+    switch (terreno) {
+      case 'A': impacto += 50; break;
+      case 'H': impacto += 45; break;
+      case 'S': impacto += 25; break;
+      case 'C': case 'U': impacto += 15; break;
+      default: impacto += 30; break;
+    }
   }
-
   // Coste extra por MODIFICAR el terreno (operacion: 1 = RAISE, -1 = DIG)
-  if (operacion == 1) { // RAISE
+  else if (operacion == 1) { // RAISE
     switch (terreno) {
       case 'H': impacto += 55; break;
       case 'S': impacto += 30; break;
@@ -778,7 +779,7 @@ vector<NodoTuberia> GenerarSucesoresTuberia(const NodoTuberia &nodo_actual, cons
 
     // Comprobamos si esta opción plana es legal
     if (abs(op_plana) <= 1) { // Regla de modificación +-1
-      if (tipo_terreno == 'A' && op_plana != 0) continue; // Si es agua, op_plana debe ser 0
+      if (!(tipo_terreno == 'A' && op_plana != 0)){ // Si es agua, op_plana debe ser 0
         int impacto_sucesor = CosteInstalacionTuberia(tipo_terreno);
         bool operacion_altura_valida = true;
 
@@ -811,7 +812,7 @@ vector<NodoTuberia> GenerarSucesoresTuberia(const NodoTuberia &nodo_actual, cons
                       
           sucesores.push_back(sucesor_plano);
         }
-      
+      }
     }
   
 
@@ -821,7 +822,7 @@ vector<NodoTuberia> GenerarSucesoresTuberia(const NodoTuberia &nodo_actual, cons
 
     // Comprobamos si esta opción en bajada es legal
     if (abs(op_bajada) <= 1) { // Regla de modificación +-1
-      if (tipo_terreno == 'A' && op_bajada != 0) continue; // Si es agua, op_bajada debe ser 0
+      if (!(tipo_terreno == 'A' && op_bajada != 0)){ // Si es agua, op_bajada debe ser 0
         int impacto_sucesor = CosteInstalacionTuberia(tipo_terreno);
         bool operacion_altura_valida = true;
 
@@ -834,7 +835,7 @@ vector<NodoTuberia> GenerarSucesoresTuberia(const NodoTuberia &nodo_actual, cons
                 operacion_altura_valida = false; // Ilegal
             }
         } else if (op_bajada == -1) { // DIG
-            if (h_bajada > 1) { // Precondición: no se puede DIG si altura es 0 o 1
+            if (h_mapa > 1) { // Precondición: no se puede DIG si altura es 0 o 1
                 impacto_sucesor += CalcularImpactoEcologico(tipo_terreno, -1);
             } else {
                 operacion_altura_valida = false; // Ilegal
@@ -854,7 +855,7 @@ vector<NodoTuberia> GenerarSucesoresTuberia(const NodoTuberia &nodo_actual, cons
                       
           sucesores.push_back(sucesor_bajada);
         }
-      
+      }
     }
   }
   return sucesores;
@@ -906,7 +907,7 @@ list<Paso> A_Star_Tuberias(EstadoTuberia inicio, const vector<vector<unsigned ch
         start_node.estado_tub.altura_tuberia = h_mapa_inicio + op; 
         start_node.g_cost = 0;
         
-        start_node.impacto = (op == 0) ? 0 : CalcularImpactoEcologico(tipo_inicio, op);
+        start_node.impacto = CalcularImpactoEcologico(tipo_inicio, op);
 
         // Si solo modificar la salida ya revienta el presupuesto, la descartamos
         if (start_node.impacto > limite_eco) continue;
@@ -1004,6 +1005,200 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores)
 {
+  Action accion = IDLE;
+  ActualizarMapa(sensores);
+
+  // Actualizar zapatillas
+  if (sensores.superficie[0] == 'D') tiene_zapatillas = true;
+  // REPLANIFICACIÓN POR CHOQUE: Si choca, borra el plan de movimiento
+  if (sensores.choque || sensores.reset) {
+    hayPlan = false; plan.clear();
+  }
+
+  // FASE 0: PLANIFICAR la red de tuberías (solo una vez)
+  if (faseNivel5 == 0) {
+    EstadoTuberia inicio;
+    inicio.site.f = sensores.BelPosF;
+    inicio.site.c = sensores.BelPosC;
+    inicio.altura_tuberia = mapaCotas[sensores.BelPosF][sensores.BelPosC];
+    //Planificamos con A* igual que en el nivel 4
+    list<Paso> planTuberias = A_Star_Tuberias(inicio, mapaResultado, mapaCotas, sensores.max_ecologico);
+
+    if (!planTuberias.empty()) {
+      VisualizaRedTuberias(planTuberias);
+      // Lo pasamos a vector para acceder fácilmente con tramo_idx
+      for (auto p : planTuberias) planTuberiasVec.push_back(p);
+      faseNivel5 = 1; //Pasamos al siguiente nivel
+      tramo_idx = 0;
+    }
+    return IDLE;
+  }
+
+  // Prevención de fin
+  if (tramo_idx+1 >= planTuberiasVec.size()) return IDLE;
+
+  // FASE 1: MOVERSE al tramo actual del plan de tuberías
+  if (faseNivel5 == 1) {
+    Paso target = planTuberiasVec[tramo_idx];
+    // Si ya estamos en la casilla, nivelamos terreno
+    if (sensores.posF == target.fil && sensores.posC == target.col) {
+      if (target.op == 1) { planTuberiasVec[tramo_idx].op = 0; return RAISE; }
+      if (target.op == -1) { planTuberiasVec[tramo_idx].op = 0; return DIG; }
+      
+      // Si la casilla está lista, plantamos baliza y avanzamos fase
+      faseNivel5 = 2; 
+      hayPlan = false; 
+      plan.clear();
+      return IDLE;
+    }
+
+    // Si no estamos, caminamos hacia ella
+    if (!hayPlan) {
+      EstadoI start, goal;
+      start.site.f = sensores.posF; start.site.c = sensores.posC;
+      start.site.brujula = sensores.rumbo; start.zapatillas = tiene_zapatillas;
+      goal.site.f = target.fil; goal.site.c = target.col;
+      plan = BFS_Ingeniero(start, goal, mapaResultado, mapaCotas);
+      VisualizaPlan(start.site, plan);
+      hayPlan = !plan.empty();
+    }
+
+    if (hayPlan && !plan.empty()) {
+      Action a = plan.front(); 
+      plan.pop_front();
+      if (plan.empty()) hayPlan = false;
+      return a;
+    }
+    cout<<"Ing: Fase1"<<endl;
+    return IDLE;
+  }
+
+  // FASE 2: INSTALAR la tubería en el tramo actual
+  if (faseNivel5 == 2) {
+    faseNivel5 = 3; // En el siguiente tick, me quitaré de en medio
+    hayPlan = false; 
+    plan.clear();
+    cout<<"Ing: Fase2"<<endl;
+    return COME; // Le deja la "migita de pan" al Técnico en esta casilla
+  }
+
+  // FASE 3: Ir a la casilla de construcción actual y prepararla
+  if (faseNivel5 == 3) {
+    cout<<"Ing: Fase3"<<endl;
+    Paso target = planTuberiasVec[tramo_idx+1];
+    
+    if (sensores.posF == target.fil && sensores.posC == target.col) {
+      if (target.op == 1) { planTuberiasVec[tramo_idx+1].op = 0; cout<<"Ing: RAISE"<<endl; return RAISE; 
+      }
+      if (target.op == -1) { planTuberiasVec[tramo_idx+1].op = 0; cout<<"Ing: RAISE"<<endl;return DIG;
+      }
+      
+      faseNivel5 = 4; // Terreno preparado, toca girarse
+      hayPlan = false; plan.clear();
+      return IDLE;
+    }
+    // 1. Calculamos la distancia y el desnivel real
+    int dist = abs(target.fil - sensores.posF) + abs(target.col - sensores.posC);
+    int maxDif = tiene_zapatillas ? 2 : 1;
+    // Usamos casting a (int) para evitar underflows silenciosos al restar
+    int difAltura = abs((int)mapaCotas[target.fil][target.col] - (int)sensores.cota[0]);
+
+    // === LÓGICA REACTIVA OPTIMIZADA (Sustituye al BFS en la Fase 3) ===
+    if(dist==1 && difAltura <=maxDif){
+      if (hayPlan) { hayPlan = false; plan.clear(); }
+      int dF = target.fil - sensores.posF;
+      int dC = target.col - sensores.posC;
+      Orientacion ideal;
+
+      // 1. Averiguamos dónde está la siguiente casilla (siempre es ortogonal)
+      if (dF < 0 && dC == 0) ideal = norte;
+      else if (dF == 0 && dC > 0) ideal = este;
+      else if (dF > 0 && dC == 0) ideal = sur;
+      else if (dF == 0 && dC < 0) ideal = oeste;
+      else ideal = (Orientacion)sensores.rumbo; // Salvaguarda
+
+      // 2. Si no la estamos mirando, giramos hacia ella
+      if (sensores.rumbo != ideal) {
+        int diff = (ideal - sensores.rumbo + 8) % 8;
+        if (diff <= 4) return TURN_SR;
+        else return TURN_SL;
+      } 
+      // 3. Si ya la estamos mirando, avanzamos directamente
+      else {
+        return WALK;
+      }
+    }else{// LÓGICA DE BÚSQUEDA BFS (Si está lejos o el salto es muy grande)
+      if (!hayPlan) {
+        EstadoI start, goal;
+        start.site.f = sensores.posF; start.site.c = sensores.posC;
+        start.site.brujula = (Orientacion)sensores.rumbo; start.zapatillas = tiene_zapatillas;
+        goal.site.f = target.fil; goal.site.c = target.col;
+        
+        plan = BFS_Ingeniero(start, goal, mapaResultado, mapaCotas);
+        VisualizaPlan(start.site, plan);
+        hayPlan = !plan.empty();
+      }
+
+      if (hayPlan && !plan.empty()) {
+        Action a = plan.front(); 
+        plan.pop_front();
+        if (plan.empty()) hayPlan = false;
+        return a;
+      }
+    }
+    return IDLE;
+  }
+
+  // FASE 4: Girarse hacia la "Migita" y esperar al Técnico
+  if (faseNivel5 == 4) {
+    cout<<"Ing: Fase4"<<endl;
+    // Si ya estamos mirándonos a los ojos ¡ZAS!
+    if (sensores.enfrente) {
+      // Avanzamos el índice AHORA, porque ya hemos construido este empalme.
+      tramo_idx++; 
+      /*// Si el tramo que acabo de construir era el penúltimo (y yo estaba en el último)
+      if (tramo_idx + 1 >= planTuberiasVec.size()) {
+          faseNivel5 = 99; // Hemos terminado la red
+      } else {*/
+          // El Técnico ya está en su sitio (tramo_idx), yo ya estoy en el mío (tramo_idx + 1).
+          // Volvemos a la fase 2 para llamarle, o a la 1 si necesito ir a preparar la nueva "migita".
+          // Como yo ya ESTOY en el tramo_idx, la fase 1 se saltará automáticamente.
+          faseNivel5 = 2; 
+      //}
+      return INSTALL;
+    }else{
+      //return TURN_SL;
+      // Si no me mira, calculo la orientación ideal hacia el técnico
+    Paso tech_pos = planTuberiasVec[tramo_idx];
+    int dF = tech_pos.fil - sensores.posF;
+    int dC = tech_pos.col - sensores.posC;
+    Orientacion ideal;
+
+    if (dF < 0 && dC == 0) ideal = norte;
+    else if (dF < 0 && dC > 0) ideal = noreste;
+    else if (dF == 0 && dC > 0) ideal = este;
+    else if (dF > 0 && dC > 0) ideal = sureste;
+    else if (dF > 0 && dC == 0) ideal = sur;
+    else if (dF > 0 && dC < 0) ideal = suroeste;
+    else if (dF == 0 && dC < 0) ideal = oeste;
+    else if (dF < 0 && dC < 0) ideal = noroeste;
+    else ideal = (Orientacion)sensores.rumbo; // ya está
+
+    if (sensores.rumbo != ideal) {
+      int diff = (ideal - sensores.rumbo + 8) % 8;
+      // Elegir el giro más corto
+      if (diff <= 4)
+        return TURN_SR; // 1,2,3,4 pasos horario
+      else
+        return TURN_SL; // 5,6,7 pasos antihorario (equivale a 3,2,1 negativos)
+    }
+    }
+    
+    
+    
+    return IDLE; // Le miramos fijamente hasta que él termine de llegar
+  }
+
   return IDLE;
 }
 

@@ -269,6 +269,15 @@ private:
   //Segunda parte
   list<Action> plan;
   bool hayPlan;
+
+  int faseNivel5;            // 0=esperando, 1=moviéndose, 2=instalando
+  //Nivel 5
+  int targetF = -1;
+  int targetC = -1;
+  int bloqueoF = -1;
+int bloqueoC = -1;
+int lastMoveRumbo = -1;   // orientación del último WALK exitoso
+int girosBuscando=0;
 };
 
 #endif

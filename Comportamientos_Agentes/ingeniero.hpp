@@ -109,6 +109,8 @@ public:
     plan.clear();
     hayPlan = false;
     tiene_zapatillas = false;
+    faseNivel5 = 0;
+    planTuberiasVec.clear();
   }
 
   ComportamientoIngeniero(const ComportamientoIngeniero &comport)
@@ -297,6 +299,11 @@ private:
   //Segunda parte
   list<Action> plan;
   bool hayPlan;
+
+  //Nivel 5
+  int faseNivel5 = 0;            
+  int tramo_idx = 0; // Para saber por qué paso vamos
+  vector<Paso> planTuberiasVec; // Más fácil de leer que una list
 };
 
 #endif
