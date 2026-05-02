@@ -828,7 +828,7 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores) {
 
       // Camino la ruta trazada
       if (hayPlan && !plan.empty()) {
-        if (plan.front() == WALK && sensores.agentes[2] == 'i') {
+        if (plan.front() == WALK && (sensores.agentes[2] == 'i' || sensores.superficie[2] == 'P')) {
           // El Ingeniero bloquea el paso: guardar su posición y replanificar
           EstadoT st_actual;
           st_actual.site.f = sensores.posF;
@@ -884,6 +884,34 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores) {
  * @return Acción a realizar.
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_6(Sensores sensores) {
+  // 1. Actualización básica de estado en el Nivel 6
+  ActualizarMapa(sensores);
+  if (sensores.superficie[0] == 'D') tiene_zapatillas = true;
+
+  // =====================================================================
+  // FASE 0: EXPLORADOR INCANSABLE
+  // =====================================================================
+  if (faseNivel6 == 0) {
+      // El Técnico mapea incansablemente hasta que el jefe le pega un grito (COME)
+      if (sensores.venpaca) {
+          cout << "Tec: ¡El jefe me llama! Aborto exploración, paso a construcción." << endl;
+          faseNivel6 = 1;
+          // No hacemos return aquí. Dejamos que el código baje al Nivel 5 
+          // para que procese las coordenadas del COME en este mismo turno.
+      } else {
+          return IDLE; // Ahorro absoluto de batería
+      }
+  }
+
+  // =====================================================================
+  // FASE 1: ASISTENTE DE CONSTRUCCIÓN
+  // =====================================================================
+  if (faseNivel6 >= 1) {
+      // Nos inyectamos directamente en el Nivel 5, que ya tiene todas las 
+      // prioridades de evadir al Ingeniero, ir a las miguitas y hacer INSTALL.
+      return ComportamientoTecnicoNivel_5(sensores);
+  }
+
   return IDLE;
 }
 

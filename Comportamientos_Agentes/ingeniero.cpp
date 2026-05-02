@@ -479,10 +479,13 @@ bool EsAccesibleWalkI(const EstadoI &st, const vector<vector<unsigned char>> &te
     ubicacion sig = DelanteSt(st.site); // Función dada en el tutorial
     if (sig.f < 0 || sig.c < 0 || sig.f >= terreno.size() || sig.c >= terreno[0].size()) return false;
     
+    // FIX 1: Asunción de espacio libre para poder explorar
+    if (terreno[sig.f][sig.c] == '?') return true;
+
     // WALK exige celda destino no bloqueante y desnivel admisible.
     bool noObstaculo = terreno[sig.f][sig.c] != 'P' and terreno[sig.f][sig.c] != 'M' and terreno[sig.f][sig.c] != 'B';
     int maxDif = st.zapatillas ? 2 : 1;
-    bool alturaValida = abs(altura[sig.f][sig.c] - altura[st.site.f][st.site.c]) <= maxDif;
+    bool alturaValida = abs((int)altura[sig.f][sig.c] - (int)altura[st.site.f][st.site.c]) <= maxDif;
     
     return noObstaculo and alturaValida;
 }
@@ -496,16 +499,29 @@ bool EsAccesibleJumpI(const EstadoI &st, const vector<vector<unsigned char>> &te
     if (destino.f < 0 || destino.c < 0 || destino.f >= terreno.size() || destino.c >= terreno[0].size()) return false;
     if (intermedia.f < 0 || intermedia.c < 0 || intermedia.f >= terreno.size() || intermedia.c >= terreno[0].size()) return false;
 
-    // JUMP requiere que la casilla intermedia también sea transitable.
-    bool intermediaValida = terreno[intermedia.f][intermedia.c] != 'P' and terreno[intermedia.f][intermedia.c] != 'M' and terreno[intermedia.f][intermedia.c] != 'B';
-    // El destino no puede ser P, M, B
-    bool destNoObstaculo = terreno[destino.f][destino.c] != 'P' and terreno[destino.f][destino.c] != 'M' and terreno[destino.f][destino.c] != 'B';
-    
-    // La altura se comprueba solo entre inicio y destino
-    int maxDif = st.zapatillas ? 2 : 1;
-    bool alturaValida = abs(altura[destino.f][destino.c] - altura[st.site.f][st.site.c]) <= maxDif;
+    // 1. La casilla intermedia DEBE ser transitable. Si la conocemos, comprobamos que no sea obstáculo.
+    if (terreno[intermedia.f][intermedia.c] != '?') {
+        if (terreno[intermedia.f][intermedia.c] == 'P' || 
+            terreno[intermedia.f][intermedia.c] == 'M' || 
+            terreno[intermedia.f][intermedia.c] == 'B') {
+            return false;
+        }
+    }
 
-    return intermediaValida and destNoObstaculo and alturaValida;
+    // 2. La casilla destino DEBE ser transitable y cumplir el desnivel.
+    if (terreno[destino.f][destino.c] != '?') {
+        if (terreno[destino.f][destino.c] == 'P' || 
+            terreno[destino.f][destino.c] == 'M' || 
+            terreno[destino.f][destino.c] == 'B') {
+            return false;
+        }
+        int maxDif = st.zapatillas ? 2 : 1;
+        if (abs((int)altura[destino.f][destino.c] - (int)altura[st.site.f][st.site.c]) > maxDif) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 EstadoI applyI(Action accion, const EstadoI &st, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura) {
@@ -1058,18 +1074,41 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
       start.site.f = sensores.posF; start.site.c = sensores.posC;
       start.site.brujula = sensores.rumbo; start.zapatillas = tiene_zapatillas;
       goal.site.f = target.fil; goal.site.c = target.col;
+
       plan = BFS_Ingeniero(start, goal, mapaResultado, mapaCotas);
       VisualizaPlan(start.site, plan);
       hayPlan = !plan.empty();
     }
 
     if (hayPlan && !plan.empty()) {
-      Action a = plan.front(); 
-      plan.pop_front();
+      cout<<"Ing: Fase1"<<endl;
+      if ((plan.front() == WALK && sensores.agentes[2] == 't') || 
+          (plan.front() == JUMP && sensores.agentes[6] == 't')) {
+          
+          plan.clear();
+          EstadoI st_actual = {ubicacion{sensores.posF, sensores.posC, (Orientacion)sensores.rumbo}, tiene_zapatillas};
+          EstadoI st_izq = st_actual; st_izq.site.brujula = (Orientacion)((st_izq.site.brujula + 7) % 8);
+          EstadoI st_dch = st_actual; st_dch.site.brujula = (Orientacion)((st_dch.site.brujula + 1) % 8);
+
+          bool izq_viable = EsAccesibleWalkI(st_izq, mapaResultado, mapaCotas) && sensores.agentes[1] == '_';
+          bool dch_viable = EsAccesibleWalkI(st_dch, mapaResultado, mapaCotas) && sensores.agentes[3] == '_';
+
+          if (izq_viable) { plan.push_back(TURN_SL); plan.push_back(WALK); } 
+          else if (dch_viable) { plan.push_back(TURN_SR); plan.push_back(WALK); } 
+          else {
+              bool salto_viable = EsAccesibleJumpI(st_actual, mapaResultado, mapaCotas) && sensores.agentes[6] == '_';
+              if (salto_viable) plan.push_back(JUMP);
+              else plan.push_back(TURN_SR); // Dar vueltas esperando
+          }
+          hayPlan = true;
+          Action a = plan.front(); plan.pop_front();
+          return a;
+      }
+
+      Action a = plan.front(); plan.pop_front();
       if (plan.empty()) hayPlan = false;
       return a;
     }
-    cout<<"Ing: Fase1"<<endl;
     return IDLE;
   }
 
@@ -1125,6 +1164,8 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
       } 
       // 3. Si ya la estamos mirando, avanzamos directamente
       else {
+        // Evasión reactiva simple
+        if (sensores.agentes[2] == 't') return TURN_SR; 
         return WALK;
       }
     }else{// LÓGICA DE BÚSQUEDA BFS (Si está lejos o el salto es muy grande)
@@ -1140,6 +1181,28 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
       }
 
       if (hayPlan && !plan.empty()) {
+        if ((plan.front() == WALK && sensores.agentes[2] == 't') || 
+            (plan.front() == JUMP && sensores.agentes[6] == 't')) {
+            
+            plan.clear();
+            EstadoI st_actual = {ubicacion{sensores.posF, sensores.posC, (Orientacion)sensores.rumbo}, tiene_zapatillas};
+            EstadoI st_izq = st_actual; st_izq.site.brujula = (Orientacion)((st_izq.site.brujula + 7) % 8);
+            EstadoI st_dch = st_actual; st_dch.site.brujula = (Orientacion)((st_dch.site.brujula + 1) % 8);
+
+            bool izq_viable = EsAccesibleWalkI(st_izq, mapaResultado, mapaCotas) && sensores.agentes[1] == '_';
+            bool dch_viable = EsAccesibleWalkI(st_dch, mapaResultado, mapaCotas) && sensores.agentes[3] == '_';
+
+            if (izq_viable) { plan.push_back(TURN_SL); plan.push_back(WALK); } 
+            else if (dch_viable) { plan.push_back(TURN_SR); plan.push_back(WALK); } 
+            else {
+                bool salto_viable = EsAccesibleJumpI(st_actual, mapaResultado, mapaCotas) && sensores.agentes[6] == '_';
+                if (salto_viable) plan.push_back(JUMP);
+                else plan.push_back(TURN_SR);
+            }
+            hayPlan = true;
+            Action a = plan.front(); plan.pop_front();
+            return a;
+        }
         Action a = plan.front(); 
         plan.pop_front();
         if (plan.empty()) hayPlan = false;
@@ -1192,6 +1255,7 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
       else
         return TURN_SL; // 5,6,7 pasos antihorario (equivale a 3,2,1 negativos)
     }
+    return IDLE;
     }
     
     
@@ -1202,6 +1266,123 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
   return IDLE;
 }
 
+int CalcularCosteEnergiaI(Action accion, char terreno_inicio, int altura_inicio, int altura_destino) {
+  int coste_base = 1;
+  int mod_altura = 0;
+  bool aplica_mod_altura = false;
+  if (accion == WALK) {
+    aplica_mod_altura = false;
+    switch (terreno_inicio) {
+      case 'A': coste_base = 60; aplica_mod_altura = true; break;
+      case 'H': coste_base = 6;  aplica_mod_altura = true; break;
+      case 'S': coste_base = 3;  aplica_mod_altura = true; break;
+    }
+  }else if(accion == JUMP){
+    aplica_mod_altura = true;
+    switch (terreno_inicio) {
+      case 'A': coste_base = 90; break;
+      case 'H': coste_base = 10; break;
+      case 'S': coste_base = 4; break;
+      default:  coste_base = 3; break;
+    }
+  }else if (accion == TURN_SL || accion == TURN_SR) {
+    switch (terreno_inicio) {
+      case 'A': coste_base= 5; break;
+      case 'H': coste_base= 2; break;
+      case 'S': coste_base= 1; break;
+    }
+  }
+  
+  if (aplica_mod_altura) {
+      int dif = altura_destino - altura_inicio;
+      if (dif > 0) mod_altura = 5;
+      else if (dif < 0) mod_altura = -2;
+
+      coste_base += mod_altura;
+  }
+  return coste_base;
+}
+
+int Heuristica(const EstadoI &actual, const EstadoI &meta) {
+  // Movimiento en 8 direcciones: cota inferior admisible = distancia de Chebyshev.
+  return max(abs(actual.site.f - meta.site.f), abs(actual.site.c - meta.site.c));
+}
+
+list<Action> A_Star_Ingeniero(EstadoI inicio, EstadoI fin, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura) {
+  priority_queue<NodoI_Astar> frontier; 
+  map<EstadoI, int> best_g_cost;
+  list<Action> plan;
+    
+  bool SolutionFound = false;
+
+  NodoI_Astar start_node;
+  start_node.estado = inicio;
+  start_node.g_cost = 0;
+  start_node.f_cost = Heuristica(inicio, fin);
+  frontier.push(start_node);
+
+  best_g_cost[inicio] = 0; // Coste de llegar al inicio es 0
+
+  while (!frontier.empty() and !SolutionFound) {
+    NodoI_Astar current_node = frontier.top();
+    frontier.pop();      
+    EstadoI estado_actual = current_node.estado;
+
+    //Comprobamos si hemos llegado a la meta
+    if (estado_actual.site.f == fin.site.f && estado_actual.site.c == fin.site.c) {
+      plan = current_node.secuencia;
+      SolutionFound = true;
+      break;
+    }
+
+    // Si ya lo exploramos con un coste menor, lo saltamos
+    if (current_node.g_cost > best_g_cost[estado_actual]) {
+      continue; 
+    }
+
+    // Generar hijos
+    vector<Action> acciones = {WALK, JUMP, TURN_SR, TURN_SL};
+        
+    for (Action acc : acciones) {
+      EstadoI nuevo_estado = applyI(acc, estado_actual, terreno, altura);
+            
+      // Verificamos que la acción haya tenido efecto
+      if (!(nuevo_estado == estado_actual) || acc == TURN_SR || acc == TURN_SL) {
+                
+        int coste_paso = 0;
+        char terr_inicio = terreno[estado_actual.site.f][estado_actual.site.c];
+
+        if (acc == WALK || acc == JUMP) {
+          int alt_inicio = altura[estado_actual.site.f][estado_actual.site.c];
+          int alt_destino = altura[nuevo_estado.site.f][nuevo_estado.site.c];
+          coste_paso = CalcularCosteEnergiaI(acc, terr_inicio, alt_inicio, alt_destino);
+        } else {
+          coste_paso = CalcularCosteEnergiaI(acc, terr_inicio, 0, 0);
+        }
+
+        int nuevo_g = current_node.g_cost + coste_paso;
+        // SOLO añadimos el hijo si nunca hemos estado ahí, o si hemos encontrado un camino MÁS BARATO
+        if (best_g_cost.find(nuevo_estado) == best_g_cost.end() || nuevo_g < best_g_cost[nuevo_estado]) {
+                  
+          best_g_cost[nuevo_estado] = nuevo_g; // Actualizamos el récord
+          int nuevo_f = nuevo_g + Heuristica(nuevo_estado, fin);
+
+          NodoI_Astar child;
+          child.estado = nuevo_estado;
+          child.secuencia = current_node.secuencia; 
+          child.secuencia.push_back(acc);
+          child.g_cost = nuevo_g;
+          child.f_cost = nuevo_f;
+                    
+          frontier.push(child);
+        }
+      }
+    }
+  }
+  return plan;
+}
+
+
 /**
  * @brief Comportamiento del ingeniero para el Nivel 6.
  * @param sensores Datos actuales de los sensores.
@@ -1209,6 +1390,221 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores)
 {
+  // 1. Actualización básica de estado en el Nivel 6
+  ActualizarMapa(sensores);
+  if (sensores.superficie[0] == 'D') tiene_zapatillas = true;
+
+  static set<pair<int, int>> niebla_inaccesible;
+  // Calculamos cuántos turnos llevamos de simulación de forma segura
+  static int vida_inicial = -1;
+  static int mejor_coste_tuberia = 999999; 
+  static list<Paso> mejor_plan_tuberias;
+  static int metas_evaluadas = 0; // Para no recalcular sobre la misma 'U'
+
+  if (vida_inicial == -1 || sensores.vida > vida_inicial) {
+      vida_inicial = sensores.vida; // Se resetea si el mapa reinicia
+  }
+  int turnos_gastados = vida_inicial - sensores.vida;
+
+  // =====================================================================
+  // FASE 0: EXPLORACIÓN Y PLANIFICACIÓN SILENCIOSA
+  // =====================================================================
+  if (faseNivel6 == 0) {
+    int num_Us_actual = 0;
+    int celdas_exploradas = 0;
+    int total_celdas = mapaResultado.size() * mapaResultado[0].size();
+    
+    // Analizamos el conocimiento actual del mapa
+    for (int i = 0; i < mapaResultado.size(); i++) {
+      for (int j = 0; j < mapaResultado[0].size(); j++) {
+        // Contamos metas
+        if (mapaResultado[i][j] == 'U') {
+          num_Us_actual++;
+        }
+      }
+    }
+
+    
+    // Calculamos el porcentaje real
+    float porcentaje_explorado = ((float)celdas_exploradas / total_celdas) * 100.0f;
+
+    // CONDICIÓN DE PARADA POR PORCENTAJE:
+    // 1. Tenemos 2+ metas y un 40% del mapa (suficiente para que A* compare la mejor).
+    // 2. Tenemos 1 meta, pero ya hemos peinado el 75% del mapa (nos conformamos para no agotar la batería).
+    bool suficientes_metas = (num_Us >= 2 && porcentaje_explorado >= 90.0f);
+    bool exploracion_profunda = (num_Us >= 1 && porcentaje_explorado >= 90.0f);
+
+    if (suficientes_metas || exploracion_profunda) {
+      EstadoTuberia inicio;
+      inicio.site.f = sensores.BelPosF;
+      inicio.site.c = sensores.BelPosC;
+      inicio.altura_tuberia = mapaCotas[sensores.BelPosF][sensores.BelPosC];
+      
+      list<Paso> planTuberias = A_Star_Tuberias(inicio, mapaResultado, mapaCotas, sensores.max_ecologico);
+      
+      if (!planTuberias.empty()) {
+          cout << "Ing: ¡Planificación lista! Metas: " << num_Us 
+               << " | Mapa explorado: " << porcentaje_explorado << "%" << endl;
+          VisualizaRedTuberias(planTuberias);
+          planTuberiasVec.clear();
+          for (auto p : planTuberias) planTuberiasVec.push_back(p);
+          
+          faseNivel6 = 2; // Saltamos a la fase de construcción
+          faseNivel5 = 1; // Le decimos al Nivel 5 que ya hemos planificado (saltamos su Fase 0)
+          tramo_idx = 0;
+          hayPlan = false;
+          plan.clear();
+          return IDLE;
+      }
+      // Si el A* devolvió una lista vacía, ignoramos la 'U' y dejamos que caiga al Nivel 1 para seguir explorando.
+    }
+    // 2. Si no tenemos mapa suficiente, EXPLORAMOS HACIA LA NIEBLA CON A*
+    if (!hayPlan) {
+        int target_f = -1, target_c = -1;
+        int min_dist = 999999;
+
+        // Buscamos la primera casilla desconocida ('?')
+        for (int i = 0; i < mapaResultado.size(); i++) {
+            for (int j = 0; j < mapaResultado[0].size(); j++) {
+                if (mapaResultado[i][j] == '?' && niebla_inaccesible.find({i, j}) == niebla_inaccesible.end()) {
+                    int dist = abs(i - sensores.posF) + abs(j - sensores.posC);
+                    if (dist < min_dist) {
+                        min_dist = dist;
+                        target_f = i;
+                        target_c = j;
+                    }
+                }
+            }
+        }
+
+        if (target_f != -1) {
+            EstadoI start, goal;
+            start.site.f = sensores.posF; start.site.c = sensores.posC;
+            start.site.brujula = (Orientacion)sensores.rumbo; start.zapatillas = tiene_zapatillas;
+            goal.site.f = target_f; goal.site.c = target_c;
+
+            // Trazamos una ruta hacia esa niebla
+            plan = A_Star_Ingeniero(start, goal, mapaResultado, mapaCotas);
+            hayPlan = !plan.empty();
+
+            // Si A* no puede llegar a esta niebla (ej. rodeada de árboles), la metemos en la lista negra
+            if (plan.empty()) {
+                niebla_inaccesible.insert({target_f, target_c});
+            }
+        }
+    }
+    // 3. Ejecutamos la ruta de exploración
+    if (hayPlan && !plan.empty()) {
+        Action a = plan.front();
+        int maxDif = tiene_zapatillas ? 2 : 1;
+        bool abortar = false;
+
+        if (a == WALK) {
+            bool frenteLibre = (sensores.superficie[2] != 'P' && sensores.superficie[2] != 'M' && sensores.superficie[2] != 'B');
+            int difAltura = abs((int)sensores.cota[2] - (int)sensores.cota[0]);
+            // Evaluamos el terreno Y LA PRESENCIA DEL TÉCNICO ('t')
+            if (!frenteLibre || difAltura > maxDif) abortar = true;
+        } else if (a == JUMP) {
+            bool interLibre = (sensores.superficie[2] != 'P' && sensores.superficie[2] != 'M' && sensores.superficie[2] != 'B');
+            bool destLibre = (sensores.superficie[6] != 'P' && sensores.superficie[6] != 'M' && sensores.superficie[6] != 'B');
+            int difAltura = abs((int)sensores.cota[6] - (int)sensores.cota[0]);
+            // El Ingeniero tampoco puede saltar encima del Técnico, ni caerle encima
+            if (!interLibre || !destLibre || difAltura > maxDif) abortar = true;
+        }
+
+        if (abortar) {
+            hayPlan = false; plan.clear();
+            return IDLE; // Frenamos y en el siguiente tick recalcula con la nueva info
+        }
+
+        if ((a == WALK && sensores.agentes[2] == 't') || 
+            (a == JUMP && sensores.agentes[6] == 't')) {
+            
+            plan.clear();
+            EstadoI st_actual = {ubicacion{sensores.posF, sensores.posC, (Orientacion)sensores.rumbo}, tiene_zapatillas};
+            EstadoI st_izq = st_actual; st_izq.site.brujula = (Orientacion)((st_izq.site.brujula + 7) % 8);
+            EstadoI st_dch = st_actual; st_dch.site.brujula = (Orientacion)((st_dch.site.brujula + 1) % 8);
+
+            bool izq_viable = EsAccesibleWalkI(st_izq, mapaResultado, mapaCotas) && sensores.agentes[1] == '_';
+            bool dch_viable = EsAccesibleWalkI(st_dch, mapaResultado, mapaCotas) && sensores.agentes[3] == '_';
+
+            if (izq_viable) { plan.push_back(TURN_SL); plan.push_back(WALK); } 
+            else if (dch_viable) { plan.push_back(TURN_SR); plan.push_back(WALK); } 
+            else {
+                bool salto_viable = EsAccesibleJumpI(st_actual, mapaResultado, mapaCotas) && sensores.agentes[6] == '_';
+                if (salto_viable) plan.push_back(JUMP);
+                else plan.push_back(TURN_SR); // Dar vueltas
+            }
+            hayPlan = true;
+            Action accion_evasion = plan.front(); plan.pop_front();
+            return accion_evasion;
+        }
+        plan.pop_front();
+        if (plan.empty()) hayPlan = false;
+        
+        if (sensores.choque || sensores.reset) {
+            hayPlan = false; plan.clear();
+            return IDLE;
+        }
+        return a;
+    }
+
+    // Fallback por si la búsqueda falla (ej. el '?' está rodeado de muros)
+    return TURN_SR;
+    
+  }
+
+  // =====================================================================
+  // FASE 2: CONSTRUCCIÓN Y REPLANIFICACIÓN DE EMERGENCIA
+  // =====================================================================
+  if (faseNivel6 == 2) {
+      // Si descubrimos de repente que un '?' era un muro ('M') o nos atascamos
+      if (sensores.choque || sensores.reset) {
+          cout << "Ing: ¡Obstáculo imprevisto en la niebla! Re-explorando..." << endl;
+          faseNivel6 = 0; // Volvemos a la Fase 0 para recalcular
+          hayPlan = false;
+          plan.clear();
+          // Reseteamos el contador de vida para darle otros 600 turnos extra de exploración si fuera necesario
+          vida_inicial = sensores.vida; 
+          return IDLE;
+      }
+
+      // 1. Obtenemos la acción que quiere hacer el Nivel 5
+      Action accion_n5 = ComportamientoIngenieroNivel_5(sensores);
+
+      // 2. ¡EL ESCUDO!: Verificamos la realidad antes de dar el paso mortal
+      int maxDif = tiene_zapatillas ? 2 : 1;
+
+      if (accion_n5 == WALK) {
+          bool frenteLibre = (sensores.superficie[2] != 'P' && sensores.superficie[2] != 'M' && sensores.superficie[2] != 'B');
+          int difAltura = abs((int)sensores.cota[2] - (int)sensores.cota[0]);
+          
+          if (!frenteLibre || difAltura > maxDif) {
+              cout << "Ing: ¡Precipicio fantasma detectado (WALK)! Abortando red..." << endl;
+              faseNivel6 = 0; // Mandamos recalcular toda la red
+              hayPlan = false; plan.clear();
+              vida_inicial = sensores.vida;
+              return IDLE; // Frenamos en seco
+          }
+      }else if (accion_n5 == JUMP) {
+          // Para el salto, verificamos la casilla intermedia [2] y el destino [6]
+          bool interLibre = (sensores.superficie[2] != 'P' && sensores.superficie[2] != 'M' && sensores.superficie[2] != 'B');
+          bool destLibre = (sensores.superficie[6] != 'P' && sensores.superficie[6] != 'M' && sensores.superficie[6] != 'B');
+          int difAltura = abs((int)sensores.cota[6] - (int)sensores.cota[0]);
+
+          if (!interLibre || !destLibre || difAltura > maxDif) {
+              cout << "Ing: ¡Precipicio fantasma detectado (JUMP)! Abortando red..." << endl;
+              faseNivel6 = 0; 
+              hayPlan = false; plan.clear();
+              vida_inicial = sensores.vida;
+              return IDLE; 
+          }
+      }
+
+      // Si es seguro, dejamos que el paso ocurra
+      return accion_n5;
+  }
+
   return IDLE;
 }
 

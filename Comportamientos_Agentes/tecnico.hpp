@@ -275,9 +275,11 @@ private:
   int targetF = -1;
   int targetC = -1;
   int bloqueoF = -1;
-int bloqueoC = -1;
-int lastMoveRumbo = -1;   // orientación del último WALK exitoso
-int girosBuscando=0;
+  int bloqueoC = -1;
+  int lastMoveRumbo = -1;   // orientación del último WALK exitoso
+  int girosBuscando=0;
+  //Nivel 6
+  int faseNivel6 = 0;
 };
 
 #endif

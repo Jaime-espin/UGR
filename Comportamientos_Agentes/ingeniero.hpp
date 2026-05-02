@@ -17,14 +17,23 @@ struct EstadoI {
     bool operator==(const EstadoI &st) const {
         return site == st.site and zapatillas == st.zapatillas;
     }
+
+    // El mapa (std::map) necesita esto para funcionar
+    bool operator<(const EstadoI &st) const {
+        if (site.f < st.site.f) return true;
+        if (site.f == st.site.f and site.c < st.site.c) return true;
+        if (site.f == st.site.f and site.c == st.site.c and site.brujula < st.site.brujula) return true;
+        if (site.f == st.site.f and site.c == st.site.c and site.brujula == st.site.brujula and zapatillas < st.zapatillas) return true;
+        return false;
+    }
 };
 
 struct NodoI {
     EstadoI estado;
     list<Action> secuencia;
     
-    bool operator==(const NodoI &node) const {
-      return estado == node.estado;
+    bool operator==(const NodoI &node) const{
+        return estado == node.estado;
     }
     
     // Operador < para poder usar std::set y hacer la búsqueda eficiente
@@ -34,6 +43,23 @@ struct NodoI {
         if (estado.site.f == node.estado.site.f and estado.site.c == node.estado.site.c and estado.site.brujula < node.estado.site.brujula) return true;
         if (estado.site.f == node.estado.site.f and estado.site.c == node.estado.site.c and estado.site.brujula == node.estado.site.brujula and estado.zapatillas < node.estado.zapatillas) return true;
         return false;
+    }
+};
+
+struct NodoI_Astar {
+    EstadoI estado;
+    list<Action> secuencia;
+    
+    int g_cost; 
+    int f_cost; 
+    
+    bool operator==(const NodoI_Astar &node) const {
+      return estado == node.estado;
+    }
+    
+    // La priority_queue necesita esto para sacar siempre el coste más bajo
+    bool operator<(const NodoI_Astar &node) const {
+      return f_cost > node.f_cost;
     }
 };
 
@@ -304,6 +330,10 @@ private:
   int faseNivel5 = 0;            
   int tramo_idx = 0; // Para saber por qué paso vamos
   vector<Paso> planTuberiasVec; // Más fácil de leer que una list
+  
+  //Nivel 6
+  int faseNivel6 = 0;
+  int num_Us = 0;
 };
 
 #endif
