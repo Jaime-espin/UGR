@@ -137,6 +137,13 @@ public:
     tiene_zapatillas = false;
     faseNivel5 = 0;
     planTuberiasVec.clear();
+    // Inicializar variables del Nivel 6
+    faseNivel6 = 0;
+    vida_inicial = -1;
+    metas_descubiertas = 0;
+    meta_f = -1;
+    meta_c = -1;
+    niebla_inaccesible.clear();
   }
 
   ComportamientoIngeniero(const ComportamientoIngeniero &comport)
@@ -333,7 +340,22 @@ private:
   
   //Nivel 6
   int faseNivel6 = 0;
-  int num_Us = 0;
+  int vida_inicial = -1;
+  set<pair<int, int>> niebla_inaccesible;
+  bool meta_nueva=false;
+  int cont = 0;
+  int metas_descubiertas=0;
+  int meta_c = -1;
+  int meta_f = -1;
+  int radio_maximo = 999999;
+  list<Paso> plan_temporal;
+
+  void ChequearReinicioNivel6(int vida_actual);
+  bool BuscarNuevaNiebla(const Sensores &sensores, int radio_maximo);
+  bool ReplanificarTuberiasDesdeInstalado(const Sensores &sensores);
+  Action EjecutarConEscudoYEvasion(const Sensores &sensores, Action accion_prevista);
+  void AnalizarMapaNivel6(int &num_Us, float &porc_explorado);
+  bool NuevaMeta(const vector<vector<unsigned char>> &terreno, int bel_f, int bel_c, int &meta_cercana_f, int &meta_cercana_c);
 };
 
 #endif

@@ -923,7 +923,10 @@ list<Paso> A_Star_Tuberias(EstadoTuberia inicio, const vector<vector<unsigned ch
         start_node.estado_tub.altura_tuberia = h_mapa_inicio + op; 
         start_node.g_cost = 0;
         
-        start_node.impacto = CalcularImpactoEcologico(tipo_inicio, op);
+        start_node.impacto = CosteInstalacionTuberia(tipo_inicio);
+        if (op != 0) {
+          start_node.impacto += CalcularImpactoEcologico(tipo_inicio, op);
+        }
 
         // Si solo modificar la salida ya revienta el presupuesto, la descartamos
         if (start_node.impacto > limite_eco) continue;
@@ -1388,6 +1391,7 @@ list<Action> A_Star_Ingeniero(EstadoI inicio, EstadoI fin, const vector<vector<u
  * @param sensores Datos actuales de los sensores.
  * @return Acción a realizar.
  */
+/*
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores)
 {
   // 1. Actualización básica de estado en el Nivel 6
@@ -1399,24 +1403,31 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores
   static int vida_inicial = -1;
   static int mejor_coste_tuberia = 999999; 
   static list<Paso> mejor_plan_tuberias;
-  static int metas_evaluadas = 0; // Para no recalcular sobre la misma 'U'
+    static int radio_exploracion = 999999; // Radio de niebla que puede mejorar el mejor plan actual
+    static int celdas_conocidas_prev = -1; // Para volver a evaluar cuando el mapa descubierto crece
 
   if (vida_inicial == -1 || sensores.vida > vida_inicial) {
       vida_inicial = sensores.vida; // Se resetea si el mapa reinicia
+      niebla_inaccesible.clear();
+      mejor_coste_tuberia = 999999;
+      mejor_plan_tuberias.clear();
+      radio_exploracion = 999999;
+      celdas_conocidas_prev = -1;
   }
-  int turnos_gastados = vida_inicial - sensores.vida;
 
   // =====================================================================
   // FASE 0: EXPLORACIÓN Y PLANIFICACIÓN SILENCIOSA
   // =====================================================================
   if (faseNivel6 == 0) {
     int num_Us_actual = 0;
-    int celdas_exploradas = 0;
-    int total_celdas = mapaResultado.size() * mapaResultado[0].size();
+    int celdas_conocidas_actual = 0;
     
     // Analizamos el conocimiento actual del mapa
     for (int i = 0; i < mapaResultado.size(); i++) {
       for (int j = 0; j < mapaResultado[0].size(); j++) {
+        if (mapaResultado[i][j] != '?') {
+          celdas_conocidas_actual++;
+        }
         // Contamos metas
         if (mapaResultado[i][j] == 'U') {
           num_Us_actual++;
@@ -1424,39 +1435,37 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores
       }
     }
 
-    
-    // Calculamos el porcentaje real
-    float porcentaje_explorado = ((float)celdas_exploradas / total_celdas) * 100.0f;
-
-    // CONDICIÓN DE PARADA POR PORCENTAJE:
-    // 1. Tenemos 2+ metas y un 40% del mapa (suficiente para que A* compare la mejor).
-    // 2. Tenemos 1 meta, pero ya hemos peinado el 75% del mapa (nos conformamos para no agotar la batería).
-    bool suficientes_metas = (num_Us >= 2 && porcentaje_explorado >= 90.0f);
-    bool exploracion_profunda = (num_Us >= 1 && porcentaje_explorado >= 90.0f);
-
-    if (suficientes_metas || exploracion_profunda) {
+    // 1. Si el mapa conocido ha crecido y ya vemos al menos una meta, reevaluamos.
+    if (num_Us_actual > 0 && celdas_conocidas_actual > celdas_conocidas_prev) {
+      celdas_conocidas_prev = celdas_conocidas_actual;
+      
       EstadoTuberia inicio;
-      inicio.site.f = sensores.BelPosF;
+      inicio.site.f = sensores.BelPosF; 
       inicio.site.c = sensores.BelPosC;
       inicio.altura_tuberia = mapaCotas[sensores.BelPosF][sensores.BelPosC];
       
-      list<Paso> planTuberias = A_Star_Tuberias(inicio, mapaResultado, mapaCotas, sensores.max_ecologico);
+      list<Paso> plan_temporal = A_Star_Tuberias(inicio, mapaResultado, mapaCotas, sensores.max_ecologico);
       
-      if (!planTuberias.empty()) {
-          cout << "Ing: ¡Planificación lista! Metas: " << num_Us 
-               << " | Mapa explorado: " << porcentaje_explorado << "%" << endl;
-          VisualizaRedTuberias(planTuberias);
-          planTuberiasVec.clear();
-          for (auto p : planTuberias) planTuberiasVec.push_back(p);
-          
-          faseNivel6 = 2; // Saltamos a la fase de construcción
-          faseNivel5 = 1; // Le decimos al Nivel 5 que ya hemos planificado (saltamos su Fase 0)
-          tramo_idx = 0;
-          hayPlan = false;
-          plan.clear();
-          return IDLE;
+      if (!plan_temporal.empty()) {
+        // Calculamos el coste real de esta ruta sumando cada paso
+        int impacto_de_esta_ruta = 0;
+        for (auto p : plan_temporal) {
+          char terreno = mapaResultado[p.fil][p.col];
+          impacto_de_esta_ruta += CosteInstalacionTuberia(terreno);
+          if (p.op != 0) {
+            impacto_de_esta_ruta += CalcularImpactoEcologico(terreno, p.op);
+          }
+        }
+        
+        // Si es mejor que lo que teníamos, ¡actualizamos el récord!
+        if (impacto_de_esta_ruta < mejor_coste_tuberia) {
+           mejor_coste_tuberia = impacto_de_esta_ruta;
+           mejor_plan_tuberias = plan_temporal; // Guardamos la joya de la corona
+            Paso ultimo_paso = plan_temporal.back();
+            radio_exploracion = abs(ultimo_paso.fil - sensores.BelPosF) + abs(ultimo_paso.col - sensores.BelPosC);
+           cout << "Ing: ¡Nuevo Récord de Tubería! Coste: " << mejor_coste_tuberia << " | Metas vistas: " << num_Us_actual << endl;
+        }
       }
-      // Si el A* devolvió una lista vacía, ignoramos la 'U' y dejamos que caiga al Nivel 1 para seguir explorando.
     }
     // 2. Si no tenemos mapa suficiente, EXPLORAMOS HACIA LA NIEBLA CON A*
     if (!hayPlan) {
@@ -1467,34 +1476,59 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores
         for (int i = 0; i < mapaResultado.size(); i++) {
             for (int j = 0; j < mapaResultado[0].size(); j++) {
                 if (mapaResultado[i][j] == '?' && niebla_inaccesible.find({i, j}) == niebla_inaccesible.end()) {
-                    int dist = abs(i - sensores.posF) + abs(j - sensores.posC);
-                    if (dist < min_dist) {
-                        min_dist = dist;
-                        target_f = i;
-                        target_c = j;
+                    // Distancia desde la Belkanita hasta la niebla
+                    int dist_desde_origen = abs(i - sensores.BelPosF) + abs(j - sensores.BelPosC);
+                  // Solo me interesa esta niebla si cae dentro del radio del mejor plan actual
+                  // y además podría mejorar el coste conocido.
+                  bool dentro_radio = (radio_exploracion == 999999) || (dist_desde_origen <= radio_exploracion);
+                  int coste_minimo_posible = dist_desde_origen * 15; 
+
+                  if (dentro_radio && coste_minimo_posible < mejor_coste_tuberia) {
+                        
+                        // Si pasa el filtro, busco el '?' más cercano a MI posición actual para ir a explorarlo
+                        int dist_a_mi = abs(i - sensores.posF) + abs(j - sensores.posC);
+                        if (dist_a_mi < min_dist) {
+                            min_dist = dist_a_mi;
+                            target_f = i;
+                            target_c = j;
+                        }
                     }
                 }
             }
         }
+        //CONDICIÓN DE PARADA DE LA EXPLORACIÓN
+        if (target_f == -1) {
+          // Ya no hay niebla dentro del radio actual que pueda mejorar el récord.
+          if (!mejor_plan_tuberias.empty()) {
+            cout << "Ing: ¡Exploración optimizada completada! Mejor coste: " << mejor_coste_tuberia << endl;
+            VisualizaRedTuberias(mejor_plan_tuberias);
+            planTuberiasVec.clear();
+            for (auto p : mejor_plan_tuberias) planTuberiasVec.push_back(p);
+                
+            faseNivel6 = 2; faseNivel5 = 1; tramo_idx = 0;
+            hayPlan = false; plan.clear();
+            return IDLE;
+          } else {
+            // Fallback de seguridad: si no hay metas válidas en absoluto
+            return IDLE;
+          }
+        } else {
+          // Trazamos una ruta hacia esa niebla
+          EstadoI start, goal;
+          start.site.f = sensores.posF; start.site.c = sensores.posC;
+          start.site.brujula = (Orientacion)sensores.rumbo; start.zapatillas = tiene_zapatillas;
+          goal.site.f = target_f; goal.site.c = target_c;
+            
+          plan = A_Star_Ingeniero(start, goal, mapaResultado, mapaCotas);
+          hayPlan = !plan.empty();
 
-        if (target_f != -1) {
-            EstadoI start, goal;
-            start.site.f = sensores.posF; start.site.c = sensores.posC;
-            start.site.brujula = (Orientacion)sensores.rumbo; start.zapatillas = tiene_zapatillas;
-            goal.site.f = target_f; goal.site.c = target_c;
-
-            // Trazamos una ruta hacia esa niebla
-            plan = A_Star_Ingeniero(start, goal, mapaResultado, mapaCotas);
-            hayPlan = !plan.empty();
-
-            // Si A* no puede llegar a esta niebla (ej. rodeada de árboles), la metemos en la lista negra
-            if (plan.empty()) {
-                niebla_inaccesible.insert({target_f, target_c});
-            }
+          if (plan.empty()) {
+            niebla_inaccesible.insert({target_f, target_c});
+            return IDLE;
+          }
         }
     }
-    // 3. Ejecutamos la ruta de exploración
-    if (hayPlan && !plan.empty()) {
+    if(hayPlan && !plan.empty()){
         Action a = plan.front();
         int maxDif = tiene_zapatillas ? 2 : 1;
         bool abortar = false;
@@ -1549,7 +1583,8 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores
         return a;
     }
 
-    // Fallback por si la búsqueda falla (ej. el '?' está rodeado de muros)
+    // Fallback: If we reach here without a plan, clear it just in case
+    hayPlan = false; plan.clear();
     return TURN_SR;
     
   }
@@ -1607,7 +1642,352 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores
 
   return IDLE;
 }
+*/
 
+// ---------------------------------------------------------------------
+// MÉTODOS AUXILIARES PARA EL NIVEL 6 (CÓDIGO REFACTORIZADO)
+// ---------------------------------------------------------------------
+
+void ComportamientoIngeniero::ChequearReinicioNivel6(int vida_actual) {
+    if (vida_inicial == -1 || vida_actual > vida_inicial) {
+        vida_inicial = vida_actual;
+        niebla_inaccesible.clear();
+    plan.clear();
+    hayPlan = false;
+    plan_temporal.clear();
+    planTuberiasVec.clear();
+    faseNivel5 = 0;
+    faseNivel6 = 0;
+    tramo_idx = 0;
+    metas_descubiertas = 0;
+    meta_f = -1;
+    meta_c = -1;
+    }
+}
+
+bool ComportamientoIngeniero::BuscarNuevaNiebla(const Sensores &sensores, int radio_maximo) {
+    int target_f = -1, target_c = -1;
+    int min_dist = 999999;
+
+    // Para no dejar al ingeniero atrapado si ESTÁ fuera de la valla, el muro 
+    // se coloca en max(radio_maximo, distancia_actual_ingeniero).
+    int dist_ingeniero = abs(sensores.posF - sensores.BelPosF) + abs(sensores.posC - sensores.BelPosC);
+    int radio_muro = max(radio_maximo, dist_ingeniero);
+    // 1. LA VALLA ESTRICTA: Recortamos el mapa
+    vector<vector<unsigned char>> mapaAcotado = mapaResultado;
+    for (int i = 0; i < mapaAcotado.size(); i++) {
+        for (int j = 0; j < mapaAcotado[0].size(); j++) {
+            int dist_origen = abs(i - sensores.BelPosF) + abs(j - sensores.BelPosC);
+            if (dist_origen > radio_muro) {
+                mapaAcotado[i][j] = 'M'; // Convertimos el exterior en un muro impenetrable
+            }
+        }
+    }
+
+    // 2. Buscamos el '?' válido más cercano
+    for (int i = 0; i < mapaAcotado.size(); i++) {
+        for (int j = 0; j < mapaAcotado[0].size(); j++) {
+            // Toda la niebla fuera de la valla ahora es 'M', el 'if' la ignora directamente.
+            if (mapaAcotado[i][j] == '?' && niebla_inaccesible.find({i, j}) == niebla_inaccesible.end()) {
+                int dist_origen = abs(i - sensores.BelPosF) + abs(j - sensores.BelPosC);
+                // Aseguramos matemáticamente que no explore nada más allá de su radio_maximo
+                if (dist_origen <= radio_maximo) {
+                    int dist_a_mi = abs(i - sensores.posF) + abs(j - sensores.posC);
+                    if (dist_a_mi < min_dist) {
+                        min_dist = dist_a_mi;
+                        target_f = i;
+                        target_c = j;
+                    }
+                }
+            }
+        }
+    }
+
+    if (target_f != -1) {
+        EstadoI start, goal;
+        start.site.f = sensores.posF; start.site.c = sensores.posC;
+        start.site.brujula = (Orientacion)sensores.rumbo; start.zapatillas = tiene_zapatillas;
+        goal.site.f = target_f; goal.site.c = target_c;
+        
+        // ¡ATENCIÓN! Le pasamos el mapaAcotado. El A* NO PUEDE salir de la valla.
+        plan = A_Star_Ingeniero(start, goal, mapaAcotado, mapaCotas);
+        
+        if (plan.empty()) {
+            niebla_inaccesible.insert({target_f, target_c});
+            return true; // Encontramos niebla pero no podemos llegar. 
+        }
+        return true; // Plan trazado con éxito
+    }
+    return false; // No queda niebla útil (Fin de exploración natural)
+}
+
+  bool ComportamientoIngeniero::ReplanificarTuberiasDesdeInstalado(const Sensores &sensores) {
+    if (planTuberiasVec.empty()) {
+      return false;
+    }
+
+    const vector<Paso> plan_original = planTuberiasVec;
+    int indice_inicio = tramo_idx;
+    if (indice_inicio < 0) indice_inicio = 0;
+    if (indice_inicio >= static_cast<int>(plan_original.size())) {
+      indice_inicio = static_cast<int>(plan_original.size()) - 1;
+    }
+
+    for (int indice = indice_inicio; indice >= 0; --indice) {
+      EstadoTuberia inicio;
+      inicio.site.f = plan_original[indice].fil;
+      inicio.site.c = plan_original[indice].col;
+      inicio.altura_tuberia = mapaCotas[inicio.site.f][inicio.site.c];
+
+      list<Paso> nuevo_plan = A_Star_Tuberias(inicio, mapaResultado, mapaCotas, sensores.max_ecologico);
+      if (nuevo_plan.empty()) {
+        continue;
+      }
+
+      vector<Paso> nuevo_vector;
+      for (int i = 0; i <= indice; ++i) {
+        nuevo_vector.push_back(plan_original[i]);
+      }
+
+      bool primer_paso = true;
+      for (const Paso &paso : nuevo_plan) {
+        if (primer_paso) {
+          primer_paso = false;
+          continue;
+        }
+        nuevo_vector.push_back(paso);
+      }
+
+      if (nuevo_vector.size() <= static_cast<size_t>(indice)) {
+        continue;
+      }
+
+      planTuberiasVec = nuevo_vector;
+      plan_temporal = nuevo_plan;
+      tramo_idx = indice;
+      hayPlan = false;
+      plan.clear();
+      list<Paso> plan_visual(nuevo_vector.begin(), nuevo_vector.end());
+      VisualizaRedTuberias(plan_visual);
+      return true;
+    }
+
+    return false;
+  }
+
+Action ComportamientoIngeniero::EjecutarConEscudoYEvasion(const Sensores &sensores, Action a) {
+    int maxDif = tiene_zapatillas ? 2 : 1;
+    
+    // 1. ESCUDO ANTI-CAÍDAS
+    if (a == WALK) {
+        bool frenteLibre = (sensores.superficie[2] != 'P' && sensores.superficie[2] != 'M' && sensores.superficie[2] != 'B');
+        int difAltura = abs((int)sensores.cota[2] - (int)sensores.cota[0]);
+        if (!frenteLibre || difAltura > maxDif) { plan.clear(); return IDLE; }
+    } else if (a == JUMP) {
+        bool interLibre = (sensores.superficie[2] != 'P' && sensores.superficie[2] != 'M' && sensores.superficie[2] != 'B');
+        bool destLibre = (sensores.superficie[6] != 'P' && sensores.superficie[6] != 'M' && sensores.superficie[6] != 'B');
+        int difAltura = abs((int)sensores.cota[6] - (int)sensores.cota[0]);
+        if (!interLibre || !destLibre || difAltura > maxDif) { plan.clear(); return IDLE; }
+    }
+
+    // 2. EVASIÓN DEL TÉCNICO
+    if ((a == WALK && sensores.agentes[2] == 't') || 
+        (a == JUMP && sensores.agentes[6] == 't')) {
+        
+        plan.clear();
+        EstadoI st_actual = {ubicacion{sensores.posF, sensores.posC, (Orientacion)sensores.rumbo}, tiene_zapatillas};
+        EstadoI st_izq = st_actual; st_izq.site.brujula = (Orientacion)((st_izq.site.brujula + 7) % 8);
+        EstadoI st_dch = st_actual; st_dch.site.brujula = (Orientacion)((st_dch.site.brujula + 1) % 8);
+
+        bool izq_viable = EsAccesibleWalkI(st_izq, mapaResultado, mapaCotas) && sensores.agentes[1] == '_';
+        bool dch_viable = EsAccesibleWalkI(st_dch, mapaResultado, mapaCotas) && sensores.agentes[3] == '_';
+
+        if (izq_viable) { plan.push_back(TURN_SL); plan.push_back(WALK); } 
+        else if (dch_viable) { plan.push_back(TURN_SR); plan.push_back(WALK); } 
+        else {
+            bool salto_viable = EsAccesibleJumpI(st_actual, mapaResultado, mapaCotas) && sensores.agentes[6] == '_';
+            if (salto_viable) plan.push_back(JUMP);
+            else plan.push_back(TURN_SR); // Dar vueltas esperando
+        }
+        Action evasion = plan.front(); plan.pop_front();
+        return evasion;
+    }
+    
+    return a;
+}
+bool ComportamientoIngeniero::NuevaMeta(const vector<vector<unsigned char>> &terreno, int bel_f, int bel_c, int &meta_cercana_f, int &meta_cercana_c){
+  bool nuevo = false;
+  int n_metas = 0;
+  vector<pair<int, int>> coordenadas_metas; // 1. Vector para almacenar las metas
+  for (int f = 0; f < terreno.size(); f++) {
+        for (int c = 0; c < terreno[0].size(); c++) {
+            if (terreno[f][c] == 'U') {
+                n_metas++;
+                coordenadas_metas.push_back({f, c});
+            }
+        }
+    }
+    if(n_metas > metas_descubiertas){
+      metas_descubiertas = n_metas;
+      // 2. Calculamos cuál coordenada está más cerca del Belkanita
+      int min_dist = 999999;
+        
+      for (auto meta : coordenadas_metas) {
+        // Distancia Manhattan
+        int dist = abs(meta.first - bel_f) + abs(meta.second - bel_c);
+            
+        if (dist < min_dist) {
+          min_dist = dist;
+          meta_cercana_f = meta.first;
+          meta_cercana_c = meta.second;
+        }
+      }
+      nuevo = true;
+    }
+    return nuevo;
+}
+// ---------------------------------------------------------------------
+// LÓGICA PRINCIPAL (Ahora es extremadamente fácil de leer)
+// ---------------------------------------------------------------------
+
+Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores)
+{
+    ActualizarMapa(sensores);
+    if (sensores.superficie[0] == 'D') tiene_zapatillas = true;
+
+    ChequearReinicioNivel6(sensores.vida);
+
+   
+    // =====================================================================
+    // FASE 0: EXPLORACIÓN ACOTADA
+    // Objetivo: Encontrar la mejor meta y explorar solo dentro de su radio
+    // =====================================================================
+    if (faseNivel6 == 0) {
+      int radio_maximo = 999999;
+        
+        // 1. EVALUAR SI HAY NUEVA META MÁS CERCANA
+        if(NuevaMeta(mapaResultado, sensores.BelPosF, sensores.BelPosC, meta_f, meta_c)){
+            cout << "Ing: Nueva meta encontrada en (" << meta_f << ", " << meta_c << ")" << endl;
+        plan_temporal.clear();
+        }
+
+      if (meta_f != -1 && meta_c != -1) {
+        radio_maximo = abs(meta_f - sensores.BelPosF) + abs(meta_c - sensores.BelPosC);
+      }
+        
+        // 2. BUSCAR NIEBLA ÚTIL (si no hay plan de exploración activo)
+        if (!hayPlan) {
+            // Buscar niebla útil dentro del radio
+            bool hay_niebla_util = BuscarNuevaNiebla(sensores, radio_maximo);
+            hayPlan = !plan.empty();
+            
+        // Si no hay niebla útil, pasamos directamente a construcción
+        if (!hay_niebla_util && meta_f != -1 && meta_c != -1) {
+          cout << "Ing: Exploración completada. Mejor meta: (" << meta_f << ", " << meta_c << "). Pasando a FASE 2..." << endl;
+
+          EstadoTuberia inicio;
+          inicio.site.f = sensores.BelPosF;
+          inicio.site.c = sensores.BelPosC;
+          inicio.altura_tuberia = mapaCotas[sensores.BelPosF][sensores.BelPosC];
+
+          plan_temporal = A_Star_Tuberias(inicio, mapaResultado, mapaCotas, sensores.max_ecologico);
+          if (!plan_temporal.empty()) {
+            VisualizaRedTuberias(plan_temporal);
+            planTuberiasVec.assign(plan_temporal.begin(), plan_temporal.end());
+            faseNivel6 = 2;
+            faseNivel5 = 1;
+            tramo_idx = 0;
+            hayPlan = false;
+            plan.clear();
+            return IDLE;
+          }
+            }
+        }
+        
+        // 3. EJECUTAR LA EXPLORACIÓN CON ESCUDO DE SEGURIDAD
+        if (hayPlan && !plan.empty()) {
+            Action a = plan.front();
+            Action accion_segura = EjecutarConEscudoYEvasion(sensores, a);
+            
+            // Gestionar resultado de la acción
+            if (accion_segura == IDLE) {
+                // El escudo bloqueó la acción (precipicio o choque con técnico)
+                hayPlan = false;
+            } else if (accion_segura != a) {
+                // Se activó una evasión (técnico en el camino)
+                hayPlan = true;
+            } else {
+                // Acción ejecutada normalmente
+                plan.pop_front();
+                if (plan.empty()) hayPlan = false;
+            }
+            
+            if (sensores.choque || sensores.reset) {
+                hayPlan = false;
+                plan.clear();
+                return IDLE;
+            }
+            return accion_segura;
+        }
+        
+        // Fallback: si no hay nada que hacer, exploramos girando
+        return TURN_SR;
+    }
+    // =====================================================================
+    // FASE 2: CONSTRUCCIÓN Y REPLANIFICACIÓN DE EMERGENCIA
+    // =====================================================================
+    if (faseNivel6 == 2) {
+        if (planTuberiasVec.empty()) {
+          EstadoTuberia inicio;
+          inicio.site.f = sensores.BelPosF;
+          inicio.site.c = sensores.BelPosC;
+          inicio.altura_tuberia = mapaCotas[sensores.BelPosF][sensores.BelPosC];
+
+          plan_temporal = A_Star_Tuberias(inicio, mapaResultado, mapaCotas, sensores.max_ecologico);
+          if (plan_temporal.empty()) {
+            cout << "Ing: No se pudo inicializar la red de tuberías. Volviendo a exploración." << endl;
+            faseNivel6 = 0;
+            return IDLE;
+          }
+
+          planTuberiasVec.assign(plan_temporal.begin(), plan_temporal.end());
+          VisualizaRedTuberias(plan_temporal);
+          faseNivel5 = 1;
+          tramo_idx = 0;
+        }
+
+        if (sensores.choque || sensores.reset) {
+          cout << "Ing: ¡Obstáculo imprevisto en la construcción! Replanificando desde lo ya instalado..." << endl;
+          if (!ReplanificarTuberiasDesdeInstalado(sensores)) {
+            cout << "Ing: No ha sido posible replanificar. Volviendo a exploración." << endl;
+            faseNivel6 = 0;
+            hayPlan = false;
+            plan.clear();
+          }
+            return IDLE;
+        }
+
+        // Dejamos que el Nivel 5 calcule la ruta a la tubería
+        Action accion_n5 = ComportamientoIngenieroNivel_5(sensores);
+        
+        // Pasamos su acción por nuestro escudo definitivo
+        Action accion_segura = EjecutarConEscudoYEvasion(sensores, accion_n5);
+
+        if (accion_segura == IDLE && accion_n5 != IDLE) {
+          cout << "Ing: ¡Precipicio fantasma detectado! Replanificando desde lo ya instalado..." << endl;
+          if (!ReplanificarTuberiasDesdeInstalado(sensores)) {
+            faseNivel6 = 0;
+            hayPlan = false;
+            plan.clear();
+          }
+          return IDLE;
+        }
+
+        return accion_segura;
+    }
+
+    return IDLE;
+}
 // =========================================================================
 // FUNCIONES PROPORCIONADAS
 // =========================================================================
