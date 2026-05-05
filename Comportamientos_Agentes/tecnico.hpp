@@ -255,6 +255,9 @@ private:
    */
   void ExtraerDatosDeZonaYMemoria(const Sensores &sensores, vector<unsigned char> &vision_segura, int &mem1, int &mem2, int &mem3);
 
+  // Versión simplificada de BuscarNuevaNiebla para el Técnico (sin acotar mapa)
+  bool BuscarNuevaNieblaSimple(const Sensores &sensores);
+
   // =========================================================================
   // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
   // =========================================================================

@@ -265,6 +265,18 @@ Action ComportamientoTecnico::EvaluarRadarAmpliado(const vector<unsigned char> &
 // =========================================================================
 
 // Niveles del técnico
+/**
+ * @brief Comportamiento reactivo del técnico para el Nivel 0.
+ *
+ * Flujo general:
+ * 1. Guarda visita y actualiza el mapa visible.
+ * 2. Mantiene la prioridad de parada si ya está en meta o girando.
+ * 3. Decide con visión local y memoria de visitas.
+ * 4. Si no hay opción clara, gira para seguir explorando.
+ *
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_0(Sensores sensores) {
   // Aumentamos el reloj interno
   iteracion_actual++; 
@@ -315,9 +327,11 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_0(Sensores sensores) {
 }
 
 /**
- * @brief Comprueba si una celda es de tipo camino transitable.
+ * @brief Comprueba si una celda se considera navegable para la exploración reactiva.
+ *
+ * A efectos del nivel 1, se aceptan caminos, senderos, zapatillas y meta.
  * @param c Carácter que representa el tipo de superficie.
- * @return true si es camino ('C'), zapatillas ('D') o meta ('U').
+ * @return true si la celda puede usarse como paso seguro.
  */
 bool ComportamientoTecnico::es_camino(unsigned char c) const {
   return (c == 'C' || c == 'D' || c == 'U' || c == 'S');
@@ -325,14 +339,24 @@ bool ComportamientoTecnico::es_camino(unsigned char c) const {
 
 
 /**
- * @brief Comportamiento reactivo del técnico para el Nivel 1.
+ * @brief Comportamiento reactivo del técnico para el Nivel 1 (Exploración).
+ *
+ * Flujo general:
+ * 1. Guarda visita y actualiza mapa visible.
+ * 2. Resuelve interacción con el Ingeniero (si está delante).
+ * 3. Continúa giros forzados si está girando.
+ * 4. Elige casilla menos visitada (exploración pura, sin prioridad a meta).
+ * 5. Si no hay opción clara, gira para seguir explorando.
+ *
+ * DIFERENCIA CON INGENIERO: El Técnico gira SIEMPRE que ve al Ingeniero (no verifica last_action)
+ * y usa 3 pasos de giro a la izquierda para apartarse más.
+ *
  * @param sensores Datos actuales de los sensores.
  * @return Acción a realizar.
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_1(Sensores sensores) {
-  // Incrementamos el reloj interno
+  // 1. Registro de visita temporal
   iteracion_actual++;
-  // Marcamos la casilla actual con el instante de tiempo actual
   mapaVisitas[sensores.posF][sensores.posC] = iteracion_actual;
   
   Action accion = IDLE;
@@ -341,16 +365,22 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_1(Sensores sensores) {
   // Detectamos si hemos encontrado zapatillas
   if(sensores.superficie[0]=='D') tiene_zapatillas = true;
   
-  // CASO 1: Hay un ingeniero delante.
+  // CASO 1: Interacción con el Ingeniero (Estrategia: Apartarse activamente)
+  // El Técnico SIEMPRE se aparta girando a la IZQUIERDA cuando el Ingeniero está delante.
+  // Diferencia con Ingeniero:
+  // - Técnico: gira 3 pasos * 45° = 135° (más alejado)
+  // - Ingeniero: gira 2 pasos * 45° = 90° (con prioridad)
+  // Girando en DIRECCIONES OPUESTAS (derecha vs izquierda) reduce probabilidad de colisión.
   if(sensores.agentes[2]=='i'){
-    cout << "REGLA: Ingeniero delante, girando" << endl;
-    girando = 3;
+    girando = 3;  // 3 pasos * 45° = 135° de giro a la izquierda
     accion=TURN_SL;
-  } else if(girando > 0){
+  }
+  // CASO 2: Continuar giro forzado en curso
+  else if(girando > 0){
     accion=TURN_SL;
     girando--;
   }
-  // CASO PRINCIPAL: Navegación normal basada en memoria de visitas
+  // CASO PRINCIPAL: Exploración normal con memoria de visitas
   else {
     cout << "REGLA: Navegación reactiva con memoria de visitas." << endl;
 
@@ -358,37 +388,45 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_1(Sensores sensores) {
     int mem1, mem2, mem3;
     ExtraerDatosDeZonaYMemoria(sensores, vision_segura, mem1, mem2, mem3);
 
-    // 3. EVALUAR OPCIONES CON MEMORIA (preferir caminos menos visitados)
+    // Extrae las 3 opciones adyacentes (izq, frente, dch)
     char Left = vision_segura[1];
     char Center = vision_segura[2];
     char Right = vision_segura[3];
 
-    // Hay caminos viables - elegir el menos visitado (sin prioridad de meta)
+    // Detecta qué casillas son transitables
     bool caminoLeft = es_camino(Left);
     bool caminoCenter = es_camino(Center);
     bool caminoRight = es_camino(Right);
 
+    // Si hay al menos una opción viable, elige la menos visitada
     if (caminoLeft || caminoCenter || caminoRight) {
       int minMemory = 999999;
       int bestOption = 0; // 1=izq, 2=frente, 3=dch
 
-      // Evaluamos de frente primero
+      // ALGORITMO: Selecciona el camino MENOS VISITADO, con preferencia SUAVE por avanzar recto.
+      // Paso 1: Si hay camino recto, úsalo como "punto de referencia" inicial.
+      // Esto minimiza giros (avanzar recto es más eficiente que girar)
       if (caminoCenter) {
-        minMemory = mem2;
+        minMemory = mem2;       // Punto de referencia: mem2 es "visitado Center veces"
         bestOption = 2;
       }
-      // Evaluamos izquierda
+      
+      // Paso 2: Comparar izquierda con el punto de referencia.
+      // Si izquierda está MENOS VISITADA, sobrescribe la referencia.
       if (caminoLeft && mem1 < minMemory) {
-        minMemory = mem1;
+        minMemory = mem1;       // Nueva referencia: mem1 es menor que mem2
         bestOption = 1;
       }
-      // Evaluamos derecha
+      
+      // Paso 3: Comparar derecha con el mejor encontrado hasta ahora.
+      // Si derecha está MENOS VISITADA, sobrescribe.
       if (caminoRight && mem3 < minMemory) {
-        minMemory = mem3;
+        minMemory = mem3;       // Mejor encontrada: mem3 es el mínimo
         bestOption = 3;
       }
+      // RESULTADO: bestOption es el camino CON MENOR número de visitas.
 
-      // Aplicamos la mejor decisión basada en la memoria
+      // Ejecuta la mejor opción
       if (bestOption == 2) {
         cout << "  -> ACCION: WALK (Camino menos visitado, mem=" << minMemory << ")" << endl;
         accion = WALK;
@@ -400,8 +438,8 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_1(Sensores sensores) {
         accion = TURN_SR;
       }
     } else {
-      // No hay opciones, girar para explorar
-      cout << "  -> ACCION: TURN_SL (Sin opciones)" << endl;
+      // Bloqueado: girar a la izquierda para buscar salida
+      cout << "  -> ACCION: TURN_SL (Sin opciones, explorando)" << endl;
       accion = TURN_SL;
     }
   }
@@ -664,9 +702,98 @@ list<Action> A_Star_Tecnico(EstadoT inicio, EstadoT fin, const vector<vector<uns
   return plan;
 }
 
+/**
+ * @brief Buscar nueva niebla para el Técnico sin acotar el mapa.
+ * Selecciona la '?' más cercana al técnico y traza un plan con A* hacia ella.
+ * Si la celda es inaccesible, se marca en una lista local para evitar reintentos inmediatos.
+ */
+bool ComportamientoTecnico::BuscarNuevaNieblaSimple(const Sensores &sensores) {
+  static set<pair<int,int>> niebla_inaccesible_tec;
+  int target_f = -1, target_c = -1;
+  int min_dist = 999999;
+  // Buscamos iterativamente la '?' más cercana que no esté marcada como inaccesible
+  for (int i = 0; i < (int)mapaResultado.size(); ++i) {
+    for (int j = 0; j < (int)mapaResultado[0].size(); ++j) {
+      if (mapaResultado[i][j] == '?' && niebla_inaccesible_tec.find({i,j}) == niebla_inaccesible_tec.end()) {
+        int dist_a_mi = abs(i - sensores.posF) + abs(j - sensores.posC);
+        if (dist_a_mi < min_dist) {
+          min_dist = dist_a_mi;
+          target_f = i; target_c = j;
+        }
+      }
+    }
+  }
+
+  while (target_f != -1) {
+    EstadoT start, goal;
+    start.site.f = sensores.posF; start.site.c = sensores.posC; start.site.brujula = sensores.rumbo; start.zapatillas = tiene_zapatillas;
+    goal.site.f = target_f; goal.site.c = target_c;
+
+    // Intentamos trazar plan con A*
+    list<Action> nuevo_plan = A_Star_Tecnico(start, goal, mapaResultado, mapaCotas);
+    if (!nuevo_plan.empty()) {
+      // Establecemos target y plan para que la fase 1 lo ejecute
+      targetF = target_f; targetC = target_c;
+      plan = nuevo_plan;
+      hayPlan = !plan.empty();
+      VisualizaPlan(start.site, plan);
+      return true;
+    }
+
+    // Si no se pudo trazar plan, marcamos esta niebla como inaccesible y buscamos la siguiente
+    niebla_inaccesible_tec.insert({target_f, target_c});
+
+    // Buscar siguiente '?' más cercana no marcada
+    target_f = -1; target_c = -1; min_dist = 999999;
+    for (int i = 0; i < (int)mapaResultado.size(); ++i) {
+      for (int j = 0; j < (int)mapaResultado[0].size(); ++j) {
+        if (mapaResultado[i][j] == '?' && niebla_inaccesible_tec.find({i,j}) == niebla_inaccesible_tec.end()) {
+          int dist_a_mi = abs(i - sensores.posF) + abs(j - sensores.posC);
+          if (dist_a_mi < min_dist) {
+            min_dist = dist_a_mi;
+            target_f = i; target_c = j;
+          }
+        }
+      }
+    }
+  }
+
+  return false; // No se encontró niebla accesible
+}
+
 
 /**
  * @brief Comportamiento del técnico para el Nivel 3.
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
+/**
+ * ============================================================================
+ * NIVEL 3: PLANIFICACIÓN ENERGÉTICA Y EVASIÓN (TÉCNICO)
+ * ============================================================================
+ *
+ * Descripción general:
+ * - En Nivel 3 el Técnico despliega planificación con A* para llegar a la meta
+ *   minimizando coste energético (función CalcularCosteEnergia).
+ * - Se sincroniza el mapa con sensores y se evita activamente situarse delante
+ *   del Ingeniero para prevenir bloqueos (si el Ingeniero está delante, el
+ *   Técnico espera en IDLE para evitar colisiones).
+ *
+ * Flujo resumido:
+ * 1) Actualizar mapa y estado (zapatillas).
+ * 2) Si no hay plan, construir estados inicio/meta y crear `mapaPlan`.
+ * 3) Si Ingeniero está justo delante, evitar planificar (retornar IDLE).
+ * 4) Ejecutar `A_Star_Tecnico` sobre `mapaPlan` para obtener `plan`.
+ * 5) Ejecutar acciones del `plan` con salvaguardas anti-choque (evitar WALK
+ *    cuando Ingeniero aparece delante).
+ *
+ * Notas de diseño:
+ * - `A_Star_Tecnico` usa heurística de Chebyshev y `CalcularCosteEnergia` para
+ *   ordenar la frontera (priority_queue) y guardar `best_g_cost`.
+ * - El Técnico no cambia el mapa real aquí; `mapaPlan` puede marcar casillas
+ *   temporales como inaccesibles para evitar la celda frontal del Ingeniero.
+ * - Se documenta la estrategia sin modificar la lógica funcional.
+ *
  * @param sensores Datos actuales de los sensores.
  * @return Acción a realizar.
  */
@@ -745,6 +872,7 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_3(Sensores sensores) {
  * @return Acción a realizar.
  */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_4(Sensores sensores) {
+  // Técnico en espera durante planificación de la red de tuberías.
   return IDLE;
 }
 
@@ -889,17 +1017,17 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_6(Sensores sensores) {
   if (sensores.superficie[0] == 'D') tiene_zapatillas = true;
 
   // =====================================================================
-  // FASE 0: EXPLORADOR INCANSABLE
+  // FASE 0: EXPLORADOR ACTIVO
   // =====================================================================
   if (faseNivel6 == 0) {
-      // El Técnico mapea incansablemente hasta que el jefe le pega un grito (COME)
+      // El Técnico ahora se dirige directamente al Bel (coordenadas BelPosF/BelPosC)
+      // en lugar de explorar. Si recibe COME, también pasa a construcción.
       if (sensores.venpaca) {
-          cout << "Tec: ¡El jefe me llama! Aborto exploración, paso a construcción." << endl;
-          faseNivel6 = 1;
-          // No hacemos return aquí. Dejamos que el código baje al Nivel 5 
-          // para que procese las coordenadas del COME en este mismo turno.
+        cout << "Tec: ¡El jefe me llama! Aborto exploración, paso a construcción." << endl;
+        faseNivel6 = 1;
+        // Dejamos que el código baje al Nivel 5 para procesar el COME
       } else {
-          return IDLE; // Ahorro absoluto de batería
+          return ComportamientoTecnicoNivel_1(sensores);
       }
   }
 

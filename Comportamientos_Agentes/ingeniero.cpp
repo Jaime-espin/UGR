@@ -284,6 +284,18 @@ Action ComportamientoIngeniero::EvaluarRadarAmpliado(const vector<unsigned char>
 
 
 // Niveles iniciales (Comportamientos reactivos simples)
+/**
+ * @brief Comportamiento reactivo del ingeniero para el Nivel 0.
+ *
+ * Flujo general:
+ * 1. Guarda visita y actualiza el mapa visible.
+ * 2. Resuelve meta, giro forzado y bloqueo por el Técnico.
+ * 3. Decide con visión local y memoria de visitas.
+ * 4. Si no hay una opción clara, consulta el radar ampliado.
+ *
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_0(Sensores sensores)
 {
   // Aumentamos el reloj interno
@@ -341,9 +353,11 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_0(Sensores sensores
 }
 
 /**
- * @brief Comprueba si una celda es de tipo camino transitable.
+ * @brief Comprueba si una celda se considera navegable para la exploración reactiva.
+ *
+ * En el nivel 0 se aceptan camino, sendero, zapatillas y meta como casillas útiles.
  * @param c Carácter que representa el tipo de superficie.
- * @return true si es camino ('C'), zapatillas ('D') o meta ('U').
+ * @return true si la celda puede usarse como paso seguro.
  */
 bool ComportamientoIngeniero::es_camino(unsigned char c) const
 {
@@ -351,15 +365,25 @@ bool ComportamientoIngeniero::es_camino(unsigned char c) const
 }
 
 /**
- * @brief Comportamiento reactivo del ingeniero para el Nivel 1.
+ * @brief Comportamiento reactivo del ingeniero para el Nivel 1 (Exploración).
+ *
+ * Flujo general:
+ * 1. Guarda visita y actualiza mapa visible.
+ * 2. Resuelve interacción con el Técnico (si está delante).
+ * 3. Continúa giros forzados si está girando.
+ * 4. Elige casilla menos visitada (exploración pura, sin prioridad a meta).
+ * 5. Si no hay opción clara, gira para seguir explorando.
+ *
+ * NOTA: Nivel 1 es EXPLORACIÓN ACTIVA. No prioriza meta ('U') ni zapatillas ('D'),
+ * solo descubre el máximo de casillas y aprende qué caminos existen.
+ *
  * @param sensores Datos actuales de los sensores.
  * @return Acción a realizar.
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores)
 {
-  // Incrementamos el reloj interno
+  // 1. Registro de visita temporal
   iteracion_actual++;
-  // Marcamos la casilla actual con el instante de tiempo actual
   mapaVisitas[sensores.posF][sensores.posC] = iteracion_actual;
   
   Action accion = IDLE;
@@ -368,20 +392,28 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
   // Detectamos si hemos encontrado zapatillas
   if(sensores.superficie[0]=='D') tiene_zapatillas = true;
   
-  // CASO 1: Hay un técnico delante. Espera ingeniero porque tiene prioridad.
+  // CASO 1: Interacción con el Técnico (Estrategia: El Ingeniero tiene PRIORIDAD)
+  // Si el Técnico está delante:
+  // - Si acabamos de verlo (last_action==IDLE): gira a DERECHA (45°*2=90°) para apartarse.
+  //   Dirección opuesta a Técnico permite evitar colisión en ángulos.
+  // - Si ya estábamos haciendo algo: ESPERA (IDLE) con prioridad hasta que Técnico se aparte.
+  //   El Técnico, al verlo, debería girar automáticamente y despejar.
   if(sensores.agentes[2]=='t'){
     if(last_action==IDLE){
-      girando = 2;
+      // Acaba de detectar al Técnico: inicia giro a la derecha (45° cada paso)
+      girando = 2;  // 2 pasos * 45° = 90° de giro total
       accion=TURN_SR;
     }else{
-      cout << "REGLA: Tecnico delante, esperando" << endl;
+      // Ya estaba explorando: se queda quieto ejerciendo prioridad
       accion=IDLE;
     }
-  } else if(girando > 0){
+  } 
+  // CASO 2: Continuar giro forzado en curso
+  else if(girando > 0){
     accion=TURN_SR;
     girando--;
   }
-  // CASO PRINCIPAL: Navegación normal basada en memoria de visitas
+  // CASO PRINCIPAL: Exploración normal con memoria de visitas
   else {
     cout << "REGLA: Navegación reactiva con memoria de visitas." << endl;
 
@@ -389,37 +421,45 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
     int mem1, mem2, mem3;
     ExtraerDatosDeZonaYMemoria(sensores, vision_segura, mem1, mem2, mem3);
 
-    // 3. EVALUAR OPCIONES CON MEMORIA (preferir caminos menos visitados)
+    // Extrae las 3 opciones adyacentes (izq, frente, dch)
     char Left = vision_segura[1];
     char Center = vision_segura[2];
     char Right = vision_segura[3];
 
-    // Hay caminos viables - elegir el menos visitado (sin prioridad de meta)
+    // Detecta qué casillas son transitables
     bool caminoLeft = es_camino(Left);
     bool caminoCenter = es_camino(Center);
     bool caminoRight = es_camino(Right);
 
+    // Si hay al menos una opción viable, elige la menos visitada
     if (caminoLeft || caminoCenter || caminoRight) {
       int minMemory = 999999;
       int bestOption = 0; // 1=izq, 2=frente, 3=dch
 
-      // Evaluamos de frente primero
+      // ALGORITMO: Selecciona el camino MENOS VISITADO, con preferencia SUAVE por avanzar recto.
+      // Paso 1: Si hay camino recto, úsalo como "punto de referencia" inicial.
+      // Esto minimiza giros (avanzar recto es más eficiente que girar)
       if (caminoCenter) {
-        minMemory = mem2;
+        minMemory = mem2;       // Punto de referencia: mem2 es "visitado Center veces"
         bestOption = 2;
       }
-      // Evaluamos izquierda
+      
+      // Paso 2: Comparar izquierda con el punto de referencia.
+      // Si izquierda está MENOS VISITADA, sobrescribe la referencia.
       if (caminoLeft && mem1 < minMemory) {
-        minMemory = mem1;
+        minMemory = mem1;       // Nueva referencia: mem1 es menor que mem2
         bestOption = 1;
       }
-      // Evaluamos derecha
+      
+      // Paso 3: Comparar derecha con el mejor encontrado hasta ahora.
+      // Si derecha está MENOS VISITADA, sobrescribe.
       if (caminoRight && mem3 < minMemory) {
-        minMemory = mem3;
+        minMemory = mem3;       // Mejor encontrada: mem3 es el mínimo
         bestOption = 3;
       }
+      // RESULTADO: bestOption es el camino CON MENOR número de visitas.
 
-      // Aplicamos la mejor decisión basada en la memoria
+      // Ejecuta la mejor opción
       if (bestOption == 2) {
         cout << "  -> ACCION: WALK (Camino menos visitado, mem=" << minMemory << ")" << endl;
         accion = WALK;
@@ -431,8 +471,8 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_1(Sensores sensores
         accion = TURN_SR;
       }
     } else {
-      // No hay opciones, girar para explorar
-      cout << "  -> ACCION: TURN_SR (Sin opciones)" << endl;
+      // Bloqueado: girar a la derecha para buscar salida
+      cout << "  -> ACCION: TURN_SR (Sin opciones, explorando)" << endl;
       accion = TURN_SR;
     }
   }
@@ -550,67 +590,161 @@ EstadoI applyI(Action accion, const EstadoI &st, const vector<vector<unsigned ch
     return next;
 }
 
+/**
+ * @brief BFS (Breadth-First Search) para encontrar la ruta más corta del Ingeniero a la meta.
+ * 
+ * Estrategia: Exploración por niveles (FIFO frontier).
+ * - Garantiza la ruta con MENOS ACCIONES (optimal para costo uniforme).
+ * - Costo de cada acción: 1 (todas las acciones cuentan igual).
+ * - Meta: Llegar a la posición de Belkanita (U en mapa).
+ * 
+ * Espacio de acciones: {WALK, JUMP, TURN_SR, TURN_SL}
+ * - WALK: Movimiento en línea recta (avanza 1 casilla en dirección actual).
+ * - JUMP: Salto (avanza 2 casillas, solo Ingeniero, requiere altura compatible).
+ * - TURN_SR: Giro derecha 45° (cambia orientación).
+ * - TURN_SL: Giro izquierda 45° (cambia orientación).
+ * 
+ * Restricciones de movimiento (aplicadas en applyI):
+ * - Altura máxima sin zapatillas: ±1 de la casilla actual.
+ * - Altura máxima con zapatillas: ±2 de la casilla actual.
+ * - Terrenos no transitables: Precipicio (P), Agua (A), Obstáculos Mario (M).
+ * - Terreno especial Bosque (B): Solo con zapatillas.
+ * 
+ * Comprobación de meta:
+ * - SOLO después de acciones de movimiento (WALK, JUMP).
+ * - NO después de rotaciones (girar no cambia posición).
+ * 
+ * Estructuras de datos:
+ * - frontier: Cola FIFO para expansión por niveles.
+ * - explored: Nodos ya procesados (evita reprocesamiento).
+ * - discovered: Nodos ya vistos (evita duplicados en frontier).
+ * 
+ * @param inicio Estado inicial (posición, orientación, zapatillas).
+ * @param fin Estado objetivo (posición de meta, orientación no importa).
+ * @param terreno Matriz de tipos de terreno.
+ * @param altura Matriz de altura de cada casilla.
+ * @return Lista de acciones que conducen a la meta, vacía si no hay solución.
+ */
 list<Action> BFS_Ingeniero(EstadoI inicio, EstadoI fin, const vector<vector<unsigned char>> &terreno, const vector<vector<unsigned char>> &altura) {
-    // frontier: cola FIFO de expansión BFS (camino con menos acciones primero).
-    list<NodoI> frontier;
-    // explored: nodos ya expandidos; discovered: nodos ya vistos (evita duplicados en cola).
-    set<NodoI> explored;
-  set<NodoI> discovered;
-    list<Action> plan;
+    // Inicializar estructura de BFS.
+    list<NodoI> frontier;           // Cola FIFO: nodos a expandir.
+    set<NodoI> explored;            // Nodos ya procesados.
+    set<NodoI> discovered;          // Nodos ya en frontier (evita inserciones repetidas).
+    list<Action> plan;              // Ruta encontrada (secuencia de acciones).
+    
+    // Verificar si ya estamos en la meta.
     bool SolutionFound = (inicio.site.f == fin.site.f and inicio.site.c == fin.site.c);
     
+    // Inicializar frontier con nodo inicial.
     NodoI current_node;
     current_node.estado = inicio;
     frontier.push_back(current_node);
     discovered.insert(NodoI{inicio, {}});
 
+    // Expansión por niveles (BFS): procesar nodos en orden FIFO.
     while (!frontier.empty() and !SolutionFound) {
+        // Extraer siguiente nodo a expandir.
         current_node = frontier.front();
         frontier.pop_front();
         explored.insert(current_node);
 
-        // Espacio de acciones del Ingeniero para nivel 2.
+        // Espacio de acciones disponibles para el Ingeniero.
         vector<Action> acciones = {WALK, JUMP, TURN_SR, TURN_SL};
         
         for (Action acc : acciones) {
             if (SolutionFound) break;
 
+            // Aplicar acción al estado actual: simular movimiento/rotación.
             EstadoI nuevo_estado = applyI(acc, current_node.estado, terreno, altura);
             
-            // Solo comprobamos objetivo tras acciones de movimiento.
-            // Girar puede alinear al agente, pero no cambia su casilla.
+            // Comprobación de meta: SOLO después de movimientos (WALK/JUMP).
+            // Rotaciones no cambian posición; no es necesario verificar meta tras girar.
             if ((acc == WALK || acc == JUMP) && 
                 nuevo_estado.site.f == fin.site.f && nuevo_estado.site.c == fin.site.c) {
                 
+                // SOLUCIÓN ENCONTRADA: construir ruta completa.
                 plan = current_node.secuencia;
                 plan.push_back(acc);
                 SolutionFound = true;
             }
-            else if (explored.find(NodoI{nuevo_estado, {}}) == explored.end() && discovered.find(NodoI{nuevo_estado, {}}) == discovered.end()) {
+            // Si el nuevo estado no ha sido visitado, agregarlo a frontier.
+            else if (explored.find(NodoI{nuevo_estado, {}}) == explored.end() && 
+                     discovered.find(NodoI{nuevo_estado, {}}) == discovered.end()) {
                 NodoI child;
                 child.estado = nuevo_estado;
                 child.secuencia = current_node.secuencia;
                 child.secuencia.push_back(acc);
                 frontier.push_back(child);
-              discovered.insert(NodoI{nuevo_estado, {}});
+                discovered.insert(NodoI{nuevo_estado, {}});
             }
         }
     }
+    
+    // Devolver plan: lista de acciones (vacía si no hay solución).
     return plan;
 }
 
 // Niveles avanzados (Uso de búsqueda)
 /**
- * @brief Comportamiento del ingeniero para el Nivel 2 (búsqueda).
- * @param sensores Datos actuales de los sensores.
- * @return Acción a realizar.
+ * ============================================================================
+ * NIVEL 2: BÚSQUEDA CON MAPA CONOCIDO - INGENIERO
+ * ============================================================================
+ * 
+ * @brief Comportamiento deliberativo: el Ingeniero planifica la ruta completa
+ *        hacia Belkanita usando BFS, luego ejecuta las acciones paso a paso.
+ * 
+ * ESTRATEGIA:
+ * - Fase planificación (si no hay plan válido):
+ *   1. Construir estado inicial (posición, orientación, zapatillas) desde sensores.
+ *   2. Construir estado objetivo (posición de Belkanita).
+ *   3. Ejecutar BFS para encontrar la ruta más corta (menos acciones).
+ *   4. Guardar plan en list<Action> y marcar hayPlan=true.
+ * 
+ * - Fase ejecución (si hay plan):
+ *   1. Extraer primera acción del plan.
+ *   2. Remover acción del plan.
+ *   3. Devolver acción al motor de juego.
+ *   4. Esperar siguiente ciclo para obtener sensores actualizados.
+ * 
+ * INVALIDACIÓN DE PLAN:
+ * - Si sensores.choque==true: última acción no se ejecutó (obstáculo imprevisto).
+ * - Si sensores.reset==true: el mundo fue restaurado (reinicio de nivel).
+ * - Acción: Limpiar plan, marcar hayPlan=false, replantificar en siguiente ciclo.
+ * 
+ * GESTIÓN DE ZAPATILLAS:
+ * - Persistencia: tiene_zapatillas se mantiene entre ciclos.
+ * - Sincronización: Si sensor detecta 'D' en casilla actual, activar zapatillas.
+ * - Impacto: Zapatillas permite mayor desplazamiento vertical (±2 vs ±1).
+ * 
+ * COSTO DE PLAN:
+ * - BFS busca ruta con MENOS ACCIONES (costo uniforme: 1 por acción).
+ * - NO considera consumo energético (a diferencia de Nivel 3+ con A*).
+ * - Ventaja: Rápido, predecible; Desventaja: Puede usar terreno caro.
+ * 
+ * EJECUCIÓN PASO A PASO:
+ * - Un ciclo = una acción (WALK, JUMP, TURN_SR, TURN_SL).
+ * - Motor de juego procesa acción y devuelve sensores actualizados.
+ * - Control de loop: Si plan vacío, replantificar automáticamente.
+ * 
+ * FLUJO COMPLETO:
+ *   ┌─ Sin plan válido ─┐
+ *   │                    ├─→ BFS ─→ plan
+ *   └────────────────────┘
+ *         ↑ (choque/reset)
+ *         │
+ *   Con plan ──→ Extraer acción ──→ Devolver
+ *         │
+ *         └─ Si vacío ──→ Replantificar
+ * 
+ * @param sensores Sensor data: posición actual, orientación, zapatillas detectadas, etc.
+ * @return Acción: Primera del plan, o IDLE si plan vacío y sin solución.
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_2(Sensores sensores)
 {
   Action accion = IDLE;
 
-  // 1) Estado interno persistente: mantener si ya obtuvo zapatillas.
-  // Sincronizar estado persistente de zapatillas con la casilla actual.
+  // 1) Sensor superficie[0]: material de la casilla actual.
+  // Si es 'D' (zapatillas), activar persistentemente para futuras acciones.
   if (sensores.superficie[0] == 'D') {
     tiene_zapatillas = true;
   }
@@ -622,36 +756,76 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_2(Sensores sensores
     plan.clear();
   }
 
-    if (!hayPlan) {
-        // 3) Construir estado inicial/objetivo y lanzar BFS sobre mapa conocido.
-        EstadoI inicio, fin;
-        inicio.site.f = sensores.posF;
-        inicio.site.c = sensores.posC;
-        inicio.site.brujula = sensores.rumbo;
-        inicio.zapatillas = tiene_zapatillas; // Debes controlar esta variable de estado
-        
-        fin.site.f = sensores.BelPosF;
-        fin.site.c = sensores.BelPosC;
-        
-        plan = BFS_Ingeniero(inicio, fin, mapaResultado, mapaCotas);
-        VisualizaPlan(inicio.site, plan);
-        hayPlan = (plan.size() > 0);
-    }
+  // ─────────────────────────────────────────────────────────────
+  // 3. PLANIFICACIÓN: Si no hay plan válido, generar nuevo
+  // ─────────────────────────────────────────────────────────────
+  if (!hayPlan) {
+      // Construir estado inicial desde sensores actuales.
+      EstadoI inicio, fin;
+      inicio.site.f = sensores.posF;
+      inicio.site.c = sensores.posC;
+      inicio.site.brujula = sensores.rumbo;
+      inicio.zapatillas = tiene_zapatillas;  // Incluir estado de zapatillas en búsqueda.
+      
+      // Construir estado objetivo: posición de Belkanita.
+      fin.site.f = sensores.BelPosF;
+      fin.site.c = sensores.BelPosC;
+      
+      // Ejecutar BFS: encuentra ruta con menos acciones hacia meta.
+      plan = BFS_Ingeniero(inicio, fin, mapaResultado, mapaCotas);
+      VisualizaPlan(inicio.site, plan);  // Mostrar plan en mapa (debug).
+      hayPlan = (plan.size() > 0);       // Marcar si se encontró solución.
+  }
 
-    if (hayPlan and plan.size() > 0) {
-        // 4) Política de ejecución: consumir una acción por ciclo de think().
-        accion = plan.front();
-        plan.pop_front();
-    }
+  // ─────────────────────────────────────────────────────────────
+  // 4. EJECUCIÓN: Extraer y devolver primera acción del plan
+  // ─────────────────────────────────────────────────────────────
+  if (hayPlan && plan.size() > 0) {
+      // Extraer primera acción (orden FIFO).
+      accion = plan.front();
+      plan.pop_front();
+  }
 
-      // 5) Si el plan se agotó, en el próximo ciclo se replantea desde el estado actual.
-    if (plan.size() == 0) hayPlan = false;
+  // ─────────────────────────────────────────────────────────────
+  // 5. CONTROL DE CICLO: Si plan agotado, marcar para replantificar
+  // ─────────────────────────────────────────────────────────────
+  // En el siguiente ciclo, sensores tendrán nueva posición.
+  // Si hayPlan==false, volveremos a FASE 3 para generar nuevo plan.
+  if (plan.size() == 0) hayPlan = false;
 
-    return accion;
+  return accion;
 }
 
 /**
- * @brief Comportamiento del ingeniero para el Nivel 3.
+ * ============================================================================
+ * NIVEL 3: REACCIÓN AVANZADA Y EVASIÓN (INGENIERO)
+ * ============================================================================
+ *
+ * Descripción general:
+ * - Nivel 3 mejora la reactividad frente a la presencia del Técnico delante.
+ * - Si el Técnico está delante (sensor agentes[2]=='t') se intenta una maniobra
+ *   de evasión rápida: girar lateralmente y avanzar, o saltar si es necesario.
+ * - El Ingeniero mantiene `tiene_zapatillas` y replanifica si hay choque/reset.
+ *
+ * Política de evasión (resumen):
+ * 1) Construir estados virtuales a izquierda/derecha para evaluar viabilidad.
+ * 2) Si hay hueco lateral libre (walk viable y sensor de agente en esa casilla '_'),
+ *    preferir moverse lateralmente: girar hacia el hueco y hacer `WALK`.
+ * 3) Si ambos laterales libres, alternar giro según `last_action` para reducir
+ *    oscilaciones (desempate).
+ * 4) Si no hay huecos laterales, intentar `JUMP` por encima (si es viable y
+ *    sensor de la casilla por encima está libre), si no, girar a la derecha.
+ * 5) Finalmente, añadir `WALK` para avanzar tras maniobra (comportamiento
+ *    original conserva este paso adicional).
+ *
+ * Notas de diseño:
+ * - `EsAccesibleWalkI` / `EsAccesibleJumpI` validan restricciones de altura y
+ *   terreno (se tienen en cuenta zapatillas).
+ * - Se usa `plan` (FIFO) para almacenar la secuencia de acciones de evasión;
+ *   se ejecuta una acción por ciclo.
+ * - No se modifica la lógica funcional; solo se documenta para facilitar
+ *   comprensión y mantenimiento.
+ *
  * @param sensores Datos actuales de los sensores.
  * @return Acción a realizar.
  */
@@ -783,6 +957,7 @@ vector<NodoTuberia> GenerarSucesoresTuberia(const NodoTuberia &nodo_actual, cons
     if (nf < 0 || nf >= terreno.size() || nc < 0 || nc >= terreno[0].size()) continue;
 
     char tipo_terreno = terreno[nf][nc];
+    char tipo_actual = terreno[f_actual][c_actual];
         
     // 2. Obstáculos duros: Muros, Precipicios y Bosques no se pueden transitar
     if (tipo_terreno == 'P' || tipo_terreno == 'M' || tipo_terreno == 'B') continue;
@@ -796,7 +971,7 @@ vector<NodoTuberia> GenerarSucesoresTuberia(const NodoTuberia &nodo_actual, cons
     // Comprobamos si esta opción plana es legal
     if (abs(op_plana) <= 1) { // Regla de modificación +-1
       if (!(tipo_terreno == 'A' && op_plana != 0)){ // Si es agua, op_plana debe ser 0
-        int impacto_sucesor = CosteInstalacionTuberia(tipo_terreno);
+        int impacto_sucesor = CosteInstalacionTuberia(tipo_actual) + CosteInstalacionTuberia(tipo_terreno);
         bool operacion_altura_valida = true;
 
     
@@ -816,17 +991,21 @@ vector<NodoTuberia> GenerarSucesoresTuberia(const NodoTuberia &nodo_actual, cons
         }
 
         // Si la operación de altura es válida y no superamos el límite ecológico
-        if (operacion_altura_valida && nodo_actual.impacto + impacto_sucesor <= limite_eco) {
+        if (operacion_altura_valida) {
+          int impacto_con_sucesor = nodo_actual.impacto + impacto_sucesor;
           
-          NodoTuberia sucesor_plano = nodo_actual;
-          sucesor_plano.estado_tub.site.f = nf;
-          sucesor_plano.estado_tub.site.c = nc;
-          sucesor_plano.estado_tub.altura_tuberia = h_actual;
-          sucesor_plano.secuencia.push_back(Paso{nf, nc, op_plana});
-          sucesor_plano.g_cost++;
-          sucesor_plano.impacto += impacto_sucesor;
-                      
-          sucesores.push_back(sucesor_plano);
+          // CRUCIAL: Validar presupuesto ANTES de crear sucesor
+          if (impacto_con_sucesor <= limite_eco) {
+            NodoTuberia sucesor_plano = nodo_actual;
+            sucesor_plano.estado_tub.site.f = nf;
+            sucesor_plano.estado_tub.site.c = nc;
+            sucesor_plano.estado_tub.altura_tuberia = h_actual;
+            sucesor_plano.secuencia.push_back(Paso{nf, nc, op_plana});
+            sucesor_plano.g_cost++;
+            sucesor_plano.impacto = impacto_con_sucesor;
+                        
+            sucesores.push_back(sucesor_plano);
+          }
         }
       }
     }
@@ -839,7 +1018,7 @@ vector<NodoTuberia> GenerarSucesoresTuberia(const NodoTuberia &nodo_actual, cons
     // Comprobamos si esta opción en bajada es legal
     if (abs(op_bajada) <= 1) { // Regla de modificación +-1
       if (!(tipo_terreno == 'A' && op_bajada != 0)){ // Si es agua, op_bajada debe ser 0
-        int impacto_sucesor = CosteInstalacionTuberia(tipo_terreno);
+        int impacto_sucesor = CosteInstalacionTuberia(tipo_actual) + CosteInstalacionTuberia(tipo_terreno);
         bool operacion_altura_valida = true;
 
         
@@ -859,17 +1038,21 @@ vector<NodoTuberia> GenerarSucesoresTuberia(const NodoTuberia &nodo_actual, cons
         }
 
         // Si la operación de altura es válida y no superamos el límite ecológico
-        if (operacion_altura_valida && nodo_actual.impacto + impacto_sucesor <= limite_eco) {
+        if (operacion_altura_valida) {
+          int impacto_con_sucesor = nodo_actual.impacto + impacto_sucesor;
           
-          NodoTuberia sucesor_bajada = nodo_actual;
-          sucesor_bajada.estado_tub.site.f = nf;
-          sucesor_bajada.estado_tub.site.c = nc;
-          sucesor_bajada.estado_tub.altura_tuberia = h_bajada;
-          sucesor_bajada.secuencia.push_back(Paso{nf, nc, op_bajada});
-          sucesor_bajada.g_cost++;
-          sucesor_bajada.impacto += impacto_sucesor;
-                      
-          sucesores.push_back(sucesor_bajada);
+          // CRUCIAL: Validar presupuesto ANTES de crear sucesor
+          if (impacto_con_sucesor <= limite_eco) {
+            NodoTuberia sucesor_bajada = nodo_actual;
+            sucesor_bajada.estado_tub.site.f = nf;
+            sucesor_bajada.estado_tub.site.c = nc;
+            sucesor_bajada.estado_tub.altura_tuberia = h_bajada;
+            sucesor_bajada.secuencia.push_back(Paso{nf, nc, op_bajada});
+            sucesor_bajada.g_cost++;
+            sucesor_bajada.impacto = impacto_con_sucesor;
+            
+            sucesores.push_back(sucesor_bajada);
+          }
         }
       }
     }
@@ -923,7 +1106,7 @@ list<Paso> A_Star_Tuberias(EstadoTuberia inicio, const vector<vector<unsigned ch
         start_node.estado_tub.altura_tuberia = h_mapa_inicio + op; 
         start_node.g_cost = 0;
         
-        start_node.impacto = CosteInstalacionTuberia(tipo_inicio);
+        start_node.impacto = 0;
         if (op != 0) {
           start_node.impacto += CalcularImpactoEcologico(tipo_inicio, op);
         }
@@ -947,11 +1130,13 @@ list<Paso> A_Star_Tuberias(EstadoTuberia inicio, const vector<vector<unsigned ch
         int c = current.estado_tub.site.c;
 
         // CONDICIÓN DE ÉXITO:
-        // Como la cola prioriza el f_cost más bajo y la ecología, la primera 'U' 
-        // que sacamos es matemáticamente la ruta más óptima y físicamente legal.
+        // La primera 'U' que sacamos con impacto valido es la ruta óptima.
         if (terreno[f][c] == 'U') {
-            plan_final = current.secuencia;
-            break; // Detenemos la búsqueda de inmediato
+            if (current.impacto <= limite_eco) {
+                plan_final = current.secuencia;
+                break; // Detenemos la búsqueda de inmediato
+            }
+            // Si excede presupuesto, ignorar este nodo e intentar otro camino
         }
 
         // 4. Generar sucesores
@@ -962,6 +1147,11 @@ list<Paso> A_Star_Tuberias(EstadoTuberia inicio, const vector<vector<unsigned ch
           int nuevo_g = sucesor.g_cost;
           int nuevo_impacto = sucesor.impacto;
           bool dominado = false;
+          
+          // ✅ VALIDACIÓN: Asegurar que el sucesor respeta el presupuesto
+          if (nuevo_impacto > limite_eco) {
+              continue;  // Descartar sucesores que superen presupuesto
+          }
             
           // Solo añadimos a la cola si NO ha sido cerrado ya
             if (explorados.find(estado_suc) != explorados.end()) {
@@ -989,32 +1179,105 @@ list<Paso> A_Star_Tuberias(EstadoTuberia inicio, const vector<vector<unsigned ch
  * @param sensores Datos actuales de los sensores.
  * @return Acción a realizar.
  */
+/**
+ * ============================================================================
+ * NIVEL 4: PLANIFICACIÓN ESTRATÉGICA DE RED DE TUBERÍAS (INGENIERO)
+ * ============================================================================
+ * 
+ * @brief Planificación offline de la red de tuberías hacia plantas de tratamiento.
+ *        NO ejecuta acciones; solo calcula y visualiza la ruta óptima.
+ * 
+ * OBJETIVO DEL NIVEL 4:
+ * Encontrar la red de tuberías más eficiente (menor impacto ecológico) que:
+ * 1. Comienza en Belkanita (posición inicial de la tubería madre).
+ * 2. Alcanza al menos una planta de tratamiento ('U' en mapa).
+ * 3. Respeta el presupuesto ecológico máximo (sensores.max_ecologico).
+ * 4. Permite modificaciones de terreno (RAISE, DIG) donde sea necesario.
+ * 
+ * ESTRATEGIA:
+ * - Se ejecuta UNA SOLA VEZ (si !hayPlan).
+ * - Construye un EstadoTuberia inicial en Belkanita.
+ * - Llama a A_Star_Tuberias para encontrar la red óptima.
+ * - Si se encuentra solución, visualiza y marca hayPlan=true.
+ * - Devuelve siempre IDLE (sin ejecución de acciones en Nivel 4).
+ * 
+ * MODELO DE BÚSQUEDA:
+ * Algoritmo: A* multinivel con optimización ecológica y geométrica.
+ * - Estado: EstadoTuberia{ubicacion site, int altura_tuberia}
+ * - Nodo: NodoTuberia{estado_tub, g_cost, f_cost, impacto_eco, secuencia}
+ * - Meta: Alcanzar cualquier casilla 'U' (planta de tratamiento).
+ * - Costo: Suma de impactos ecológicos (INSTALL + RAISE/DIG).
+ * - Heurística: Distancia mínima a cualquier 'U' (admisible).
+ * - Ordenamiento: Prioriza menor f_cost; en empate, menor impacto_eco.
+ * 
+ * COMPONENTES:
+ * 1. A_Star_Tuberias: Búsqueda principal (busca ruta a cualquier 'U').
+ * 2. GenerarSucesoresTuberia: Expande un nodo (genera tubería en 8 direcciones).
+ * 3. HeuristicaTuberias: Distancia mínima a cualquier 'U'.
+ * 4. CosteInstalacionTuberia / CalcularImpactoEcologico: Valúan cada casilla.
+ * 5. VisualizaRedTuberias: Muestra la red en el monitor.
+ * 
+ * MODIFICACIONES DE TERRENO:
+ * - RAISE (op=+1): Elevar terreno (+5 ecología base, +altura_mod).
+ * - DIG (op=-1): Excavar terreno (-2 ecología base, +altura_mod).
+ * - op=0: Sin modificación.
+ * - Restricciones: No modificar agua ('A'), ni exceder cotas del mapa (0-9).
+ * 
+ * LIMITACIONES CONOCIDAS:
+ * - Presupuesto ecológico es GLOBAL para toda la planificación.
+ * - No se replantifica si falla (marcar hayPlan previene reintentos).
+ * - No ejecuta el plan en Nivel 4 (puro cálculo).
+ * - Nivel 5 añade la ejecución física de la red.
+ * 
+ * @param sensores Sensores con posición de Belkanita y presupuesto ecológico.
+ * @return Siempre IDLE (solo planificación, sin ejecución en Nivel 4).
+ */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores)
 {
-  // Nivel 4: no ejecutamos pasos aquí; solo generamos y publicamos la red de tuberías.
+  // ─────────────────────────────────────────────────────────────
+  // 1. PLANIFICACIÓN: Calcular red de tuberías si no existe
+  // ─────────────────────────────────────────────────────────────
   if (!hayPlan) {
-        EstadoTuberia inicio;
-        inicio.site.f = sensores.BelPosF;
-        inicio.site.c = sensores.BelPosC;
-    // La red arranca en la altura natural de la casilla de inicio.
-        inicio.altura_tuberia = mapaCotas[sensores.BelPosF][sensores.BelPosC];
+      // Construir estado inicial: raíz de la red en Belkanita.
+      EstadoTuberia inicio;
+      inicio.site.f = sensores.BelPosF;
+      inicio.site.c = sensores.BelPosC;
+      inicio.altura_tuberia = mapaCotas[sensores.BelPosF][sensores.BelPosC];
 
-    // El presupuesto real es el impacto restante disponible para esta planificación.
-    int limite_eco = sensores.max_ecologico;
+      // Presupuesto ecológico disponible: límite máximo de impacto total.
+      int limite_eco = sensores.max_ecologico;
 
-    // Lanzamos la búsqueda sobre el mapa completo conocido.
-        list<Paso> plan_tub = A_Star_Tuberias(inicio, mapaResultado, mapaCotas, limite_eco);
+      // ─────────────────────────────────────────────────────────────
+      // 2. BUSCAR RED ÓPTIMA: A* hacia cualquier planta ('U')
+      // ─────────────────────────────────────────────────────────────
+      // A_Star_Tuberias devuelve lista de Paso{fil, col, op}:
+      // - fil, col: posición de la casilla en la red.
+      // - op: operación de terreno (-1=DIG, 0=mantener, +1=RAISE).
+      // La búsqueda respeta todas las restricciones físicas y presupuestarias.
+      list<Paso> plan_tub = A_Star_Tuberias(inicio, mapaResultado, mapaCotas, limite_eco);
 
-    // Si encontró solución, la guardamos en la estructura que lee el monitor.
-        if (plan_tub.size() > 0) {
-            VisualizaRedTuberias(plan_tub);
-            hayPlan = true;
-            cout << "Plan de tuberías trazado con éxito!" << endl;
-        } else {
-            cout << "No se encontró un camino válido para las tuberías." << endl;
-        }
-    }
-    return IDLE;
+      // ─────────────────────────────────────────────────────────────
+      // 3. RESULTADO: Visualizar y marcar como exitoso
+      // ─────────────────────────────────────────────────────────────
+      if (plan_tub.size() > 0) {
+          // Visualizar la red en el monitor (para debug/seguimiento).
+          VisualizaRedTuberias(plan_tub);
+          hayPlan = true;  // Marcar como planificado exitosamente.
+          cout << "Plan de tuberías trazado con éxito!" << endl;
+      } else {
+          // No se encontró solución viable (presupuesto insuficiente, etc).
+          cout << "No se encontró un camino válido para las tuberías." << endl;
+          // ✅ IMPORTANTE: Marcar hayPlan=false explícitamente para permitir reintentos
+          hayPlan = false;
+      }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 4. NIVEL 4 NO EJECUTA: Devolver IDLE siempre
+  // ─────────────────────────────────────────────────────────────
+  // Nivel 4 es solo planificación offline.
+  // La ejecución física de la red ocurre en Nivel 5.
+  return IDLE;
 }
 
 /**
@@ -1872,7 +2135,7 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores
         }
 
       if (meta_f != -1 && meta_c != -1) {
-        radio_maximo = abs(meta_f - sensores.BelPosF) + abs(meta_c - sensores.BelPosC);
+        radio_maximo = (abs(meta_f - sensores.BelPosF) + abs(meta_c - sensores.BelPosC))+5;
       }
         
         // 2. BUSCAR NIEBLA ÚTIL (si no hay plan de exploración activo)
