@@ -1281,228 +1281,331 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_4(Sensores sensores
 }
 
 /**
- * @brief Comportamiento del ingeniero para el Nivel 5.
+ * @brief Comportamiento del ingeniero para el Nivel 5 - INSTALACIÓN DE RED DE TUBERÍAS.
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * ALGORITMO COORDINADO INGENIERO-TÉCNICO:
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * El Ingeniero ejecuta 5 fases para construir la red de tuberías junto al Técnico:
+ * 
+ * FASE 0 (PLANIFICACIÓN): 
+ *   - Se ejecuta UNA SOLA VEZ al inicio del nivel.
+ *   - Utiliza A* para planificar la ruta óptima de tuberías (respetando el
+ *     presupuesto ecológico).
+ *   - Almacena el plan en planTuberiasVec[] para acceso rápido con tramo_idx.
+ *   - Transición → FASE 1.
+ * 
+ * FASE 1 (MOVIMIENTO):
+ *   - El Ingeniero se mueve hacia el tramo actual del plan (posición planTuberiasVec[tramo_idx]).
+ *   - Una vez llega, si es necesario, ejecuta RAISE o DIG para modificar el terreno.
+ *   - Cuando la casilla está lista, envía COME (señal para el Técnico).
+ *   - Transición → FASE 2.
+ * 
+ * FASE 2 (INSTALACIÓN):
+ *   - El Ingeniero deja una "migita de pan" (COME) para que el Técnico se dirija aquí.
+ *   - Esta acción también le sirve al Ingeniero para abandonar la casilla.
+ *   - Transición → FASE 3 (en el siguiente tick).
+ * 
+ * FASE 3 (PREPARACIÓN):
+ *   - El Ingeniero se mueve al siguiente tramo (planTuberiasVec[tramo_idx+1]).
+ *   - Prepara el terreno (RAISE/DIG) si es necesario.
+ *   - Cuando está listo, se gira hacia el Técnico.
+ *   - Transición → FASE 4.
+ * 
+ * FASE 4 (SINCRONIZACIÓN):
+ *   - El Ingeniero y el Técnico se miran a los ojos (enfrente).
+ *   - Cuando se ven, AMBOS ejecutan INSTALL simultáneamente.
+ *   - Después de INSTALL, el índice avanza y se vuelve a FASE 2 para el siguiente tramo.
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * NOTAS IMPORTANTES:
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * - El ciclo se repite hasta cubrir todos los tramos: tramo_idx va de 0 hasta
+ *   planTuberiasVec.size()-1.
+ * - El Ingeniero y el Técnico están siempre separados por 1 casilla: cuando el
+ *   Ingeniero está en tramo_idx+1, el Técnico está en tramo_idx.
+ * - Si el Técnico bloquea el paso del Ingeniero, se activa evasión reactiva.
+ * - Si hay colisión o reset, se borra el plan de movimiento y se replanifica.
+ * 
  * @param sensores Datos actuales de los sensores.
- * @return Acción a realizar.
+ * @return Acción a realizar en este tick.
  */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores)
 {
   Action accion = IDLE;
   ActualizarMapa(sensores);
 
-  // Actualizar zapatillas
+  // ─────────────────────────────────────────────────────────────────────────
+  // INICIALIZACIÓN: Detectar zapatillas y reseteos
+  // ─────────────────────────────────────────────────────────────────────────
   if (sensores.superficie[0] == 'D') tiene_zapatillas = true;
-  // REPLANIFICACIÓN POR CHOQUE: Si choca, borra el plan de movimiento
+  
+  // Si hay colisión o reset, descarta el plan de movimiento y replanifico
   if (sensores.choque || sensores.reset) {
-    hayPlan = false; plan.clear();
+    hayPlan = false; 
+    plan.clear();
   }
 
-  // FASE 0: PLANIFICAR la red de tuberías (solo una vez)
+  // ─────────────────────────────────────────────────────────────────────────
+  // FASE 0: PLANIFICACIÓN OFFLINE DE LA RED DE TUBERÍAS (Ejecuta 1 sola vez)
+  // ─────────────────────────────────────────────────────────────────────────
   if (faseNivel5 == 0) {
     EstadoTuberia inicio;
     inicio.site.f = sensores.BelPosF;
     inicio.site.c = sensores.BelPosC;
     inicio.altura_tuberia = mapaCotas[sensores.BelPosF][sensores.BelPosC];
-    //Planificamos con A* igual que en el nivel 4
+    
+    // Planificar la red completa usando A* respetando presupuesto ecológico
     list<Paso> planTuberias = A_Star_Tuberias(inicio, mapaResultado, mapaCotas, sensores.max_ecologico);
 
     if (!planTuberias.empty()) {
       VisualizaRedTuberias(planTuberias);
-      // Lo pasamos a vector para acceder fácilmente con tramo_idx
+      
+      // Convertir lista a vector para acceso indexado eficiente durante ejecución
       for (auto p : planTuberias) planTuberiasVec.push_back(p);
-      faseNivel5 = 1; //Pasamos al siguiente nivel
-      tramo_idx = 0;
+      
+      faseNivel5 = 1;  // Pasar a FASE 1 (movimiento al primer tramo)
+      tramo_idx = 0;   // Comenzar desde el primer tramo
     }
     return IDLE;
   }
 
-  // Prevención de fin
-  if (tramo_idx+1 >= planTuberiasVec.size()) return IDLE;
+  // ─────────────────────────────────────────────────────────────────────────
+  // VALIDACIÓN: Detectar fin de red (todos los tramos completados)
+  // ─────────────────────────────────────────────────────────────────────────
+  if (tramo_idx + 1 >= planTuberiasVec.size()) return IDLE;
 
-  // FASE 1: MOVERSE al tramo actual del plan de tuberías
+  // ─────────────────────────────────────────────────────────────────────────
+  // FASE 1: MOVIMIENTO HACIA EL TRAMO ACTUAL
+  // ─────────────────────────────────────────────────────────────────────────
+  // Objetivo: Alcanzar planTuberiasVec[tramo_idx] y preparar su terreno (RAISE/DIG).
+  // Una vez completado, envía COME al Técnico.
+  // ─────────────────────────────────────────────────────────────────────────
   if (faseNivel5 == 1) {
     Paso target = planTuberiasVec[tramo_idx];
-    // Si ya estamos en la casilla, nivelamos terreno
+    
+    // SUBCASO 1.1: Ya estamos en la casilla del tramo
     if (sensores.posF == target.fil && sensores.posC == target.col) {
-      if (target.op == 1) { planTuberiasVec[tramo_idx].op = 0; return RAISE; }
-      if (target.op == -1) { planTuberiasVec[tramo_idx].op = 0; return DIG; }
+      // Modificar terreno si es necesario (RAISE/DIG)
+      if (target.op == 1) { 
+        planTuberiasVec[tramo_idx].op = 0;  // Marcar como completado
+        return RAISE; 
+      }
+      if (target.op == -1) { 
+        planTuberiasVec[tramo_idx].op = 0;  // Marcar como completado
+        return DIG; 
+      }
       
-      // Si la casilla está lista, plantamos baliza y avanzamos fase
-      faseNivel5 = 2; 
-      hayPlan = false; 
+      // La casilla está lista → enviar señal COME al Técnico y pasar a FASE 2
+      faseNivel5 = 2;
+      hayPlan = false;
       plan.clear();
       return IDLE;
     }
 
-    // Si no estamos, caminamos hacia ella
+    // SUBCASO 1.2: No hemos llegado aún → planificar ruta
     if (!hayPlan) {
       EstadoI start, goal;
-      start.site.f = sensores.posF; start.site.c = sensores.posC;
-      start.site.brujula = sensores.rumbo; start.zapatillas = tiene_zapatillas;
-      goal.site.f = target.fil; goal.site.c = target.col;
+      start.site.f = sensores.posF;
+      start.site.c = sensores.posC;
+      start.site.brujula = sensores.rumbo;
+      start.zapatillas = tiene_zapatillas;
+      goal.site.f = target.fil;
+      goal.site.c = target.col;
 
       plan = BFS_Ingeniero(start, goal, mapaResultado, mapaCotas);
       VisualizaPlan(start.site, plan);
       hayPlan = !plan.empty();
     }
 
+    // SUBCASO 1.3: Ejecutar el plan de movimiento (con evasión reactiva si es necesario)
     if (hayPlan && !plan.empty()) {
-      cout<<"Ing: Fase1"<<endl;
+      // Si el Técnico está en el camino, activar evasión
       if ((plan.front() == WALK && sensores.agentes[2] == 't') || 
           (plan.front() == JUMP && sensores.agentes[6] == 't')) {
-          
-          plan.clear();
-          EstadoI st_actual = {ubicacion{sensores.posF, sensores.posC, (Orientacion)sensores.rumbo}, tiene_zapatillas};
-          EstadoI st_izq = st_actual; st_izq.site.brujula = (Orientacion)((st_izq.site.brujula + 7) % 8);
-          EstadoI st_dch = st_actual; st_dch.site.brujula = (Orientacion)((st_dch.site.brujula + 1) % 8);
+        
+        // Intentar ir a izquierda o derecha del Técnico
+        plan.clear();
+        EstadoI st_actual = {ubicacion{sensores.posF, sensores.posC, (Orientacion)sensores.rumbo}, tiene_zapatillas};
+        EstadoI st_izq = st_actual; 
+        st_izq.site.brujula = (Orientacion)((st_izq.site.brujula + 7) % 8);
+        EstadoI st_dch = st_actual; 
+        st_dch.site.brujula = (Orientacion)((st_dch.site.brujula + 1) % 8);
 
-          bool izq_viable = EsAccesibleWalkI(st_izq, mapaResultado, mapaCotas) && sensores.agentes[1] == '_';
-          bool dch_viable = EsAccesibleWalkI(st_dch, mapaResultado, mapaCotas) && sensores.agentes[3] == '_';
+        bool izq_viable = EsAccesibleWalkI(st_izq, mapaResultado, mapaCotas) && sensores.agentes[1] == '_';
+        bool dch_viable = EsAccesibleWalkI(st_dch, mapaResultado, mapaCotas) && sensores.agentes[3] == '_';
 
-          if (izq_viable) { plan.push_back(TURN_SL); plan.push_back(WALK); } 
-          else if (dch_viable) { plan.push_back(TURN_SR); plan.push_back(WALK); } 
-          else {
-              bool salto_viable = EsAccesibleJumpI(st_actual, mapaResultado, mapaCotas) && sensores.agentes[6] == '_';
-              if (salto_viable) plan.push_back(JUMP);
-              else plan.push_back(TURN_SR); // Dar vueltas esperando
-          }
-          hayPlan = true;
-          Action a = plan.front(); plan.pop_front();
-          return a;
+        if (izq_viable) { plan.push_back(TURN_SL); plan.push_back(WALK); } 
+        else if (dch_viable) { plan.push_back(TURN_SR); plan.push_back(WALK); } 
+        else {
+          bool salto_viable = EsAccesibleJumpI(st_actual, mapaResultado, mapaCotas) && sensores.agentes[6] == '_';
+          if (salto_viable) plan.push_back(JUMP);
+          else plan.push_back(TURN_SR);  // Girar esperando
+        }
+        hayPlan = true;
+        Action a = plan.front(); 
+        plan.pop_front();
+        return a;
       }
 
-      Action a = plan.front(); plan.pop_front();
+      // Ejecutar acción siguiente del plan
+      Action a = plan.front();
+      plan.pop_front();
       if (plan.empty()) hayPlan = false;
       return a;
     }
     return IDLE;
   }
 
-  // FASE 2: INSTALAR la tubería en el tramo actual
+  // ─────────────────────────────────────────────────────────────────────────
+  // FASE 2: DEJAR MIGITA DE PAN (COME)
+  // ─────────────────────────────────────────────────────────────────────────
+  // El Ingeniero deja una señal para que el Técnico sepa dónde ir.
+  // Esto también sirve para que el Ingeniero se mueva a la siguiente posición.
+  // ─────────────────────────────────────────────────────────────────────────
   if (faseNivel5 == 2) {
-    faseNivel5 = 3; // En el siguiente tick, me quitaré de en medio
-    hayPlan = false; 
+    faseNivel5 = 3;  // Pasar a FASE 3 (en el siguiente tick)
+    hayPlan = false;
     plan.clear();
-    cout<<"Ing: Fase2"<<endl;
-    return COME; // Le deja la "migita de pan" al Técnico en esta casilla
+    return COME;  // Dejar "migita de pan" para el Técnico
   }
 
-  // FASE 3: Ir a la casilla de construcción actual y prepararla
+  // ─────────────────────────────────────────────────────────────────────────
+  // FASE 3: PREPARACIÓN DEL SIGUIENTE TRAMO
+  // ─────────────────────────────────────────────────────────────────────────
+  // Objetivo: Alcanzar planTuberiasVec[tramo_idx+1] y preparar su terreno (RAISE/DIG).
+  // El Técnico está en planTuberiasVec[tramo_idx], ambos listos para sincronización.
+  // ─────────────────────────────────────────────────────────────────────────
   if (faseNivel5 == 3) {
-    cout<<"Ing: Fase3"<<endl;
-    Paso target = planTuberiasVec[tramo_idx+1];
+    Paso target = planTuberiasVec[tramo_idx + 1];
     
+    // SUBCASO 3.1: Ya estamos en el siguiente tramo
     if (sensores.posF == target.fil && sensores.posC == target.col) {
-      if (target.op == 1) { planTuberiasVec[tramo_idx+1].op = 0; cout<<"Ing: RAISE"<<endl; return RAISE; 
+      // Modificar terreno si es necesario (RAISE/DIG)
+      if (target.op == 1) { 
+        planTuberiasVec[tramo_idx + 1].op = 0;  // Marcar como completado
+        return RAISE;
       }
-      if (target.op == -1) { planTuberiasVec[tramo_idx+1].op = 0; cout<<"Ing: RAISE"<<endl;return DIG;
+      if (target.op == -1) { 
+        planTuberiasVec[tramo_idx + 1].op = 0;  // Marcar como completado
+        return DIG;
       }
       
-      faseNivel5 = 4; // Terreno preparado, toca girarse
-      hayPlan = false; plan.clear();
+      // Terreno preparado → pasar a FASE 4 (girarse hacia el Técnico)
+      faseNivel5 = 4;
+      hayPlan = false;
+      plan.clear();
       return IDLE;
     }
-    // 1. Calculamos la distancia y el desnivel real
+    
+    // Calcular distancia Manhattan y desnivel máximo permitido
     int dist = abs(target.fil - sensores.posF) + abs(target.col - sensores.posC);
     int maxDif = tiene_zapatillas ? 2 : 1;
-    // Usamos casting a (int) para evitar underflows silenciosos al restar
     int difAltura = abs((int)mapaCotas[target.fil][target.col] - (int)sensores.cota[0]);
 
-    // === LÓGICA REACTIVA OPTIMIZADA (Sustituye al BFS en la Fase 3) ===
-    if(dist==1 && difAltura <=maxDif){
+    // SUBCASO 3.2: Objetivo cercano (distancia=1) → control reactivo directo
+    if (dist == 1 && difAltura <= maxDif) {
       if (hayPlan) { hayPlan = false; plan.clear(); }
+      
+      // Calcular orientación ideal hacia la casilla
       int dF = target.fil - sensores.posF;
       int dC = target.col - sensores.posC;
       Orientacion ideal;
 
-      // 1. Averiguamos dónde está la siguiente casilla (siempre es ortogonal)
       if (dF < 0 && dC == 0) ideal = norte;
       else if (dF == 0 && dC > 0) ideal = este;
       else if (dF > 0 && dC == 0) ideal = sur;
       else if (dF == 0 && dC < 0) ideal = oeste;
-      else ideal = (Orientacion)sensores.rumbo; // Salvaguarda
+      else ideal = (Orientacion)sensores.rumbo;  // Salvaguarda
 
-      // 2. Si no la estamos mirando, giramos hacia ella
+      // Si no miramos la dirección, giramos
       if (sensores.rumbo != ideal) {
         int diff = (ideal - sensores.rumbo + 8) % 8;
         if (diff <= 4) return TURN_SR;
         else return TURN_SL;
-      } 
-      // 3. Si ya la estamos mirando, avanzamos directamente
-      else {
-        // Evasión reactiva simple
-        if (sensores.agentes[2] == 't') return TURN_SR; 
-        return WALK;
       }
-    }else{// LÓGICA DE BÚSQUEDA BFS (Si está lejos o el salto es muy grande)
-      if (!hayPlan) {
-        EstadoI start, goal;
-        start.site.f = sensores.posF; start.site.c = sensores.posC;
-        start.site.brujula = (Orientacion)sensores.rumbo; start.zapatillas = tiene_zapatillas;
-        goal.site.f = target.fil; goal.site.c = target.col;
+      
+      // Ya miramos → avanzar o esquivar al Técnico
+      if (sensores.agentes[2] == 't') return TURN_SR;  // Técnico adelante → girar esperando
+      return WALK;
+    }
+    
+    // SUBCASO 3.3: Objetivo lejano → usar BFS para planificación
+    if (!hayPlan) {
+      EstadoI start, goal;
+      start.site.f = sensores.posF;
+      start.site.c = sensores.posC;
+      start.site.brujula = (Orientacion)sensores.rumbo;
+      start.zapatillas = tiene_zapatillas;
+      goal.site.f = target.fil;
+      goal.site.c = target.col;
+      
+      plan = BFS_Ingeniero(start, goal, mapaResultado, mapaCotas);
+      VisualizaPlan(start.site, plan);
+      hayPlan = !plan.empty();
+    }
+
+    // Ejecutar el plan de movimiento (con evasión reactiva si es necesario)
+    if (hayPlan && !plan.empty()) {
+      // Si el Técnico está en el camino, activar evasión
+      if ((plan.front() == WALK && sensores.agentes[2] == 't') || 
+          (plan.front() == JUMP && sensores.agentes[6] == 't')) {
         
-        plan = BFS_Ingeniero(start, goal, mapaResultado, mapaCotas);
-        VisualizaPlan(start.site, plan);
-        hayPlan = !plan.empty();
-      }
+        // Intentar ir a izquierda o derecha del Técnico
+        plan.clear();
+        EstadoI st_actual = {ubicacion{sensores.posF, sensores.posC, (Orientacion)sensores.rumbo}, tiene_zapatillas};
+        EstadoI st_izq = st_actual; 
+        st_izq.site.brujula = (Orientacion)((st_izq.site.brujula + 7) % 8);
+        EstadoI st_dch = st_actual; 
+        st_dch.site.brujula = (Orientacion)((st_dch.site.brujula + 1) % 8);
 
-      if (hayPlan && !plan.empty()) {
-        if ((plan.front() == WALK && sensores.agentes[2] == 't') || 
-            (plan.front() == JUMP && sensores.agentes[6] == 't')) {
-            
-            plan.clear();
-            EstadoI st_actual = {ubicacion{sensores.posF, sensores.posC, (Orientacion)sensores.rumbo}, tiene_zapatillas};
-            EstadoI st_izq = st_actual; st_izq.site.brujula = (Orientacion)((st_izq.site.brujula + 7) % 8);
-            EstadoI st_dch = st_actual; st_dch.site.brujula = (Orientacion)((st_dch.site.brujula + 1) % 8);
+        bool izq_viable = EsAccesibleWalkI(st_izq, mapaResultado, mapaCotas) && sensores.agentes[1] == '_';
+        bool dch_viable = EsAccesibleWalkI(st_dch, mapaResultado, mapaCotas) && sensores.agentes[3] == '_';
 
-            bool izq_viable = EsAccesibleWalkI(st_izq, mapaResultado, mapaCotas) && sensores.agentes[1] == '_';
-            bool dch_viable = EsAccesibleWalkI(st_dch, mapaResultado, mapaCotas) && sensores.agentes[3] == '_';
-
-            if (izq_viable) { plan.push_back(TURN_SL); plan.push_back(WALK); } 
-            else if (dch_viable) { plan.push_back(TURN_SR); plan.push_back(WALK); } 
-            else {
-                bool salto_viable = EsAccesibleJumpI(st_actual, mapaResultado, mapaCotas) && sensores.agentes[6] == '_';
-                if (salto_viable) plan.push_back(JUMP);
-                else plan.push_back(TURN_SR);
-            }
-            hayPlan = true;
-            Action a = plan.front(); plan.pop_front();
-            return a;
+        if (izq_viable) { plan.push_back(TURN_SL); plan.push_back(WALK); } 
+        else if (dch_viable) { plan.push_back(TURN_SR); plan.push_back(WALK); } 
+        else {
+          bool salto_viable = EsAccesibleJumpI(st_actual, mapaResultado, mapaCotas) && sensores.agentes[6] == '_';
+          if (salto_viable) plan.push_back(JUMP);
+          else plan.push_back(TURN_SR);
         }
-        Action a = plan.front(); 
+        hayPlan = true;
+        Action a = plan.front();
         plan.pop_front();
-        if (plan.empty()) hayPlan = false;
         return a;
       }
+
+      // Ejecutar acción siguiente del plan
+      Action a = plan.front();
+      plan.pop_front();
+      if (plan.empty()) hayPlan = false;
+      return a;
     }
     return IDLE;
   }
 
-  // FASE 4: Girarse hacia la "Migita" y esperar al Técnico
+  // ─────────────────────────────────────────────────────────────────────────
+  // FASE 4: SINCRONIZACIÓN CON TÉCNICO
+  // ─────────────────────────────────────────────────────────────────────────
+  // Objetivo: Mirarse a los ojos con el Técnico (enfrente) y ejecutar INSTALL.
+  // Después, incrementar índice y volver a FASE 2 para el siguiente tramo.
+  // ─────────────────────────────────────────────────────────────────────────
   if (faseNivel5 == 4) {
-    cout<<"Ing: Fase4"<<endl;
-    // Si ya estamos mirándonos a los ojos ¡ZAS!
+    // Si nos miramos a los ojos ¡INSTALAR!
     if (sensores.enfrente) {
-      // Avanzamos el índice AHORA, porque ya hemos construido este empalme.
-      tramo_idx++; 
-      /*// Si el tramo que acabo de construir era el penúltimo (y yo estaba en el último)
-      if (tramo_idx + 1 >= planTuberiasVec.size()) {
-          faseNivel5 = 99; // Hemos terminado la red
-      } else {*/
-          // El Técnico ya está en su sitio (tramo_idx), yo ya estoy en el mío (tramo_idx + 1).
-          // Volvemos a la fase 2 para llamarle, o a la 1 si necesito ir a preparar la nueva "migita".
-          // Como yo ya ESTOY en el tramo_idx, la fase 1 se saltará automáticamente.
-          faseNivel5 = 2; 
-      //}
+      tramo_idx++;  // Avanzar al siguiente tramo (ya fue construido)
+      faseNivel5 = 2;  // Volver a FASE 2 para siguiente ciclo
       return INSTALL;
-    }else{
-      //return TURN_SL;
-      // Si no me mira, calculo la orientación ideal hacia el técnico
+    }
+    
+    // No nos miramos aún → calcular orientación ideal hacia el Técnico
     Paso tech_pos = planTuberiasVec[tramo_idx];
     int dF = tech_pos.fil - sensores.posF;
     int dC = tech_pos.col - sensores.posC;
     Orientacion ideal;
 
+    // Calcular orientación en 8 direcciones hacia el Técnico
     if (dF < 0 && dC == 0) ideal = norte;
     else if (dF < 0 && dC > 0) ideal = noreste;
     else if (dF == 0 && dC > 0) ideal = este;
@@ -1511,22 +1614,17 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_5(Sensores sensores
     else if (dF > 0 && dC < 0) ideal = suroeste;
     else if (dF == 0 && dC < 0) ideal = oeste;
     else if (dF < 0 && dC < 0) ideal = noroeste;
-    else ideal = (Orientacion)sensores.rumbo; // ya está
+    else ideal = (Orientacion)sensores.rumbo;
 
+    // Si no miramos la dirección ideal, girar hacia ella por el camino más corto
     if (sensores.rumbo != ideal) {
       int diff = (ideal - sensores.rumbo + 8) % 8;
-      // Elegir el giro más corto
-      if (diff <= 4)
-        return TURN_SR; // 1,2,3,4 pasos horario
-      else
-        return TURN_SL; // 5,6,7 pasos antihorario (equivale a 3,2,1 negativos)
-    }
-    return IDLE;
+      // Elegir dirección de giro más corta: horario (≤4) o antihorario (>4)
+      if (diff <= 4) return TURN_SR;  // Giro horario
+      else return TURN_SL;            // Giro antihorario
     }
     
-    
-    
-    return IDLE; // Le miramos fijamente hasta que él termine de llegar
+    return IDLE;  // Mirando al Técnico, esperar a que llegue
   }
 
   return IDLE;
@@ -1649,264 +1747,6 @@ list<Action> A_Star_Ingeniero(EstadoI inicio, EstadoI fin, const vector<vector<u
 }
 
 
-/**
- * @brief Comportamiento del ingeniero para el Nivel 6.
- * @param sensores Datos actuales de los sensores.
- * @return Acción a realizar.
- */
-/*
-Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores)
-{
-  // 1. Actualización básica de estado en el Nivel 6
-  ActualizarMapa(sensores);
-  if (sensores.superficie[0] == 'D') tiene_zapatillas = true;
-
-  static set<pair<int, int>> niebla_inaccesible;
-  // Calculamos cuántos turnos llevamos de simulación de forma segura
-  static int vida_inicial = -1;
-  static int mejor_coste_tuberia = 999999; 
-  static list<Paso> mejor_plan_tuberias;
-    static int radio_exploracion = 999999; // Radio de niebla que puede mejorar el mejor plan actual
-    static int celdas_conocidas_prev = -1; // Para volver a evaluar cuando el mapa descubierto crece
-
-  if (vida_inicial == -1 || sensores.vida > vida_inicial) {
-      vida_inicial = sensores.vida; // Se resetea si el mapa reinicia
-      niebla_inaccesible.clear();
-      mejor_coste_tuberia = 999999;
-      mejor_plan_tuberias.clear();
-      radio_exploracion = 999999;
-      celdas_conocidas_prev = -1;
-  }
-
-  // =====================================================================
-  // FASE 0: EXPLORACIÓN Y PLANIFICACIÓN SILENCIOSA
-  // =====================================================================
-  if (faseNivel6 == 0) {
-    int num_Us_actual = 0;
-    int celdas_conocidas_actual = 0;
-    
-    // Analizamos el conocimiento actual del mapa
-    for (int i = 0; i < mapaResultado.size(); i++) {
-      for (int j = 0; j < mapaResultado[0].size(); j++) {
-        if (mapaResultado[i][j] != '?') {
-          celdas_conocidas_actual++;
-        }
-        // Contamos metas
-        if (mapaResultado[i][j] == 'U') {
-          num_Us_actual++;
-        }
-      }
-    }
-
-    // 1. Si el mapa conocido ha crecido y ya vemos al menos una meta, reevaluamos.
-    if (num_Us_actual > 0 && celdas_conocidas_actual > celdas_conocidas_prev) {
-      celdas_conocidas_prev = celdas_conocidas_actual;
-      
-      EstadoTuberia inicio;
-      inicio.site.f = sensores.BelPosF; 
-      inicio.site.c = sensores.BelPosC;
-      inicio.altura_tuberia = mapaCotas[sensores.BelPosF][sensores.BelPosC];
-      
-      list<Paso> plan_temporal = A_Star_Tuberias(inicio, mapaResultado, mapaCotas, sensores.max_ecologico);
-      
-      if (!plan_temporal.empty()) {
-        // Calculamos el coste real de esta ruta sumando cada paso
-        int impacto_de_esta_ruta = 0;
-        for (auto p : plan_temporal) {
-          char terreno = mapaResultado[p.fil][p.col];
-          impacto_de_esta_ruta += CosteInstalacionTuberia(terreno);
-          if (p.op != 0) {
-            impacto_de_esta_ruta += CalcularImpactoEcologico(terreno, p.op);
-          }
-        }
-        
-        // Si es mejor que lo que teníamos, ¡actualizamos el récord!
-        if (impacto_de_esta_ruta < mejor_coste_tuberia) {
-           mejor_coste_tuberia = impacto_de_esta_ruta;
-           mejor_plan_tuberias = plan_temporal; // Guardamos la joya de la corona
-            Paso ultimo_paso = plan_temporal.back();
-            radio_exploracion = abs(ultimo_paso.fil - sensores.BelPosF) + abs(ultimo_paso.col - sensores.BelPosC);
-           cout << "Ing: ¡Nuevo Récord de Tubería! Coste: " << mejor_coste_tuberia << " | Metas vistas: " << num_Us_actual << endl;
-        }
-      }
-    }
-    // 2. Si no tenemos mapa suficiente, EXPLORAMOS HACIA LA NIEBLA CON A*
-    if (!hayPlan) {
-        int target_f = -1, target_c = -1;
-        int min_dist = 999999;
-
-        // Buscamos la primera casilla desconocida ('?')
-        for (int i = 0; i < mapaResultado.size(); i++) {
-            for (int j = 0; j < mapaResultado[0].size(); j++) {
-                if (mapaResultado[i][j] == '?' && niebla_inaccesible.find({i, j}) == niebla_inaccesible.end()) {
-                    // Distancia desde la Belkanita hasta la niebla
-                    int dist_desde_origen = abs(i - sensores.BelPosF) + abs(j - sensores.BelPosC);
-                  // Solo me interesa esta niebla si cae dentro del radio del mejor plan actual
-                  // y además podría mejorar el coste conocido.
-                  bool dentro_radio = (radio_exploracion == 999999) || (dist_desde_origen <= radio_exploracion);
-                  int coste_minimo_posible = dist_desde_origen * 15; 
-
-                  if (dentro_radio && coste_minimo_posible < mejor_coste_tuberia) {
-                        
-                        // Si pasa el filtro, busco el '?' más cercano a MI posición actual para ir a explorarlo
-                        int dist_a_mi = abs(i - sensores.posF) + abs(j - sensores.posC);
-                        if (dist_a_mi < min_dist) {
-                            min_dist = dist_a_mi;
-                            target_f = i;
-                            target_c = j;
-                        }
-                    }
-                }
-            }
-        }
-        //CONDICIÓN DE PARADA DE LA EXPLORACIÓN
-        if (target_f == -1) {
-          // Ya no hay niebla dentro del radio actual que pueda mejorar el récord.
-          if (!mejor_plan_tuberias.empty()) {
-            cout << "Ing: ¡Exploración optimizada completada! Mejor coste: " << mejor_coste_tuberia << endl;
-            VisualizaRedTuberias(mejor_plan_tuberias);
-            planTuberiasVec.clear();
-            for (auto p : mejor_plan_tuberias) planTuberiasVec.push_back(p);
-                
-            faseNivel6 = 2; faseNivel5 = 1; tramo_idx = 0;
-            hayPlan = false; plan.clear();
-            return IDLE;
-          } else {
-            // Fallback de seguridad: si no hay metas válidas en absoluto
-            return IDLE;
-          }
-        } else {
-          // Trazamos una ruta hacia esa niebla
-          EstadoI start, goal;
-          start.site.f = sensores.posF; start.site.c = sensores.posC;
-          start.site.brujula = (Orientacion)sensores.rumbo; start.zapatillas = tiene_zapatillas;
-          goal.site.f = target_f; goal.site.c = target_c;
-            
-          plan = A_Star_Ingeniero(start, goal, mapaResultado, mapaCotas);
-          hayPlan = !plan.empty();
-
-          if (plan.empty()) {
-            niebla_inaccesible.insert({target_f, target_c});
-            return IDLE;
-          }
-        }
-    }
-    if(hayPlan && !plan.empty()){
-        Action a = plan.front();
-        int maxDif = tiene_zapatillas ? 2 : 1;
-        bool abortar = false;
-
-        if (a == WALK) {
-            bool frenteLibre = (sensores.superficie[2] != 'P' && sensores.superficie[2] != 'M' && sensores.superficie[2] != 'B');
-            int difAltura = abs((int)sensores.cota[2] - (int)sensores.cota[0]);
-            // Evaluamos el terreno Y LA PRESENCIA DEL TÉCNICO ('t')
-            if (!frenteLibre || difAltura > maxDif) abortar = true;
-        } else if (a == JUMP) {
-            bool interLibre = (sensores.superficie[2] != 'P' && sensores.superficie[2] != 'M' && sensores.superficie[2] != 'B');
-            bool destLibre = (sensores.superficie[6] != 'P' && sensores.superficie[6] != 'M' && sensores.superficie[6] != 'B');
-            int difAltura = abs((int)sensores.cota[6] - (int)sensores.cota[0]);
-            // El Ingeniero tampoco puede saltar encima del Técnico, ni caerle encima
-            if (!interLibre || !destLibre || difAltura > maxDif) abortar = true;
-        }
-
-        if (abortar) {
-            hayPlan = false; plan.clear();
-            return IDLE; // Frenamos y en el siguiente tick recalcula con la nueva info
-        }
-
-        if ((a == WALK && sensores.agentes[2] == 't') || 
-            (a == JUMP && sensores.agentes[6] == 't')) {
-            
-            plan.clear();
-            EstadoI st_actual = {ubicacion{sensores.posF, sensores.posC, (Orientacion)sensores.rumbo}, tiene_zapatillas};
-            EstadoI st_izq = st_actual; st_izq.site.brujula = (Orientacion)((st_izq.site.brujula + 7) % 8);
-            EstadoI st_dch = st_actual; st_dch.site.brujula = (Orientacion)((st_dch.site.brujula + 1) % 8);
-
-            bool izq_viable = EsAccesibleWalkI(st_izq, mapaResultado, mapaCotas) && sensores.agentes[1] == '_';
-            bool dch_viable = EsAccesibleWalkI(st_dch, mapaResultado, mapaCotas) && sensores.agentes[3] == '_';
-
-            if (izq_viable) { plan.push_back(TURN_SL); plan.push_back(WALK); } 
-            else if (dch_viable) { plan.push_back(TURN_SR); plan.push_back(WALK); } 
-            else {
-                bool salto_viable = EsAccesibleJumpI(st_actual, mapaResultado, mapaCotas) && sensores.agentes[6] == '_';
-                if (salto_viable) plan.push_back(JUMP);
-                else plan.push_back(TURN_SR); // Dar vueltas
-            }
-            hayPlan = true;
-            Action accion_evasion = plan.front(); plan.pop_front();
-            return accion_evasion;
-        }
-        plan.pop_front();
-        if (plan.empty()) hayPlan = false;
-        
-        if (sensores.choque || sensores.reset) {
-            hayPlan = false; plan.clear();
-            return IDLE;
-        }
-        return a;
-    }
-
-    // Fallback: If we reach here without a plan, clear it just in case
-    hayPlan = false; plan.clear();
-    return TURN_SR;
-    
-  }
-
-  // =====================================================================
-  // FASE 2: CONSTRUCCIÓN Y REPLANIFICACIÓN DE EMERGENCIA
-  // =====================================================================
-  if (faseNivel6 == 2) {
-      // Si descubrimos de repente que un '?' era un muro ('M') o nos atascamos
-      if (sensores.choque || sensores.reset) {
-          cout << "Ing: ¡Obstáculo imprevisto en la niebla! Re-explorando..." << endl;
-          faseNivel6 = 0; // Volvemos a la Fase 0 para recalcular
-          hayPlan = false;
-          plan.clear();
-          // Reseteamos el contador de vida para darle otros 600 turnos extra de exploración si fuera necesario
-          vida_inicial = sensores.vida; 
-          return IDLE;
-      }
-
-      // 1. Obtenemos la acción que quiere hacer el Nivel 5
-      Action accion_n5 = ComportamientoIngenieroNivel_5(sensores);
-
-      // 2. ¡EL ESCUDO!: Verificamos la realidad antes de dar el paso mortal
-      int maxDif = tiene_zapatillas ? 2 : 1;
-
-      if (accion_n5 == WALK) {
-          bool frenteLibre = (sensores.superficie[2] != 'P' && sensores.superficie[2] != 'M' && sensores.superficie[2] != 'B');
-          int difAltura = abs((int)sensores.cota[2] - (int)sensores.cota[0]);
-          
-          if (!frenteLibre || difAltura > maxDif) {
-              cout << "Ing: ¡Precipicio fantasma detectado (WALK)! Abortando red..." << endl;
-              faseNivel6 = 0; // Mandamos recalcular toda la red
-              hayPlan = false; plan.clear();
-              vida_inicial = sensores.vida;
-              return IDLE; // Frenamos en seco
-          }
-      }else if (accion_n5 == JUMP) {
-          // Para el salto, verificamos la casilla intermedia [2] y el destino [6]
-          bool interLibre = (sensores.superficie[2] != 'P' && sensores.superficie[2] != 'M' && sensores.superficie[2] != 'B');
-          bool destLibre = (sensores.superficie[6] != 'P' && sensores.superficie[6] != 'M' && sensores.superficie[6] != 'B');
-          int difAltura = abs((int)sensores.cota[6] - (int)sensores.cota[0]);
-
-          if (!interLibre || !destLibre || difAltura > maxDif) {
-              cout << "Ing: ¡Precipicio fantasma detectado (JUMP)! Abortando red..." << endl;
-              faseNivel6 = 0; 
-              hayPlan = false; plan.clear();
-              vida_inicial = sensores.vida;
-              return IDLE; 
-          }
-      }
-
-      // Si es seguro, dejamos que el paso ocurra
-      return accion_n5;
-  }
-
-  return IDLE;
-}
-*/
-
 // ---------------------------------------------------------------------
 // MÉTODOS AUXILIARES PARA EL NIVEL 6 (CÓDIGO REFACTORIZADO)
 // ---------------------------------------------------------------------
@@ -1921,6 +1761,7 @@ void ComportamientoIngeniero::ChequearReinicioNivel6(int vida_actual) {
     planTuberiasVec.clear();
     faseNivel5 = 0;
     faseNivel6 = 0;
+    belkanitaPaso1 = true;
     tramo_idx = 0;
     metas_descubiertas = 0;
     meta_f = -1;
@@ -2110,9 +1951,14 @@ bool ComportamientoIngeniero::NuevaMeta(const vector<vector<unsigned char>> &ter
     return nuevo;
 }
 // ---------------------------------------------------------------------
-// LÓGICA PRINCIPAL (Ahora es extremadamente fácil de leer)
+// LÓGICA PRINCIPAL
 // ---------------------------------------------------------------------
 
+/**
+ * @brief Comportamiento del ingeniero para el Nivel 6.
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
 Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores)
 {
     ActualizarMapa(sensores);
@@ -2127,12 +1973,65 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores
     // =====================================================================
     if (faseNivel6 == 0) {
       int radio_maximo = 999999;
-        
-        // 1. EVALUAR SI HAY NUEVA META MÁS CERCANA
-        if(NuevaMeta(mapaResultado, sensores.BelPosF, sensores.BelPosC, meta_f, meta_c)){
-            cout << "Ing: Nueva meta encontrada en (" << meta_f << ", " << meta_c << ")" << endl;
-        plan_temporal.clear();
+
+      // Primero nos dirigimos directamente a la Belkanita, conocida desde el inicio.
+      if (belkanitaPaso1) {
+        if (sensores.posF == sensores.BelPosF && sensores.posC == sensores.BelPosC) {
+          belkanitaPaso1 = false;
+          hayPlan = false;
+          plan.clear();
+        } else {
+          if (!hayPlan) {
+            EstadoI start, goal;
+            start.site.f = sensores.posF;
+            start.site.c = sensores.posC;
+            start.site.brujula = (Orientacion)sensores.rumbo;
+            start.zapatillas = tiene_zapatillas;
+            goal.site.f = sensores.BelPosF;
+            goal.site.c = sensores.BelPosC;
+            goal.site.brujula = (Orientacion)sensores.rumbo;
+            goal.zapatillas = tiene_zapatillas;
+
+            plan = BFS_Ingeniero(start, goal, mapaResultado, mapaCotas);
+            VisualizaPlan(start.site, plan);
+            hayPlan = !plan.empty();
+          }
+
+          if (hayPlan && !plan.empty()) {
+            Action a = plan.front();
+            Action accion_segura = EjecutarConEscudoYEvasion(sensores, a);
+
+            if (accion_segura == IDLE) {
+              hayPlan = false;
+              plan.clear();
+            } else if (accion_segura == a) {
+              plan.pop_front();
+              if (plan.empty()) {
+                hayPlan = false;
+                belkanitaPaso1 = false;
+              }
+            } else {
+              hayPlan = true;
+            }
+
+            if (sensores.choque || sensores.reset) {
+              hayPlan = false;
+              plan.clear();
+              return IDLE;
+            }
+
+            return accion_segura;
+          }
+
+          return TURN_SR;
         }
+      }
+        
+      // 1. EVALUAR SI HAY NUEVA META MÁS CERCANA
+      if(NuevaMeta(mapaResultado, sensores.BelPosF, sensores.BelPosC, meta_f, meta_c)){
+        cout << "Ing: Nueva meta encontrada en (" << meta_f << ", " << meta_c << ")" << endl;
+        plan_temporal.clear();
+      }
 
       if (meta_f != -1 && meta_c != -1) {
         radio_maximo = (abs(meta_f - sensores.BelPosF) + abs(meta_c - sensores.BelPosC))+5;
@@ -2140,12 +2039,12 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores
         
         // 2. BUSCAR NIEBLA ÚTIL (si no hay plan de exploración activo)
         if (!hayPlan) {
-            // Buscar niebla útil dentro del radio
-            bool hay_niebla_util = BuscarNuevaNiebla(sensores, radio_maximo);
-            hayPlan = !plan.empty();
-            
-        // Si no hay niebla útil, pasamos directamente a construcción
-        if (!hay_niebla_util && meta_f != -1 && meta_c != -1) {
+          // Buscar niebla útil dentro del radio
+          bool hay_niebla_util = BuscarNuevaNiebla(sensores, radio_maximo);
+          hayPlan = !plan.empty();
+
+          // Si no hay niebla útil y ya tenemos meta: ir a construcción
+          if (!hay_niebla_util && meta_f != -1 && meta_c != -1) {
           cout << "Ing: Exploración completada. Mejor meta: (" << meta_f << ", " << meta_c << "). Pasando a FASE 2..." << endl;
 
           EstadoTuberia inicio;
@@ -2163,7 +2062,31 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_6(Sensores sensores
             hayPlan = false;
             plan.clear();
             return IDLE;
+          } else {
+            // No ha sido posible generar la red hacia la meta encontrada.
+            // Marcamos la meta como no válida para evitar reintentos infinitos
+            // y continuamos con la exploración restante.
+            cout << "Ing: No ha sido posible planificar tuberias a la meta (" << meta_f << ", " << meta_c << "). Continuo explorando." << endl;
+            niebla_inaccesible.insert({meta_f, meta_c});
+            meta_f = -1; meta_c = -1;
+            hayPlan = false;
+            plan.clear();
           }
+            }
+            else if (!hay_niebla_util) {
+              // No hay niebla útil y tampoco tenemos meta: puede ocurrir si marcamos
+              // nieblas como inaccesibles por error o por bloqueo temporal. Intentamos
+              // limpiar la lista de nieblas inaccesibles y reintentar una vez expandiendo
+              // el radio. Si sigue sin encontrar nada, evitamos quedar girando retornando
+              // un giro como recurso de emergencia.
+              niebla_inaccesible.clear();
+              int radio_expand = max(radio_maximo * 2, radio_maximo + 10);
+              bool hay_niebla_reintentada = BuscarNuevaNiebla(sensores, radio_expand);
+              hayPlan = !plan.empty();
+              if (!hay_niebla_reintentada) {
+                // Nada reachable: forzamos un giro para salir del estancamiento
+                return TURN_SR;
+              }
             }
         }
         

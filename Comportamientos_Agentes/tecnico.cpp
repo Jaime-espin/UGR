@@ -881,72 +881,126 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_4(Sensores sensores) {
  * @param sensores Datos actuales de los sensores.
  * @return Acción a realizar.
  */
+/**
+ * @brief Comportamiento del técnico para el Nivel 5 - INSTALACIÓN DE RED DE TUBERÍAS.
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * ALGORITMO COORDINADO INGENIERO-TÉCNICO:
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * El Técnico recibe órdenes del Ingeniero (COME) para navegar y coordinar la 
+ * instalación de tuberías:
+ * 
+ * 1. ESCUCHAR SEÑALES:
+ *    - venpaca: Recibe orden del Ingeniero (COME) con nueva posición objetivo.
+ *    - enfrente: Si el Ingeniero está en la casilla frontal, ejecutar INSTALL.
+ * 
+ * 2. NAVEGAR HACIA OBJETIVO:
+ *    - Si targetF/targetC están definidas, planificar ruta hacia allá.
+ *    - Usar A* para rutas largas (dist > 1).
+ *    - Usar control reactivo para rutas cortas (dist == 1).
+ *    - Si el Ingeniero bloquea, evitar su posición en siguiente planificación.
+ * 
+ * 3. ENCARARSE CON INGENIERO:
+ *    - Una vez en el objetivo, girar para ver al Ingeniero.
+ *    - Detectar Ingeniero a izq (agentes[1]), frente (agentes[2]), o dcha (agentes[3]).
+ *    - Girar hasta verlo, luego esperar.
+ * 
+ * 4. SINCRONIZAR INSTALACIÓN:
+ *    - Cuando el Ingeniero está enfrente (enfrente=true), ejecutar INSTALL.
+ *    - Esperar nueva orden COME del Ingeniero para siguiente tramo.
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * NOTAS IMPORTANTES:
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * - El Técnico es completamente pasivo: solo actúa siguiendo órdenes del Ingeniero.
+ * - No tiene un sistema de "fases" como el Ingeniero; todo es reactivo.
+ * - Si hay choque o reset, olvida el plan y replanifico.
+ * - Mantiene variable bloqueoF/bloqueoC para evitar pasar por donde está el Ingeniero.
+ * 
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar en este tick.
+ */
 Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores) {
   Action accion = IDLE;
   ActualizarMapa(sensores);
 
-  // Actualizar zapatillas
+  // ─────────────────────────────────────────────────────────────────────────
+  // INICIALIZACIÓN: Detectar zapatillas y reseteos
+  // ─────────────────────────────────────────────────────────────────────────
   if (sensores.superficie[0] == 'D') tiene_zapatillas = true;
 
-  // REPLANIFICACIÓN POR CHOQUE: Si choca o se resetea, borra el plan de movimiento
+  // Si hay colisión o reset, descarta el plan de movimiento y replanifico
   if (sensores.choque || sensores.reset) {
     hayPlan = false;
     plan.clear();
   }
 
-  // 2. Si el jefe lanza COME, actualizo mi destino
+  // ─────────────────────────────────────────────────────────────────────────
+  // ESCUCHAR ORDEN DEL INGENIERO (COME): Actualizar objetivo de navegación
+  // ─────────────────────────────────────────────────────────────────────────
   if (sensores.venpaca) {
     targetF = sensores.GotoF;
     targetC = sensores.GotoC;
-    hayPlan = false; 
+    hayPlan = false;
     plan.clear();
-    cout<<"Tec: Come recivido"<<endl;
   }
 
-  // 1. Prioridad Absoluta: Si el jefe me está mirando a los ojos, ¡Instalo!
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRIORIDAD MÁXIMA: Si el Ingeniero está enfrente, ¡INSTALAR!
+  // ─────────────────────────────────────────────────────────────────────────
   if (sensores.enfrente) {
-
-    hayPlan = false; 
+    hayPlan = false;
     plan.clear();
-    cout<<"Tec: Instalo, ingeniero enfrente"<<endl;
     return INSTALL;
   }
 
-  // 3. NAVEGAR HACIA LA ORDEN Y ENCARARSE
+  // ─────────────────────────────────────────────────────────────────────────
+  // NAVEGAR HACIA EL OBJETIVO (Solo si tenemos objetivo válido)
+  // ─────────────────────────────────────────────────────────────────────────
   if (targetF != -1 && targetC != -1) {
-    cout<<"Tec: Navego al destino"<<endl;
-    // Si ya he llegado a la migita de pan
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // SUBCASO 1: Ya hemos alcanzado el objetivo
+    // ─────────────────────────────────────────────────────────────────────────
     if (sensores.posF == targetF && sensores.posC == targetC) {
-      // Si el Ingeniero está justo delante mía, me quedo quieto
+      // Si el Ingeniero está justo enfrente, esperar
       if (sensores.agentes[2] == 'i') return IDLE;
 
-      // Si no está delante, miro si está a izquierda (posición 1) o derecha (posición 3)
+      // Si está a izquierda (posición 1) o derecha (posición 3), girarse
       if (sensores.agentes[1] == 'i') return TURN_SL;
       if (sensores.agentes[3] == 'i') return TURN_SR;
 
-      // Si no lo detecto en visión cercana, giro en el sentido que menos recorrido haga
-      // (no sabemos dónde está, así que seguimos girando a la derecha)
+      // Si no lo vemos en visión cercana, seguir girando (busca activa)
       return TURN_SR;
     }
 
+    // Calcular distancia Manhattan hacia el objetivo
     int dist = abs(targetF - sensores.posF) + abs(targetC - sensores.posC);
 
-    if(dist>1){
-      // Si no he llegado, trazo mi ruta
+    // ─────────────────────────────────────────────────────────────────────────
+    // SUBCASO 2: Objetivo lejano (dist > 1) → Usar A* para planificación
+    // ─────────────────────────────────────────────────────────────────────────
+    if (dist > 1) {
+      // Planificar si aún no lo hemos hecho
       if (!hayPlan) {
         EstadoT start, goal;
-        start.site.f = sensores.posF; start.site.c = sensores.posC;
-        start.site.brujula = sensores.rumbo; start.zapatillas = tiene_zapatillas;
-        goal.site.f = targetF; goal.site.c = targetC;
+        start.site.f = sensores.posF;
+        start.site.c = sensores.posC;
+        start.site.brujula = sensores.rumbo;
+        start.zapatillas = tiene_zapatillas;
+        goal.site.f = targetF;
+        goal.site.c = targetC;
 
-        // Crear copia del mapa para posible evitación del Ingeniero
+        // Crear copia del mapa para marcar posición del Ingeniero como intransitable
         vector<vector<unsigned char>> mapaPlan = mapaResultado;
         if (bloqueoF != -1 && bloqueoC != -1) {
           if (bloqueoF >= 0 && bloqueoF < mapaPlan.size() &&
               bloqueoC >= 0 && bloqueoC < mapaPlan[0].size()) {
-            mapaPlan[bloqueoF][bloqueoC] = 'P'; // Marcar como intransitable
+            mapaPlan[bloqueoF][bloqueoC] = 'P';  // Marcar Ingeniero como pared
           }
-          bloqueoF = -1; bloqueoC = -1; // Resetear para futuras planificaciones
+          bloqueoF = -1; 
+          bloqueoC = -1;  // Reset para futuras planificaciones
         }
 
         plan = A_Star_Tecnico(start, goal, mapaPlan, mapaCotas);
@@ -954,31 +1008,39 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores) {
         hayPlan = !plan.empty();
       }
 
-      // Camino la ruta trazada
+      // Ejecutar el plan de movimiento (con evitación si es necesario)
       if (hayPlan && !plan.empty()) {
+        // Si el Ingeniero bloquea el paso, marcar su posición y replanificar
         if (plan.front() == WALK && (sensores.agentes[2] == 'i' || sensores.superficie[2] == 'P')) {
-          // El Ingeniero bloquea el paso: guardar su posición y replanificar
           EstadoT st_actual;
           st_actual.site.f = sensores.posF;
           st_actual.site.c = sensores.posC;
           st_actual.site.brujula = (Orientacion)sensores.rumbo;
           st_actual.zapatillas = tiene_zapatillas;
+          
           EstadoT st_frontal = NextCasillaTecnico(st_actual);
           bloqueoF = st_frontal.site.f;
           bloqueoC = st_frontal.site.c;
           hayPlan = false;
           plan.clear();
-          // No retornar IDLE; dejamos que más abajo se replanifique con evitación
+          // No retornar; dejar que se replanifique abajo
         } else {
+          // Ejecutar acción siguiente del plan
           Action a = plan.front();
           plan.pop_front();
           if (plan.empty()) hayPlan = false;
           return a;
         }
       }
-    }else{
-      if (hayPlan) { hayPlan = false; plan.clear(); } // Limpiamos la memoria
+    }
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // SUBCASO 3: Objetivo cercano (dist == 1) → Control reactivo directo
+    // ─────────────────────────────────────────────────────────────────────────
+    else {
+      if (hayPlan) { hayPlan = false; plan.clear(); }
 
+      // Calcular orientación ideal hacia el objetivo
       int dF = targetF - sensores.posF;
       int dC = targetC - sensores.posC;
       Orientacion ideal;
@@ -989,17 +1051,18 @@ Action ComportamientoTecnico::ComportamientoTecnicoNivel_5(Sensores sensores) {
       else if (dF == 0 && dC < 0) ideal = oeste;
       else ideal = (Orientacion)sensores.rumbo;
 
+      // Si no miramos la dirección, girar
       if (sensores.rumbo != ideal) {
         int diff = (ideal - sensores.rumbo + 8) % 8;
         if (diff <= 4) return TURN_SR;
         else return TURN_SL;
-      } else {
-        // Si ya estamos mirando a la casilla, miramos si el Ingeniero sigue allí
-        if (sensores.agentes[2] == 'i') {
-            return IDLE; // El jefe sigue ahí, esperamos pacientemente
-        }
-        return WALK; // ¡Vía libre! Avanzamos
       }
+      
+      // Ya miramos la dirección → verificar si podemos avanzar
+      if (sensores.agentes[2] == 'i') {
+        return IDLE;  // El Ingeniero está en el camino, esperar
+      }
+      return WALK;  // Vía libre, avanzar
     }
   }
 

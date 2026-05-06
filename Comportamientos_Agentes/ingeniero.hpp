@@ -139,6 +139,7 @@ public:
     planTuberiasVec.clear();
     // Inicializar variables del Nivel 6
     faseNivel6 = 0;
+    belkanitaPaso1 = true;
     vida_inicial = -1;
     metas_descubiertas = 0;
     meta_f = -1;
@@ -340,6 +341,7 @@ private:
   
   //Nivel 6
   int faseNivel6 = 0;
+  bool belkanitaPaso1 = true;
   int vida_inicial = -1;
   set<pair<int, int>> niebla_inaccesible;
   bool meta_nueva=false;
