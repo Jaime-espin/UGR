@@ -110,10 +110,10 @@ void Lianas::explorar(int x, int y, int destinoX, int destinoY, vector<vector<bo
     visitado[x][y] = false;
 }
 
-// Método que resuelve el problema llamando al método de acktracking
+// Método que resuelve el problema llamando al método de backtracking
 void Lianas::resolver(int destinoX, int destinoY, int& minSaltos, vector<pair<int, int>>& mejorCamino) const{
     // Inicializaremos el mínimo de salto a un número muy alto para asegurarnos que cualquier solición inicial sea menor
-    minSaltos = 99999999999999999999999999999999999999; // Literalmente esto es lo máximo que me permite poner antes de que salga un erroe :(
+    minSaltos = 99999999999999999999999999999999999999; // Literalmente esto es lo máximo que me permite poner antes de que salga un error :(
     // Nos aseguramos que mejorCamino este vacio
     mejorCamino.clear();
 
