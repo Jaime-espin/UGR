@@ -23,6 +23,12 @@ private:
     vector<vector<int>> lianas; //matriz cuadrada de lianas
     int dimension; //dimension de matriz
 
+    /**
+     * @brief Método privado para la exploración usando recursividad
+    */    
+    void explorar(int x, int y, int destinoX, int destinoY, vector<vector<bool>>& visitado,
+         vector<pair<int, int>>& camino_actual, vector<pair<int, int>>& mejor_camino, int& min_saltos) const;
+
 public:
 
     /**
@@ -66,6 +72,11 @@ public:
      * @return Referencia al flujo de entrada.
      */
     friend istream& operator>>(istream& is, Lianas& l);
+
+    /** 
+     * @brief Método que resuelve el problema
+    */
+    void resolver(int destinoX, int destinoY, int& minSaltos, vector<pair<int, int>>& mejorCamino) const;
 };
 
 /**
