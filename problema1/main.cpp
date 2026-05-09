@@ -1,11 +1,19 @@
 #include <iostream>
 #include <filesystem>
 #include <limits>
+#include <chrono>
 #include "LianasColgantes.h"
 
 using namespace std;
 namespace fs = std::filesystem;
 
+const int NUM_EJECUCIONES = 10;
+
+/**
+ * @brief Imprime la ruta sobre una matriz dimension x dimension segun su orden de visita
+ * @param ruta Secuencia de coordenadas del camino optimo.
+ * @param dimension Tamaño del lado de la matriz.
+ */
 void imprimir_camino(const vector<pair<int,int>> &ruta, const int dimension) {
 
     vector<vector<int>> matriz_resultado(dimension, vector<int>(dimension, 0));
@@ -28,10 +36,12 @@ void imprimir_camino(const vector<pair<int,int>> &ruta, const int dimension) {
     }
 }
 
+/** @brief Serializa una coordenada como "(fila,columna)". */
 ostream& operator<<(ostream& os, const pair<int, int>& coordenada) {
     os << "(" << coordenada.first << "," << coordenada.second << ")";
     return os;
 }
+/** @brief Serializa una ruta como "(r0,c0) -> (r1,c1) -> …" */
 ostream& operator<<(ostream& os, const vector<pair<int, int>>& ruta) {
     if (ruta.empty()) {
         os << "Ruta vacía. NO TIENE SOLUCION";
@@ -74,11 +84,43 @@ vector<string> obtenerMapas(const string& ruta_directorio) {
     return archivos_txt;
 }
 
+/** @brief Agrupa los datos de salida de un mapa: nombre del archivo, tamaño, ruta optima y tiempo medio. */
 struct ResultadoMapa {
     string nombre;
     int dimension;
     vector<pair<int,int>> ruta;
+    double tiempo_ms;
 };
+
+/**
+ * @brief Ejecuta el algoritmo backtracking NUM_EJECUCIONES veces y devuelve la ruta optima y el tiempo medio.
+ * @param mapa Mapa de lianas
+ * @param destino Casilla objetivo
+ * @param tiempo_medio_ms Parametro de salida con el tiempo medio en ms
+ * @return La ruta optima encontrada
+ */
+vector<pair<int,int>> ejecutarConMedia(const Lianas& mapa, pair<int,int> destino, double& tiempo_medio_ms) {
+
+    vector<pair<int,int>> mejor_ruta;
+    double tiempo_total = 0.0;
+
+    for (int i = 0; i < NUM_EJECUCIONES; ++i) {
+        EstadoCamino estado(mapa.getDimension());
+        int min_saltos = numeric_limits<int>::max();
+
+        auto t0 = chrono::high_resolution_clock::now();
+        vector<pair<int,int>> ruta = caminoHaciaAltar(mapa, estado, destino, min_saltos);
+        auto t1 = chrono::high_resolution_clock::now();
+
+        tiempo_total += chrono::duration<double, milli>(t1 - t0).count();
+
+        if (i == 0)
+            mejor_ruta = ruta;
+    }
+
+    tiempo_medio_ms = tiempo_total / NUM_EJECUCIONES;
+    return mejor_ruta;
+}
 
 int main(const int argc, const char * argv[]) {
 
@@ -104,13 +146,11 @@ int main(const int argc, const char * argv[]) {
 
         if (dim == 0) continue;
 
-        EstadoCamino estado(dim);
         pair<int,int> destino(dim - 1, dim - 1);
-        int min_saltos = numeric_limits<int>::max();
+        double tiempo_medio_ms;
+        vector<pair<int,int>> camino_optimo = ejecutarConMedia(lianas, destino, tiempo_medio_ms);
 
-        vector<pair<int,int>> camino_optimo = caminoHaciaAltar(lianas, estado, destino, min_saltos);
-
-        resultados.push_back({ fs::path(ruta_archivo).filename().string(), dim, camino_optimo });
+        resultados.push_back({ fs::path(ruta_archivo).filename().string(), dim, camino_optimo, tiempo_medio_ms });
     }
 
     cout << endl << "MATRICES RESULTADO" << endl;
@@ -125,14 +165,15 @@ int main(const int argc, const char * argv[]) {
         cout << endl << "Mapa: " << r.nombre << endl;
         cout << "Trayectoria: " << r.ruta << endl;
         cout << "Numero de saltos: " << num_saltos << endl;
+        cout << "Tiempo: " << r.tiempo_ms << " ms" << endl;
     }
 
     cout << endl << "TABLA PARA EL LIDER SUPREMO (OMAR)" << endl << endl;
 
-    cout << endl << "MAPA\t SALTOS \t TRAYECTORIA" << endl;
+    cout << endl << "MAPA\t SALTOS \t TIEMPO(ms) \t TRAYECTORIA" << endl;
     for (const ResultadoMapa& r : resultados) {
         int num_saltos = r.ruta.empty() ? 0 : r.ruta.size() - 1;
-        cout << r.nombre << "\t" << num_saltos << "\t" << r.ruta << endl;
+        cout << r.nombre << "\t" << num_saltos << "\t" << r.tiempo_ms << "\t" << r.ruta << endl;
     }
 
     return 0;
