@@ -109,3 +109,18 @@ void Lianas::explorar(int x, int y, int destinoX, int destinoY, vector<vector<bo
     caminoActual.pop_back();
     visitado[x][y] = false;
 }
+
+// Método que resuelve el problema llamando al método de acktracking
+void Lianas::resolver(int destinoX, int destinoY, int& minSaltos, vector<pair<int, int>>& mejorCamino) const{
+    // Inicializaremos el mínimo de salto a un número muy alto para asegurarnos que cualquier solición inicial sea menor
+    minSaltos = 99999999999999999999999999999999999999; // Literalmente esto es lo máximo que me permite poner antes de que salga un erroe :(
+    // Nos aseguramos que mejorCamino este vacio
+    mejorCamino.clear();
+
+    // Creamos la matriz visitados y el vector de pares caminoActual
+    vector<vector<bool>> visitado(dimension, vector<bool>(dimension, false));
+    vector<pair<int, int>> camino_actual;
+
+    // Lanzamos la exploración desde (0,0)
+    explorar(0, 0, destinoX, destinoY, visitado, camino_actual, mejorCamino, minSaltos);
+}

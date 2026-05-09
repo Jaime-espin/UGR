@@ -67,10 +67,9 @@ public:
     friend istream& operator>>(istream& is, Lianas& l);
 
     /** 
-     * @brief Método que resuleve el problema
+     * @brief Método que resuelve el problema
     */
-    // !!!! NO IMPLEMENTADA TODAVÍA
-    void resolver(int dest_x, int dest_y, int& min_saltos, vector<pair<int, int>>& mejor_camino) const;
+    void resolver(int destinoX, int destinoY, int& minSaltos, vector<pair<int, int>>& mejorCamino) const;
 };
 
 /**
