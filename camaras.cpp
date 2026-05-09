@@ -12,7 +12,6 @@ vector<vector<int>> m;
 
 
 // Fuerza Bruta
-
 vector<int> X_fb; 
 vector<int> solucion_fb;
 int mejorvalor_fb = 10000;
@@ -98,7 +97,7 @@ void va_recursivo(int k, int camaras_colocadas, vector<int>& X) {
 }
 
 
-// 3. RAMIFICACIÓN Y PODA
+// RAMIFICACIÓN Y PODA
 
 struct NodoB {
     vector<int> X;
@@ -162,7 +161,7 @@ void ryp() {
         if (hijo1.cota_estimada < mejorvalor_ryp) pq.push(hijo1);
         else nodos_podados_ryp++;
         
-        // Hijo 2: NO PONER CÁMARA
+        // Hijo 2: NO CAMARA
         NodoB hijo0 = actual;
         hijo0.X[k] = 0;
         hijo0.k = k + 1;
@@ -173,7 +172,7 @@ void ryp() {
             if (hijo0.cota_estimada < mejorvalor_ryp) pq.push(hijo0);
             else nodos_podados_ryp++;
         } else {
-            nodos_podados_ryp++; // Poda por no factible
+            nodos_podados_ryp++; // Como no es factible se poda
         }
     }
 }
@@ -220,7 +219,7 @@ void generarArbol(vector<vector<int>> & matriz, int n) {
 }
 
 
-// MAIN
+//main
 int main(int argc, char *argv[]) {
     if (argc >= 3) {
         n = atoi(argv[1]);
@@ -246,8 +245,8 @@ int main(int argc, char *argv[]) {
 
     cout << "Tamano del problema: " << n << " intersecciones.\n\n";
 
-    // 1. FUERZA BRUTA
-    if (n <= 20) { // FB es muy lento para n > 20
+    // FUERZA BRUTA
+    if (n <= 20) { 
         X_fb.assign(n, -1);
         clock_t tantes_fb = clock();
         fb_recursivo(0);
@@ -257,7 +256,7 @@ int main(int argc, char *argv[]) {
         cout << "Tiempo: " << (double)(tdespues_fb - tantes_fb) / CLOCKS_PER_SEC << " segs.\n\n";
     }
 
-    // 2. VUELTA ATRÁS
+    // BACKTRACKING
     vector<int> X_va(n, -1);
     clock_t tantes_va = clock();
     va_recursivo(0, 0, X_va);
@@ -269,7 +268,7 @@ int main(int argc, char *argv[]) {
     cout << "Nodos podados: " << nodos_podados_va << endl;
     cout << "Tiempo: " << (double)(tdespues_va - tantes_va) / CLOCKS_PER_SEC << " segs.\n\n";
 
-    // 3. RAMIFICACION Y PODA
+    // RAMIFICACION Y PODA
     clock_t tantes_ryp = clock();
     ryp();
     clock_t tdespues_ryp = clock();
