@@ -7,6 +7,13 @@
 
 using namespace std;
 
+enum Direccion {
+    IZQUIERDA,
+    DERECHA,
+    ARRIBA,
+    ABAJO
+};
+
 /**
  * @brief TDA Lianas. Representa la matriz de lianas.
  */
@@ -68,6 +75,51 @@ public:
  * @return Referencia al flujo de salida.
  */
 ostream& operator<<(ostream& os, const Lianas& l);
+
+/**
+ * @brief TDA EstadoCamino. Representa un estado del grafo de caminos posibles
+ */
+class EstadoCamino {
+public:
+    int fila;
+    int columna;
+    vector<vector<bool>> visitados;  //matriz de casillas visitadas
+    vector<pair<int, int>> ruta;     //recorrido actual
+
+    /**
+    * @brief Constructor de un estado
+    * @param n Tamaño de la matriz de casillas visitadas y de la ruta.
+    * @note Pone a la posicion (0,0) como punto de comienzo
+    */
+    explicit EstadoCamino(int n);
+    /**
+    * @brief Evalua si un salto con liana es posible en cierta direccion
+    * @param l Espacio de lianas
+    * @param movimiento Movimiento a evaluar
+    * @return True si es posible moverse hacia la direccion de 'movimiento'
+    * @return false en caso contrario
+    */
+    bool avanzarEstado(const Lianas& l, Direccion movimiento);
+    /**
+    * @brief Restaura un EstadoCamino a una fila, columna anterior
+    * @param fila_anterior Fila con la que remplazar
+    * @param columna_anterior Columna con la que remplazar
+    */
+    void deshacerEstado(int fila_anterior, int columna_anterior);
+};
+
+
+/**
+ * @brief Calcula todas las rutas posibles hacia el altar desde el inicio del mapa de lianas y devuelve la mejor.
+ * @param mapa Mapa de lianas
+ * @param estado Nodo de estado actual
+ * @param destino Posicion final a alcanzar
+ * @param min_saltos Número de saltos minimos encontrados hacia la meta
+ * @return Devuelve un vector de coordenadas con la direccion óptima.
+ */
+vector<pair<int,int>> caminoHaciaAltar(const Lianas& mapa, EstadoCamino& estado, pair<int,int> destino, int &min_saltos);
+
+
 
 
 
