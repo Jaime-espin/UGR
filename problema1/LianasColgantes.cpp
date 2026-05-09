@@ -112,7 +112,8 @@ vector<pair<int, int>> caminoHaciaAltar(const Lianas &mapa, EstadoCamino &estado
     }
 
     vector<pair<int, int>> mejor_ruta;
-    Direccion direcciones[] = {IZQUIERDA, DERECHA, ABAJO, ARRIBA};
+    Direccion direcciones[] = {ABAJO, DERECHA, IZQUIERDA, ARRIBA}; //ordenado asi intencionalmente porque
+    // asi podra obtener los mejores caminos (que se encuentran abajo muy probablemente si es que se parte del inicio)
 
     for (Direccion dir : direcciones) {
 
