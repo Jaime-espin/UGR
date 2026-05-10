@@ -108,6 +108,15 @@ public:
     void deshacerEstado(int fila_anterior, int columna_anterior);
 };
 
+/**
+ * @brief Calcula la existencia de un camino hacia el altar
+ * @param mapa Mapa de lianas
+ * @param estado Nodo de estado actual
+ * @param destino Posicion final a alcanzar
+ * @return Devuelve true si existe el camino. False en caso contrario.
+ */
+bool caminoSencillo(const Lianas &mapa, EstadoCamino &estado, pair<int, int> destino);
+
 
 /**
  * @brief Calcula todas las rutas posibles hacia el altar desde el inicio del mapa de lianas y devuelve la mejor.
@@ -115,9 +124,11 @@ public:
  * @param estado Nodo de estado actual
  * @param destino Posicion final a alcanzar
  * @param min_saltos Número de saltos minimos encontrados hacia la meta
+ * @param nodos_podados Número de nodos que el algoritmo ha podado
+ * @param nodos_generados Número de nodos que se han generado (visitado).
  * @return Devuelve un vector de coordenadas con la direccion óptima.
  */
-vector<pair<int,int>> caminoHaciaAltar(const Lianas& mapa, EstadoCamino& estado, pair<int,int> destino, int &min_saltos);
+vector<pair<int,int>> caminoHaciaAltar(const Lianas& mapa, EstadoCamino& estado, pair<int,int> destino, int &min_saltos, int &nodos_podados, int &nodos_generados);
 
 
 

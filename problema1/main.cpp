@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <limits>
 #include <chrono>
+#include <iomanip>
 #include "LianasColgantes.h"
 
 using namespace std;
@@ -88,34 +89,83 @@ vector<string> obtenerMapas(const string& ruta_directorio) {
 struct ResultadoMapa {
     string nombre;
     int dimension;
-    vector<pair<int,int>> ruta;
-    double tiempo_ms;
+    
+    // algoritmo básico
+    vector<pair<int,int>> ruta_basica;
+    double tiempo_basico_ms;
+    
+    // algoritmo óptimo
+    vector<pair<int,int>> ruta_optima;
+    double tiempo_optimo_ms;
+
+    double nodos_podados;
+    double nodos_generados;
 };
 
 /**
- * @brief Ejecuta el algoritmo backtracking NUM_EJECUCIONES veces y devuelve la ruta optima y el tiempo medio.
+ * @brief Ejecuta el algoritmo óptimo backtracking NUM_EJECUCIONES veces y devuelve la ruta optima y el tiempo medio.
+ * @param mapa Mapa de lianas
+ * @param destino Casilla objetivo
+ * @param tiempo_medio_ms Parametro de salida con el tiempo medio en ms
+ * @param media_podados Devuelve la cantidad media de nodos podados
+ * @param media_generados Devuelve la cantidad media de nodos generados
+ * @return La ruta optima encontrada
+ */
+vector<pair<int,int>> ejecutarOptimoConMedia(const Lianas& mapa, pair<int,int> destino, double& tiempo_medio_ms, double& media_podados, double& media_generados) {
+
+    vector<pair<int,int>> mejor_ruta;
+    double tiempo_total = 0.0;
+    int nodos_podados = 0;
+    int nodos_generados = 0;
+
+    for (int i = 0; i < NUM_EJECUCIONES; ++i) {
+        EstadoCamino estado(mapa.getDimension());
+        int min_saltos = numeric_limits<int>::max();
+        int nodos_pod = 0;
+        int nodos_gen = 0; 
+
+        auto t0 = chrono::high_resolution_clock::now();
+        vector<pair<int,int>> ruta = caminoHaciaAltar(mapa, estado, destino, min_saltos, nodos_pod, nodos_gen);
+        auto t1 = chrono::high_resolution_clock::now();
+
+        nodos_podados += nodos_pod;
+        nodos_generados += nodos_gen;
+
+        tiempo_total += chrono::duration<double, milli>(t1 - t0).count();
+
+        if (i == 0)
+            mejor_ruta = ruta;
+    }
+
+    tiempo_medio_ms = tiempo_total / NUM_EJECUCIONES;
+    media_podados = (double) nodos_podados / NUM_EJECUCIONES;
+    media_generados = (double) nodos_generados / NUM_EJECUCIONES; 
+    return mejor_ruta;
+}
+
+/**
+ * @brief Ejecuta el algoritmo básico backtracking NUM_EJECUCIONES veces y devuelve la ruta optima y el tiempo medio.
  * @param mapa Mapa de lianas
  * @param destino Casilla objetivo
  * @param tiempo_medio_ms Parametro de salida con el tiempo medio en ms
  * @return La ruta optima encontrada
  */
-vector<pair<int,int>> ejecutarConMedia(const Lianas& mapa, pair<int,int> destino, double& tiempo_medio_ms) {
+vector<pair<int,int>> ejecutarBasicoConMedia(const Lianas& mapa, pair<int,int> destino, double& tiempo_medio_ms) {
 
     vector<pair<int,int>> mejor_ruta;
     double tiempo_total = 0.0;
 
     for (int i = 0; i < NUM_EJECUCIONES; ++i) {
         EstadoCamino estado(mapa.getDimension());
-        int min_saltos = numeric_limits<int>::max();
 
         auto t0 = chrono::high_resolution_clock::now();
-        vector<pair<int,int>> ruta = caminoHaciaAltar(mapa, estado, destino, min_saltos);
+        bool exito = caminoSencillo(mapa, estado, destino);
         auto t1 = chrono::high_resolution_clock::now();
 
         tiempo_total += chrono::duration<double, milli>(t1 - t0).count();
 
-        if (i == 0)
-            mejor_ruta = ruta;
+        if (i == 0 && exito)
+            mejor_ruta = estado.ruta;
     }
 
     tiempo_medio_ms = tiempo_total / NUM_EJECUCIONES;
@@ -147,33 +197,61 @@ int main(const int argc, const char * argv[]) {
         if (dim == 0) continue;
 
         pair<int,int> destino(dim - 1, dim - 1);
-        double tiempo_medio_ms;
-        vector<pair<int,int>> camino_optimo = ejecutarConMedia(lianas, destino, tiempo_medio_ms);
+        double tiempo_basico, tiempo_optimo;
+        double nodos_podados = 0.0;
+        double nodos_generados = 0.0; 
 
-        resultados.push_back({ fs::path(ruta_archivo).filename().string(), dim, camino_optimo, tiempo_medio_ms });
+        vector<pair<int,int>> camino_basico = ejecutarBasicoConMedia(lianas, destino, tiempo_basico);
+        vector<pair<int,int>> camino_optimo = ejecutarOptimoConMedia(lianas, destino, tiempo_optimo, nodos_podados, nodos_generados);
+
+        resultados.push_back({ fs::path(ruta_archivo).filename().string(), dim, camino_basico, tiempo_basico, camino_optimo, tiempo_optimo, nodos_podados, nodos_generados });
     }
 
-    cout << endl << "MATRICES RESULTADO" << endl;
+    cout << endl << "================ MATRICES RESULTADO ================" << endl;
     for (const ResultadoMapa& r : resultados) {
+        cout << endl << "Mapa: " << r.nombre << " | ALGORITMO BÁSICO" << endl;
+        imprimir_camino(r.ruta_basica, r.dimension);
+        
+        cout << endl << "Mapa: " << r.nombre << " | ALGORITMO ÓPTIMO" << endl;
+        imprimir_camino(r.ruta_optima, r.dimension);
+    }
+
+    cout << endl << "================ RESUMEN DE TRAYECTORIA ================" << endl;
+    for (const ResultadoMapa& r : resultados) {
+        int saltos_basico = r.ruta_basica.empty() ? 0 : r.ruta_basica.size() - 1;
+        int saltos_optimo = r.ruta_optima.empty() ? 0 : r.ruta_optima.size() - 1;
+        
         cout << endl << "Mapa: " << r.nombre << endl;
-        imprimir_camino(r.ruta, r.dimension);
+        cout << "  [BÁSICO] Saltos: " << saltos_basico << " | Tiempo: " << r.tiempo_basico_ms << " ms" << endl;
+        cout << "  Trayectoria: " << r.ruta_basica << endl;
+        
+        cout << "  [ÓPTIMO] Saltos: " << saltos_optimo << " | Tiempo: " << r.tiempo_optimo_ms << " ms" << endl;
+        cout << "  Trayectoria: " << r.ruta_optima << endl;
     }
 
-    cout << endl << "RESUMEN DE TRAYECETORIA" << endl;
-    for (const ResultadoMapa& r : resultados) {
-        int num_saltos = r.ruta.empty() ? 0 : r.ruta.size() - 1;
-        cout << endl << "Mapa: " << r.nombre << endl;
-        cout << "Trayectoria: " << r.ruta << endl;
-        cout << "Numero de saltos: " << num_saltos << endl;
-        cout << "Tiempo: " << r.tiempo_ms << " ms" << endl;
-    }
+    cout << "================ TABLA PARA EL LIDER SUPREMO (OMAR) ================" << endl << endl;
 
-    cout << endl << "TABLA PARA EL LIDER SUPREMO (OMAR)" << endl << endl;
+    cout << left << setw(18) << "MAPA" 
+         << right << setw(12) << "SALTOS(B)" 
+         << setw(18) << "TIEMPO(B)ms" 
+         << setw(12) << "SALTOS(O)" 
+         << setw(18) << "TIEMPO(O)ms" 
+         << setw(18) << "GENERADOS(O)" 
+         << setw(15) << "PODADOS(O)" << endl;
+         
+    cout << string(93, '-') << endl;
 
-    cout << endl << "MAPA\t SALTOS \t TIEMPO(ms) \t TRAYECTORIA" << endl;
     for (const ResultadoMapa& r : resultados) {
-        int num_saltos = r.ruta.empty() ? 0 : r.ruta.size() - 1;
-        cout << r.nombre << "\t" << num_saltos << "\t" << r.tiempo_ms << "\t" << r.ruta << endl;
+        int saltos_basico = r.ruta_basica.empty() ? 0 : r.ruta_basica.size() - 1;
+        int saltos_optimo = r.ruta_optima.empty() ? 0 : r.ruta_optima.size() - 1;
+        
+        cout << left << setw(18) << r.nombre 
+             << right << setw(12) << saltos_basico 
+             << setw(18) << fixed << setprecision(4) << r.tiempo_basico_ms 
+             << setw(12) << saltos_optimo 
+             << setw(18) << fixed << setprecision(4) << r.tiempo_optimo_ms 
+             << setw(15) << r.nodos_generados
+             << setw(15) << r.nodos_podados << endl;
     }
 
     return 0;

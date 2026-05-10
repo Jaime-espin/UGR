@@ -98,12 +98,48 @@ void EstadoCamino::deshacerEstado(int fila_anterior, int columna_anterior) {
 //-------------------------------------------------------------
 //ALGORITMO BACKTRACKING
 //-------------------------------------------------------------
+bool caminoSencillo(const Lianas &mapa, EstadoCamino &estado, pair<int, int> destino){
 
-vector<pair<int, int>> caminoHaciaAltar(const Lianas &mapa, EstadoCamino &estado, pair<int, int> destino, int &min_saltos) {
+    //si llegamos al destino
+    if (estado.fila == destino.first && estado.columna == destino.second) {
+        return true; 
+    }   
+
+    static const Direccion direcciones[] = {ABAJO, DERECHA, IZQUIERDA, ARRIBA};  //ordenado asi intencionalmente porque
+    // asi podra obtener los mejores caminos (que se encuentran abajo muy probablemente si es que se parte del inicio)
+
+    for (const Direccion& dir : direcciones) {
+
+        const int fila_origen = estado.fila;
+        const int col_origen = estado.columna;
+
+        // Intentamos avanzar
+        if (estado.avanzarEstado(mapa, dir)) {
+
+            //Llamada recursiva
+            if (caminoSencillo(mapa, estado, destino)) return true; 
+            
+            // Si llegamos aquí, es que la ruta elegida no llevó al altar. Deshacer los cambios.
+            estado.deshacerEstado(fila_origen, col_origen);
+        }
+    } 
+
+    // Si llegamos aquí es que no hay camino
+    return false;
+
+}
+
+vector<pair<int, int>> caminoHaciaAltar(const Lianas &mapa, EstadoCamino &estado, pair<int, int> destino, 
+    int &min_saltos, int &nodos_podados, int &nodos_generados) {
+
+    nodos_generados++;
 
     //si no mejorará la solución que ya tenemos, podamos
-    if (estado.ruta.size() >= min_saltos)
+    if (estado.ruta.size() >= min_saltos){
+        nodos_podados++;
         return vector<pair<int, int>>();
+
+    }
 
     //si llegamos al destino
     if (estado.fila == destino.first && estado.columna == destino.second) {
@@ -112,19 +148,19 @@ vector<pair<int, int>> caminoHaciaAltar(const Lianas &mapa, EstadoCamino &estado
     }
 
     vector<pair<int, int>> mejor_ruta;
-    Direccion direcciones[] = {ABAJO, DERECHA, IZQUIERDA, ARRIBA}; //ordenado asi intencionalmente porque
+    static const Direccion direcciones[] = {ABAJO, DERECHA, IZQUIERDA, ARRIBA}; //ordenado asi intencionalmente porque
     // asi podra obtener los mejores caminos (que se encuentran abajo muy probablemente si es que se parte del inicio)
 
-    for (Direccion dir : direcciones) {
+    for (const Direccion& dir : direcciones) {
 
-        int fila_origen = estado.fila;
-        int col_origen = estado.columna;
+        const int fila_origen = estado.fila;
+        const int col_origen = estado.columna;
 
         //intentamos avanzar
         if (estado.avanzarEstado(mapa, dir)) {
 
             //exploramos
-            vector<pair<int,int>> camino_encontrado = caminoHaciaAltar(mapa, estado, destino, min_saltos);
+            const vector<pair<int,int>> camino_encontrado = caminoHaciaAltar(mapa, estado, destino, min_saltos, nodos_podados, nodos_generados);
 
             if (!camino_encontrado.empty()) {
                 mejor_ruta = camino_encontrado; //si encontramos un mejor camino
