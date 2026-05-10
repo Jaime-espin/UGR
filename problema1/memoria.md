@@ -39,19 +39,23 @@ Por otro lado, las restricciones implícitas son aquellas condiciones lógicas q
 - Destino Correcto: El destino calculado tras el balanceo (supongamos que el destino es ``(destinoF, destinoC)``) debe ser una posición válida. Es decir, que el destino tiene que estar dentro de la matriz $n \times n$, por lo que se debe cumplir que $0 \le \text{destinoF} < n$ y $0 \le \text{destinoC} < n$. Si esto no se cumple, se considera un destino inválido (choque).
 - Evitar Ciclos: Dado que las lianas se rompen tras su uso, no es posible regresar a un pilar ya visitado. Esto se traduce a que si el valor de nuestra matriz de control es ``true``, el movimiento se descarta automáticamente asegurándonos que la búsqueda sea finita.
 
-graph TD
-    %% Nodos principales
-    A["(0,0)<br>k=2"] -->|Abajo| B["(2,0)<br>k=2"]
-    B -->|Abajo| C["(4,0)<br>k=3"]
-    C -->|Abajo| D{"(4,4)<br>¡Meta!<br>3 saltos"}
+## Árbol de Exploración
+El árbol de búsqueda se va generando de forma dinámica en la búsqueda. Este árbol contiene los siguientes elementos: 
+- Raíz: Representa el pilar de entrada, es decir la posición ``(0,0)``.
+- Nodos: Cada nodo del árbol es una celda ``(i, j)`` alcanzada tras un balanceo. 
+- Ramas / Hijos: Para cada uno de los nodos, pueden crearse hasta 4 hijos. Esto es debido a que solo podemos movernos en 4 direcciones diferentes (Abajo, Derecha, Izquierda, Arriba). En apartados siguientes aclararemos el por qué hemos elegido este orden de exploración en específico. 
+- Hojas: Son estados donde no es posible realizar más movimientos válidos o donde se ha alcanzado el Pilar del Altar.
 
-    A -->|Derecha| E["(0,2)<br>k=1"]
-    E -->|Derecha| F["(0,3)<br>k=4"]
-    F -->|Abajo| G["(4,3)<br>k=1"]
-    
-    %% Nodo podado
-    G -.->|Derecha| H["PODA<br>ruta >= min_saltos"]
+Como cada nodo interno del árbol puede generar hasta 4 hijos, el tamaño del árbol crece de forma exponencial. En el peor de los casos, la longitud máxima de una ruta (sin ciclos) en una matriz de $n \times n$ es $n^2$ casillas. Es decir, la complejidad espacial y temporal teórica es de órden $\mathcal{O}(4^{n^2})$. Por ello, es estrictamente obligatorio emplear mecanismos para descartar ramas masivamente.
 
-    %% Estilos (Verde para meta, Rojo punteado para poda)
-    style D fill:#d4edda,stroke:#28a745,stroke-width:2px
-    style H fill:#f8d7da,stroke:#dc3545,stroke-width:2px,stroke-dasharray: 5 5
+## Función de Factibilidad y Cotas
+Como se indicaba en el aprtado anterior, es sumamente necesario incluir en los algoritmos algún mecanismo que nos permita reducir de alguna forma el número de nodos que podemos llegar a explorar. 
+Es por ello que en nuestra clase ``EstadoCamino`` tenemos una función ``avanzarEstado``, que permite que un estado hijo solo se consolida en el árbol si cumple dos condiciones:
+
+- Límites espaciales: Las coordenadas calculadas para el destino se encuentran dentro del rango válido de la matriz ($[0, n-1]$).  
+- Prevención de ciclos: La matriz booleana de control verifica que el pilar de destino no forma parte de la ruta actual, evitando bucles infinitos.  
+
+No obstante, descartando los movimientos no factibles, el número de rutas válidas puede ser muy alto. Es por ello, que para el algoritmo de minimización de saltos (``caminoHaciaAltar``) hemos podido incluir una técnica de poda por cota superior: 
+- Cota global: ``min_saltos`` representa el mejor valor conocido, almacenando el tamaño de la ruta óptima encontrada hasta este momento. Al principio es inicializada en infinito. 
+- Cota local: Representa el número de saltos que el explorador ya ha dado en la rama actual (el tamaño del vector ruta).
+- Lógica de Poda: Si durante la expansión de un nodo se detecta que la cota local iguala o supera a la cota global (ruta >= min_saltos), el algoritmo asume que cualquier solución derivada de esa rama será subóptima. En ese instante, se aborta la exploración de ese subárbol (poda) y se realiza el backtracking para evaluar la siguiente alternativa.
