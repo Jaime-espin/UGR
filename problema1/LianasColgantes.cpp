@@ -105,8 +105,10 @@ bool caminoSencillo(const Lianas &mapa, EstadoCamino &estado, pair<int, int> des
         return true; 
     }   
 
-    static const Direccion direcciones[] = {ABAJO, DERECHA, IZQUIERDA, ARRIBA};  //ordenado asi intencionalmente porque
+    //static const Direccion direcciones[] = {ABAJO, DERECHA, IZQUIERDA, ARRIBA};  //ordenado asi intencionalmente porque
     // asi podra obtener los mejores caminos (que se encuentran abajo muy probablemente si es que se parte del inicio)
+
+    static const Direccion direcciones[] = {ARRIBA, IZQUIERDA, DERECHA, ABAJO};
 
     for (const Direccion& dir : direcciones) {
 
@@ -148,8 +150,10 @@ vector<pair<int, int>> caminoHaciaAltar(const Lianas &mapa, EstadoCamino &estado
     }
 
     vector<pair<int, int>> mejor_ruta;
-    static const Direccion direcciones[] = {ABAJO, DERECHA, IZQUIERDA, ARRIBA}; //ordenado asi intencionalmente porque
+    //static const Direccion direcciones[] = {ABAJO, DERECHA, IZQUIERDA, ARRIBA}; //ordenado asi intencionalmente porque
     // asi podra obtener los mejores caminos (que se encuentran abajo muy probablemente si es que se parte del inicio)
+
+    static const Direccion direcciones[] = {ARRIBA, IZQUIERDA, DERECHA, ABAJO};
 
     for (const Direccion& dir : direcciones) {
 

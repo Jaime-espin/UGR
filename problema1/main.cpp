@@ -8,7 +8,7 @@
 using namespace std;
 namespace fs = std::filesystem;
 
-const int NUM_EJECUCIONES = 10;
+const int NUM_EJECUCIONES = 1;
 
 /**
  * @brief Imprime la ruta sobre una matriz dimension x dimension segun su orden de visita
@@ -190,6 +190,7 @@ int main(const int argc, const char * argv[]) {
     vector<ResultadoMapa> resultados;
 
     for (const string& ruta_archivo : archivos) {
+        cout << "Hago el archivo: " << ruta_archivo << endl;
 
         Lianas lianas(ruta_archivo);
         int dim = lianas.getDimension();
@@ -205,6 +206,8 @@ int main(const int argc, const char * argv[]) {
         vector<pair<int,int>> camino_optimo = ejecutarOptimoConMedia(lianas, destino, tiempo_optimo, nodos_podados, nodos_generados);
 
         resultados.push_back({ fs::path(ruta_archivo).filename().string(), dim, camino_basico, tiempo_basico, camino_optimo, tiempo_optimo, nodos_podados, nodos_generados });
+
+        cout << "He terminado el archivo " << ruta_archivo << endl; 
     }
 
     cout << endl << "================ MATRICES RESULTADO ================" << endl;
