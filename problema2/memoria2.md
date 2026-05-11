@@ -19,11 +19,11 @@ Se habrá llegado a una solución completa cuando el nivel de exploración alcan
 
 ## Restricciones del Problema
 ### Restricciones Explícitas
-Las restricciones explícitas definen el dominio de las variables de decisión, cada x debe ser binario(pertenecer al conjunto {0,1}). Entonces, nosotros hemos concluido las siguientes restricciones explícitas:
+Estas reglas son dictadas por el propio enunciado del problema, ya que hacen referencia a la física del problema. Entonces, nosotros hemos concluido las siguientes restricciones explícitas:
 - Decisión binaria de instalación: Al evaluar una intersección solo existen dos posibilidades, o se instala una cámara en la intersección o se decide no instalarla.
 
 ### Restricciones Implícitas
-Las restricciones implícitas son esas condiciones lógicas que garantizan la coherencia y validez de los estados generados. Para asegurar la correcta ejecución de la búsqueda, en este problema debemos garantizar el cumplimiento de las siguientes dos reglas:
+Las restricciones implícitas son aquellas condiciones lógicas que garantizan la coherencia y validez de los estados generados. Para asegurar la correcta ejecución de la búsqueda, en este problema debemos garantizar el cumplimiento de las siguientes dos reglas:
 - Todos los pasillos deben estar vigilados por al menos una cámara. En nuestra representación, si existe un pasillo que conecta la intersección $i$ con la intersección $j$ (m[i][j] == 1), es incorrecto que ambas intersecciones carezcan de cámara simultáneamente ($X[i] == 0$ y $X[j] == 0$).
 - Si tomamos la decisión de no colocar una cámara en una intersección, debemos verificar hacia atrás. Si hay alguna intersección anterior, conectada con k, en la que se no se conectó cámara, el movimiento se considerará inválido. Ya que ese pasillo quedaría sin vigilar, haciendo imposible que sea una solución correcta.
 
