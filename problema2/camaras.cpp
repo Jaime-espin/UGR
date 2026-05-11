@@ -56,7 +56,7 @@ long long nodos_generados_va = 0;
 long long nodos_podados_va = 0;
 
 
-// Si estamos en k y se decide no poner cámara, vverifico que no haya dejado algun pasillo hacia atrás sin vigilar
+// Si estamos en k y se decide no poner cámara, verifico que no haya dejado algun pasillo hacia atrás sin vigilar
 bool factible(int k, const vector<int>& X) {
     for (int i = 0; i < k; i++) {
         // Si hay pasillo y ninguno de los dos extremos tiene cámara es inviable
