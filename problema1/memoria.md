@@ -192,7 +192,7 @@ El mapa ``lianas30b.txt`` es también el mejor ejemplo para apreciar nuestra cot
 Los datos del mapa ``lianas10ss.txt`` corroboran el comportamiento del Backtracking exhaustivo. Al no existir un camino posible hacia el altar, el algoritmo nunca puede establecer un valor inicial para min_saltos. Como resultado, la cota jamás se activa (0 nodos podados) y el programa se ve forzado a explorar la totalidad del árbol de búsqueda (generando 1.090.343 nodos en una matriz de solo $10 \times 10$). Esto explica por qué es el caso que más tiempo consume (~225 ms) a pesar de su reducido tamaño. 
 
 Para establecer un ejemplo de la salida del algoritmo básico VS el algoritmo óptimo, hemos tomado como ejemplo la salida del mapa ``lianas12.txt``:
-```bash
+```sh
 Mapa: lianas12.txt
   [BÁSICO] Saltos: 15 | Tiempo: 155.185 ms
   Trayectoria: (0,0) -> (3,0) -> (9,0) -> (9,5) -> (1,5) -> (1,8) -> (3,8) -> (3,9) -> (11,9) -> (11,0) -> (11,10) -> (11,3) -> (0,3) -> (0,11) -> (1,11) -> (11,11)
@@ -201,3 +201,25 @@ Mapa: lianas12.txt
 ```
 
 Analizando detalladamente las trayectorias obtenidas para el mapa lianas12.txt, se observan peculiaridades clave del comportamiento de ambos algoritmos. En primer lugar, ambas rutas convergen en el mismo tramo final: (0,3) -> (0,11) -> (1,11) -> (11,11). Esto indica que la casilla (0,3) es un punto crítico. Mientras que el algoritmo Óptimo alcanza este nodo directamente en su primer movimiento, el algoritmo Básico por ser "ciego" solamente se empeña en seguir las direcciones descritas; al priorizar el movimiento hacia 'ABAJO', se lanza en picado (0,0) -> (3,0) -> (9,0) alejándose de la ruta ideal y viéndose obligado a dar un rodeo de 11 saltos antes de encontrar el cuello de botella en (0,3).
+
+### Resultados 2
+Como se adelantó en el apartado de implementación, el orden de expansión de los hijos en el árbol de estados no altera la corrección matemática del algoritmo, pero intuíamos que influiría  en su rendimiento. Para demostrar esto empíricamente, se modificó el vector de direcciones invirtiendo la prioridad, forzando al explorador a intentar moverse inicialmente en la dirección diametralmente opuesta al altar:
+
+```static const Direccion direcciones[] = {ARRIBA, IZQUIERDA, DERECHA, ABAJO};```
+
+Al ejecutar con este vector, hemos experimentado que a partir del mapa ``lianas12.txt`` el tiempo de ejecución era considerable. Por lo que, hemos bajado las iteraciones de 10 a 1, y solo hemos cogido los mapas ``lianas10*.txt``. Hemos obtenido estos resultados: 
+
+| MAPA | SALTOS(B) | TIEMPO(B)ms | SALTOS(O) | TIEMPO(O)ms | GENERADOS(O) | PODADOS(O) |
+|---|---:|---:|---:|---:|---:|---:|
+| lianas10.txt | 13 | 7.7761 | 8 | 8.0761 | 40495.0000 | 823.0000 |
+| lianas10b.txt | 30 | 0.0378 | 10 | 0.4168 | 1883.0000 | 618.0000 |
+| lianas10ss.txt | 0 | 184.9057 | 0 | 239.4299 | 1090343.0000 | 0.0000 |
+
+En ``lianas10.txt`` podemos ver que con el vector original (hacia el altar), el Algoritmo Óptimo necesitó generar solo 1.917 nodos en 0.42 ms. Al invertir el orden, los nodos generados se dispararon a 40.495, aumentando el tiempo a 8.07 ms. Al perderse el explorador en zonas alejadas del destino, tarda mucho más en encontrar una primera solución válida; en consecuencia, la cota global (min_saltos) se mantiene en infinito durante gran parte de la ejecución, inutilizando la función de poda inicial y permitiendo que el árbol crezca de forma descontrolada.
+
+Por otro lado, podemos observar que en el caso de ``lianas10ss.txt`` los nodos generados son exactamente igual en ambos resultados, debido a que como no tiene solución el algoritmo se ve obligado en ambos casos a explorar todo el árbol de búsqueda.
+
+Gracias a que en el mapa  ``lianas12.txt`` no lograra terminar la prueba, podemos evidenciar que, en los algoritmos de optimización mediante Vuelta Atrás, el diseño de la función de poda es ineficaz si no va acompañado de una heurística de ordenamiento que permita encontrar una cota restrictiva temprana.
+
+## Conclusiones
+La técnica de Vuelta Atrás ha demostrado ser un método robusto para la búsqueda de rutas óptimas, aunque altamente vulnerable a la explosión combinatoria. El estudio empírico evidencia que la implementación de técnicas de poda resulta ineficaz si no se acompaña de una estrategia heurística inteligente. Por consiguiente, es estrictamente necesario combinar ambas herramientas para establecer cotas restrictivas tempranas que garanticen la viabilidad computacional del algoritmo en instancias de mayor complejidad.
