@@ -61,3 +61,44 @@ Para ordenar la cola y descartar ramas, es necesario definir un sistema de cotas
 - Poda en extracción: Después de extraer el mejor nodo de la cola con prioridad, se compara su ``cota_estimada`` con la cota global (``mejorvalor_ryp``). Si la cota local del nodo es mayor o igual a la cota global, significa que este nodo no podrá mejorar la solución que ya conocemos. Por tanto, el nodo es descartado.
 
 ## Estudio empírico
+Para el estudio empírico hemos optado por evaluar el rendimiento del algoritmo de Backtracking aplicando el problema de las cámaras de seguridad variando diferentes parámetros:
+
+- La variable independiente: El tamaño del problema, que representa el número de intersecciones. El rango de valores evaluados ha sido desde n=10 hasta n=30 incrementando de 2 en 2.
+
+- Las topologías: Para evaluar el verdadero impacto de la densidad de las conexiones hemos comparado 2 estructuras de grafos:
+  - Aleatorio: Grafos generados con una probabilidad de arista $p=0.3$.
+  - Árbol: Grafos conexos y dispersos con exactamente n-1 aristas.
+
+- Variables dependientes: Serán el tiempo de ejecución del algoritmo en segundos, la cantidad de nodos generados y los nodos podados.
+
+### Análisis de la Complejidad Temporal y Espacio de Búsqueda
+En primer lugar, evaluamos la complejidad temporal y el tamaño del árbol de búsqueda en función del número de intersecciones, n.
+
+La gráfica de $Tiempo de Ejecución$ vs $n$ obtenida ha sido la siguiente:
+
+![Tiempo de Ejecución](img/tiempo_ejecucion.png)
+
+Vemos una tendencia recta ascendente. Esto confirma que la complejidad temporal y el crecimiento del árbol de exploración tienen un compotamiento exponencial $O(2^n)$ para el peor de los casos.
+
+Aun así se puede observar como para n <= 30 se obtienen tiempos de ejecución menores de milisegundos ($\approx 0.001$ segundos), demostrando una eficiencia considerable.
+
+### Impacto de la Topología
+Los resultados nos muestran una fuerte dependencia entre la desidad del grafo y el redimiento general del algoritmo. 
+
+La topología tipo "Árbol" genera sistemáticamente un orden de magnitud más de nodos y consume un tiempo de ejecución mayor frente a la topología "Aleatoria".
+
+Esta diferencia radica en la función de factibilidad. Un grafo tipo árbol posee escasas ramificaciones cruzadas. Al evaluar la rama de decisión donde no se coloca una cámara, la probabilidad de dejar un pasillo adyacente sin vigilancia temporal es baja, lo que permite al algoritmo profundizar más en el árbol de recursión antes de detectar una inconsistencia. Por el contrario, en grafos aleatorios más densos, las intersecciones tienen más conexiones; no colocar una cámara genera violaciones de factibilidad en niveles muy superiores del árbol, lo que activa la poda temprana y reduce drásticamente el espacio de exploración.
+
+![Nodos Generados](img/nodos_generados.png)
+
+### Eficiencia de la poda
+La métrica de la poda muestra que el algoritmo estabiliza rápidamente su tasa de descarte en un valor muy cercano a $0.5(50%)$ constante para ambas topologías a medida que $n$ crece.
+
+Es un comportamiento esperado, por cada llamada recursiva se generan 2 nodods hijos. La poda recae de forma exclusiva sobre la rama correspondiente a la decisión de no colocar cámara, descartando en promedio 1 de las 2 opciones generadas. Esto garantiza que el árbol sea muy pequeño conparandolo con el espacio de soluciones teóricas posibles.
+
+![Eficiencia De Poda](img/eficacia_poda.png)
+
+  
+  
+
+
