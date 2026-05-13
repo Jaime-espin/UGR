@@ -40,7 +40,8 @@ Como cada nodo interno del árbol puede generar hasta 2 hijos, el tamaño del á
 ## Backtracking (vuelta atrás)
 ### Explicación del algoritmo:
 Para el algoritmo de Vuelta Atrás empleamos una estrategia de búsqueda en profundidad (DFS). De forma recursiva, el algoritmo avanza nivel a nivel en el árbol de exploración. En cada nivel k (intersección concreta), algoritmo siempre intenta primero la rama donde se instala la cámara (X[k] = 1) y posteriormente, mediante el backtracking, explora la rama donde no se instala (X[k] = 0).
-Para minimizar el coste, tenemos un variable ``mejorvalor_va``. Cada vez que la recursión alcanza un nodo hoja válido, se compara el número de cámaras de esa solución con mejorvalor_va, actualizándolo si se ha encontrado una distribución más óptima.
+Para minimizar el coste, tenemos un variable ``mejorvalor_va``. Esta función recibe como parámetros el nivel actual de exploración `k` (que corresponde a la intersección que estamos evaluando), el número de cámaras que ya han sido colocadas en la rama actual (`camaras_colocadas`), y el vector de decisiones `X` que representa el estado de la solución parcial.
+
 
 ### Función de Factibilidad
 Para evitar la exploración de subárboles que llegan a soluciones inválidas, hemos implementado la función factible(k, X). Esta función la usamos cuando se decide no colocar cámara. Consiste en mirar hacia las intersecciones ya procesadas. Si detecta que existe un pasillo directo entre una intersección previa y la actual, y verifica que en esa intersección tampoco se colocó una cámara, la función devuelve ``false`` indicando que no es factible esa rama. Ya que ese pasillo quedará sin vigilancia.
@@ -97,8 +98,5 @@ La métrica de la poda muestra que el algoritmo estabiliza rápidamente su tasa 
 Es un comportamiento esperado, por cada llamada recursiva se generan 2 nodods hijos. La poda recae de forma exclusiva sobre la rama correspondiente a la decisión de no colocar cámara, descartando en promedio 1 de las 2 opciones generadas. Esto garantiza que el árbol sea muy pequeño conparandolo con el espacio de soluciones teóricas posibles.
 
 ![Eficiencia De Poda](img/eficacia_poda.png)
-
-  
-  
 
 
