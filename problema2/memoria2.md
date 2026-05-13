@@ -37,10 +37,23 @@ El árbol de búsqueda de nuestro algoritmo se va generando de forma dinámica a
 Como cada nodo interno del árbol puede generar hasta 2 hijos, el tamaño del árbol crece de forma exponencial. En el peor de los casos, el número total de hojas a evaluar sería $2^n$. Es decir, la complejidad espacial y temporal teórica es de órden $\mathcal{O}(2^{n})$. Por ello, es necesario emplear mecanismos para descartar ramas.
 
 
+
+## Justificación y Contraejemplo del Algoritmo Voraz
+Se han implementado técnicas de búsquedad exacta debido a que los algoritmos voraces utilziados en etapas anteriores no garantizan la obtención de la solución optima global. El enfoque voraz basado en seleccionar siempre la intersección con mayor número de pasillos puede tomar decidio es que obliguen a instalar más cámaras de las necesarias.
+
+### Contraejemplo
+Imaginemos un grafo con 7 nodos: un nodo central C conectado a 3 nodos intermedios(N1,N2,N3). A su vez, cada nodo intermedio está conectado a un único nodo exterior(L1,L2,L3).
+El algoritmo voraz elegiría primero el nodo C por tener el grado más alto(3). Al hacerlo, quedan sin vigilar los pasillos exteriores(N1,L1),(N2,L2) y (N3,L3). Para cubrirlos se ve obligado a instalar 3 cámaras más en los nodos hoja. En total, el voraz instala 4 cámaras.
+
+Sin embargo, la solución óptima consiste en ignorar el centro y colocar cámaras directamente en los nodos intermedios(N1,N2,N3). Estos 3 nodos vigilan el nodo central y también sus respectivas hojas. En total, la solución óptima instala sólo 3 cámaras.
+
+
 ## Backtracking (vuelta atrás)
 ### Explicación del algoritmo:
 Para el algoritmo de Vuelta Atrás empleamos una estrategia de búsqueda en profundidad (DFS). De forma recursiva, el algoritmo avanza nivel a nivel en el árbol de exploración. En cada nivel k (intersección concreta), algoritmo siempre intenta primero la rama donde se instala la cámara (X[k] = 1) y posteriormente, mediante el backtracking, explora la rama donde no se instala (X[k] = 0).
-Para minimizar el coste, tenemos un variable ``mejorvalor_va``. Esta función recibe como parámetros el nivel actual de exploración `k` (que corresponde a la intersección que estamos evaluando), el número de cámaras que ya han sido colocadas en la rama actual (`camaras_colocadas`), y el vector de decisiones `X` que representa el estado de la solución parcial.
+
+Para minimizar el coste, tenemos un variable mejorvalor_va que se encarga de almacenar el menor número de cámaras encontrado hasta el momento. Por su parte, la función recursiva de búsquedad recibe como par
+ametros el nivel actual de exploración k, el número de camaras_colocadas en la rama actual y el vector de decisiones X.
 
 
 ### Función de Factibilidad
@@ -60,6 +73,12 @@ Para ordenar la cola y descartar ramas, es necesario definir un sistema de cotas
 ### Podas aplicadas:
 - Poda en generación (Factibilidad): como en el backtraking, al generar el nodo hijo de no instalar cámara, se evalúa su viabilidad mediante la función de factibilidad. Si no es factible, el nodo ni siquiera llega a ser insertado en la cola con prioridad.
 - Poda en extracción: Después de extraer el mejor nodo de la cola con prioridad, se compara su ``cota_estimada`` con la cota global (``mejorvalor_ryp``). Si la cota local del nodo es mayor o igual a la cota global, significa que este nodo no podrá mejorar la solución que ya conocemos. Por tanto, el nodo es descartado.
+
+
+## Verificación de Optimalidad(Fuerza Bruta)
+Para asegurar que nuestros algoritmos de Backtracking y Ramificación y Poda están bien programados, hemos validado sus resutlados comparándolos con el algortimo de Fuerza Bruta en casos pequeños.
+En todas las ejecuciones, los tres métodos han devuelto exactamente el mismo número mínimo de cámaras. Esto nos vonfirma que nuestras funciones de poda y las reglas que hemos usado para decidir si un pasillo está vigilado y no eliminan por error ninguna solución que pudiera ser la mejor. 
+
 
 ## Estudio empírico
 Para el estudio empírico hemos optado por evaluar el rendimiento del algoritmo de Backtracking aplicando el problema de las cámaras de seguridad variando diferentes parámetros:
