@@ -12,6 +12,7 @@ En el código la matriz está definida como ``vector<vector<int>> m``. Cada casi
 
 ### Representación de la Solución
 Backtracking: La solución la almacenamos en un ``vector<int> X`` de tamaño n. Cada posición del vector corresponde una intersección específica, si el valor una posición es 1 es que ha colocado una cámara en esa intersección, si es 0 no se coloca cámara y si es -1 aún no se ha decidido.
+
 Ramificación y Poda: La solución la almacenamos en ``struct NodoB`` que está compuesto por el vector de decisiones que usamos en el problema de backtraking ``vector<int> X``, también tenemos un entero ``k`` para representar el nivel de profundidad actual en el árbol (el índice de la intersección evaluada), un entero ``camaras_colocadas`` para saber el número de camaras instaladas y el entero ``cota_estimada`` para almacenar el valor heurístico optimista del nodo, usado para ordenar la cola con prioridad.
 
 Se habrá llegado a una solución completa cuando el nivel de exploración alcance el valor $k = n$, indicando que el vector de decisiones $X$ está lleno.
