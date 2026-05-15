@@ -36,8 +36,8 @@ int main(const int argc, const char * argv[]) {
     vector<pair<int,int>> solucion = mejorCombinacionCompra(dineros,n, precio, beneficio);
 
     cout << "COMPRA OPTIMA 1" << endl << endl;
-    for (int i = 0; i < solucion.size(); i++)
-        cout << "Producto " << solucion[i].first << ": " << solucion[i].second << " unidad(es)." << endl;
+    for (auto & i : solucion)
+        cout << "Producto " << i.first << ": " << i.second << " unidad(es)." << endl;
 
 
     precio.erase(precio.begin(), precio.end());
@@ -52,8 +52,8 @@ int main(const int argc, const char * argv[]) {
     solucion = mejorCombinacionCompra(dineros,n, precio, beneficio);
 
     cout << endl << "COMPRA OPTIMA 2" << endl << endl;
-    for (int i = 0; i < solucion.size(); i++)
-        cout << "Producto " << solucion[i].first << ": " << solucion[i].second << " unidad(es)." << endl;
+    for (auto & i : solucion)
+        cout << "Producto " << i.first << ": " << i.second << " unidad(es)." << endl;
 
     return 0;
 }
