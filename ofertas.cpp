@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -25,38 +26,6 @@ vector<pair<int, int>> mejorCombinacionCompra(int dinero_disponible, const int n
  * @return Vector de pares {índice_producto, cantidad} con los productos seleccionados.
  */
 vector<pair<int,int>> construirSolucion(const vector<vector<int>> &tabla, int dinero_disponible, const int n_productos, const vector<int>& precio, const vector<int>& beneficio);
-
-int main(const int argc, const char * argv[]) {
-
-    int n = 3;
-    int dineros = 10;
-    vector<int> precio = {3, 4, 5};
-    vector<int> beneficio = {7, 8, 9};
-
-    vector<pair<int,int>> solucion = mejorCombinacionCompra(dineros,n, precio, beneficio);
-
-    cout << "COMPRA OPTIMA 1" << endl << endl;
-    for (auto & i : solucion)
-        cout << "Producto " << i.first << ": " << i.second << " unidad(es)." << endl;
-
-
-    precio.erase(precio.begin(), precio.end());
-    beneficio.erase(beneficio.begin(), beneficio.end());
-    solucion.erase(solucion.begin(), solucion.end());
-
-
-    n = 6;
-    dineros = 16;
-    precio = {1,2,3,4,5,6};
-    beneficio = {7,8,9,5,6,18};
-    solucion = mejorCombinacionCompra(dineros,n, precio, beneficio);
-
-    cout << endl << "COMPRA OPTIMA 2" << endl << endl;
-    for (auto & i : solucion)
-        cout << "Producto " << i.first << ": " << i.second << " unidad(es)." << endl;
-
-    return 0;
-}
 
 
 vector<pair<int, int>> mejorCombinacionCompra(int dinero_disponible, const int n_productos,
@@ -115,4 +84,36 @@ vector<pair<int,int>> construirSolucion(const vector<vector<int>> &tabla, int di
     }
 
     return compras;
+}
+
+int main(const int argc, const char * argv[]) {
+
+    int n = 3;
+    int dineros = 10;
+    vector<int> precio = {3, 4, 5};
+    vector<int> beneficio = {7, 8, 9};
+
+    vector<pair<int,int>> solucion = mejorCombinacionCompra(dineros,n, precio, beneficio);
+
+    cout << "COMPRA OPTIMA 1" << endl << endl;
+    for (auto & i : solucion)
+        cout << "Producto " << i.first << ": " << i.second << " unidad(es)." << endl;
+
+
+    precio.erase(precio.begin(), precio.end());
+    beneficio.erase(beneficio.begin(), beneficio.end());
+    solucion.erase(solucion.begin(), solucion.end());
+
+
+    n = 6;
+    dineros = 16;
+    precio = {1,2,3,4,5,6};
+    beneficio = {7,8,9,5,6,18};
+    solucion = mejorCombinacionCompra(dineros,n, precio, beneficio);
+
+    cout << endl << "COMPRA OPTIMA 2" << endl << endl;
+    for (auto & i : solucion)
+        cout << "Producto " << i.first << ": " << i.second << " unidad(es)." << endl;
+
+    return 0;
 }
