@@ -94,7 +94,52 @@ AgenteEstudiante::Resultado AgenteEstudiante::Status(const Tablero &tablero, std
     /* ============== Este trozo de código se tiene que quedar aquí  =============== */
     nodosVisitados++;
     /* ============== Empieza a partir de aquí tu implementación  =============== */
+    int estado = tablero.comprobarGanador();
+    if(estado==0){//No hay ganador
+        auto hijos = tablero.getSucesoresConMovimientos();
+        if (hijos.empty()) {
+            return Resultado::EMPATE;
+        }
 
+        int turno = tablero.getJugadorTurno();
+        Resultado mejor_res;
+        if(turno==id){
+            mejor_res = Resultado::DERROTA;
+        }else{
+            mejor_res = Resultado::VICTORIA;
+        }
+        
+        Mov = hijos[0].second;
+        for (const auto& hijo : hijos) {
+            std::pair<int,int> movHijo;
+            Resultado res = Status(hijo.first, movHijo);
+
+            if(turno == id){
+                if(res == Resultado::VICTORIA){
+                    Mov = hijo.second;
+                    return Resultado::VICTORIA;
+                }else if(res == Resultado::EMPATE){
+                    Mov = hijo.second;
+                    mejor_res = Resultado::EMPATE;
+                }
+            }else{
+                if(res == Resultado::DERROTA){
+                    Mov = hijo.second;
+                    return Resultado::DERROTA;
+                }else if(res == Resultado::EMPATE){
+                    Mov = hijo.second;
+                    mejor_res = Resultado::EMPATE;
+                }
+            }
+        }
+        return mejor_res;
+    }else if(estado==-1){
+        return Resultado::EMPATE;
+    }else if(estado==id){
+        return Resultado::VICTORIA;
+    }else if(estado!=id){
+        return Resultado::DERROTA;
+    }
 
     return Resultado::EMPATE;
 }
@@ -119,7 +164,51 @@ double AgenteEstudiante::minimax(const Tablero &tablero, int profundidad, int pr
         return 0;
     }
     /* ============== Empieza a partir de aquí tu implementación  =============== */
+    int estado = tablero.comprobarGanador();
 
+    if(estado == 0){
+        if(profundidad == prof_Max){
+            return heuristica(tablero);
+        }else{
+            auto hijos = tablero.getSucesoresConMovimientos();
+            if (hijos.empty()) {
+                return 0.0;
+            }
+
+            int turno = tablero.getJugadorTurno();
+            double mejor_res;
+            if(turno==id){
+                mejor_res = -99999999999999.0;
+            }else{
+                mejor_res = 99999999999999.0;
+            }
+            
+            Mov = hijos[0].second;
+            for (const auto& hijo : hijos) {
+                std::pair<int,int> movHijo;
+                double puntuacion_hijo = minimax(hijo.first, profundidad + 1, prof_Max, movHijo);
+
+                if(turno == id){
+                    if(puntuacion_hijo > mejor_res){
+                        mejor_res = puntuacion_hijo;
+                        Mov = hijo.second;
+                    }
+                }else{
+                    if(puntuacion_hijo < mejor_res){
+                        mejor_res = puntuacion_hijo;
+                        Mov = hijo.second;
+                    }
+                }
+            }
+            return mejor_res;
+        }
+    }else if(estado==-1){ //Empate
+        return 0.0;
+    }else if(estado==id){ //Ganamos
+        return 99999999999999.0;
+    }else if(estado!=id){ //Perdemos
+        return -99999999999999.0;
+    }
 
     return 0;
 }
@@ -211,8 +300,28 @@ double AgenteEstudiante::heuristicaPrueba(const Tablero& tablero) {
 
 
 double AgenteEstudiante::heuristica1(const Tablero& tablero) {
-    //A implementar por el estudiante
-return 0;
+    int oponente = (id == 1) ? 2 : 1;
+    double score_positivo = 0;
+    double score_negativo = 0;
+
+    score_positivo += tablero.contarCombinaciones(2, id) * 10.0;
+    score_positivo += tablero.contarCombinaciones(3, id) * 100.0;
+    score_positivo += tablero.contarCombinaciones(4, id) * 10000.0;
+
+    score_negativo += tablero.contarCombinaciones(2, oponente) * 15.0;
+    score_negativo += tablero.contarCombinaciones(3, oponente) * 150.0;
+    score_negativo += tablero.contarCombinaciones(4, oponente) * 50000.0;
+    /*for(int i=1; i<=2; i++){
+        for(int n=2; n<=4; n++){
+            if(i == oponente){
+                score_negativo += tablero.contarCombinaciones(n, i) * n;
+            }else{
+                score_positivo += tablero.contarCombinaciones(n, i) * n;
+            }
+        }
+    }*/
+
+    return score_positivo - score_negativo;
 }
 
 double AgenteEstudiante::heuristica2(const Tablero& tablero) {
