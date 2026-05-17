@@ -250,7 +250,63 @@ double AgenteEstudiante::alfaBeta(const Tablero &tablero, int profundidad, int p
         return 0;
     }
     /* ============== Empieza a partir de aquí tu implementación  =============== */
+    int estado = tablero.comprobarGanador();
 
+    if(estado == 0){
+        if(profundidad == prof_Max){
+            return heuristica(tablero);
+        }else{
+            auto hijos = tablero.getSucesoresConMovimientos();
+            if (hijos.empty()) {
+                return 0.0;
+            }
+
+            int turno = tablero.getJugadorTurno();
+            double mejor_res;
+            if(turno==id){
+                mejor_res = -99999999999999.0;
+            }else{
+                mejor_res = 99999999999999.0;
+            }
+            
+            Mov = hijos[0].second;
+            for (const auto& hijo : hijos) {
+                std::pair<int,int> movHijo;
+                double puntuacion_hijo = alfaBeta(hijo.first, profundidad + 1, prof_Max, alfa, beta, movHijo);
+
+                if(turno == id){
+                    if(puntuacion_hijo > mejor_res){
+                        mejor_res = puntuacion_hijo;
+                        Mov = hijo.second;
+                        if (mejor_res > alfa) {
+                            alfa = mejor_res;
+                        }
+                        if (alfa >= beta) {
+                            break; // PODA: El rival tiene opciones mejores
+                        }
+                    }
+                }else{
+                    if(puntuacion_hijo < mejor_res){
+                        mejor_res = puntuacion_hijo;
+                        Mov = hijo.second;
+                        if (mejor_res < beta) {
+                            beta = mejor_res;
+                        }
+                        if (alfa >= beta) {
+                            break; // PODA: tenemos opciones mejores
+                        }
+                    }
+                }
+            }
+            return mejor_res;
+        }
+    }else if(estado==-1){ //Empate
+        return 0.0;
+    }else if(estado==id){ //Ganamos
+        return 99999999999999.0;
+    }else if(estado!=id){ //Perdemos
+        return -99999999999999.0;
+    }
 
     return 0;
 }
@@ -311,15 +367,51 @@ double AgenteEstudiante::heuristica1(const Tablero& tablero) {
     score_negativo += tablero.contarCombinaciones(2, oponente) * 15.0;
     score_negativo += tablero.contarCombinaciones(3, oponente) * 150.0;
     score_negativo += tablero.contarCombinaciones(4, oponente) * 50000.0;
-    /*for(int i=1; i<=2; i++){
-        for(int n=2; n<=4; n++){
-            if(i == oponente){
-                score_negativo += tablero.contarCombinaciones(n, i) * n;
-            }else{
-                score_positivo += tablero.contarCombinaciones(n, i) * n;
+
+    for (int f=0; f< tablero.getFilas(); f++ ){
+        for (int c = 0; c< tablero.getColumnas(); c++){
+
+            int dueño = tablero.getCelda(f, c); // 0: vacío, 1: J1, 2: J2
+            if (dueño != 0 ){//Celda no vacía
+                double bonus_posicion = 0.0;
+            
+                if (f == 4 && c == 4) bonus_posicion = 20.0; //Centro
+                // Anillo interior
+                else if (f >= 3 && f <= 5 && c >= 3 && c <= 5) bonus_posicion = 10.0;
+                // Anillo exterior
+                else if (f >= 2 && f <= 6 && c >= 2 && c <= 6) bonus_posicion = 3.0;
+
+                if (dueño == id) score_positivo += bonus_posicion;
+                else score_negativo += bonus_posicion;
+            }
+
+            //Si detectamos casilla verde
+            if (tablero.getTipoCelda(f, c) == Tablero::TipoCelda::VERDE && dueño == 0) {
+                int propias_cercanas = 0;
+                int rival_cercano = 0;
+
+                const int df[8] = {-1, 1, 0, 0, -1, -1, 1, 1};
+                const int dc[8] = {0, 0, -1, 1, -1, 1, -1, 1};
+
+                for (int k = 0; k < 8; ++k) {
+                    int nf = f + df[k];
+                    int nc = c + dc[k];
+                    if (nf >= 0 && nf < tablero.getFilas() && nc >= 0 && nc < tablero.getColumnas()) {
+                        int vecino = tablero.getCelda(nf, nc);
+                        if (vecino == id) propias_cercanas++;
+                        else if (vecino == oponente) rival_cercano++;
+                    }
+                }
+
+                if (propias_cercanas > 0) {
+                    score_positivo += 15.0 * propias_cercanas;
+                }
+                if (rival_cercano > 0) {
+                    score_negativo += 25.0 * rival_cercano;
+                }
             }
         }
-    }*/
+    }
 
     return score_positivo - score_negativo;
 }
