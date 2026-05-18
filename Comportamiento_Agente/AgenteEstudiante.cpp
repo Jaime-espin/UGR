@@ -413,6 +413,50 @@ double AgenteEstudiante::heuristica1(const Tablero& tablero) {
         }
     }
 
+    //Detector de huecos
+    const int df_ventana[4] = {0, 1, 1, 1};
+    const int dc_ventana[4] = {1, 0, 1, -1};
+    // Escaneamos cada casilla del tablero como punto de inicio
+    for (int f = 0; f < tablero.getFilas(); f++) {
+        for (int c = 0; c < tablero.getColumnas(); c++) {
+            
+            // Miramos en las 4 direcciones
+            for (int dir = 0; dir < 4; dir++) {
+                
+                // Calculamos dónde terminaría la ventana de 5 casillas
+                int f_fin = f + 4 * df_ventana[dir];
+                int c_fin = c + 4 * dc_ventana[dir];
+
+                // Analizamos si la ventana de 5 NO se sale del tablero
+                if (f_fin >= 0 && f_fin < tablero.getFilas() && c_fin >= 0 && c_fin < tablero.getColumnas()) {
+                    
+                    int mis_fichas = 0;
+                    int sus_fichas = 0;
+
+                    // Contamos qué hay dentro de esta ventana de 5
+                    for (int i = 0; i < 5; i++) {
+                        int celda = tablero.getCelda(f + i * df_ventana[dir], c + i * dc_ventana[dir]);
+                        if (celda == id) mis_fichas++;
+                        else if (celda == oponente) sus_fichas++;
+                    }
+
+                    // Evaluación de la Ventana
+                    
+                    // Si es una ventana limpia para MÍ
+                    if (mis_fichas > 0 && sus_fichas == 0) {
+                        if (mis_fichas == 3) score_positivo += 500.0;  // Tengo 3 y 2 huecos
+                        if (mis_fichas == 4) score_positivo += 20000.0; // Tengo 4 y 1 hueco
+                    } 
+                    // Si es una ventana limpia para el RIVAL
+                    else if (sus_fichas > 0 && mis_fichas == 0) {
+                        if (sus_fichas == 3) score_negativo += 800.0;  // Amenaza
+                        if (sus_fichas == 4) score_negativo += 80000.0; // Amenaza
+                    }
+                }
+            }
+        }
+    }
+
     return score_positivo - score_negativo;
 }
 
