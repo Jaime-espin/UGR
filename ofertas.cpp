@@ -5,14 +5,29 @@
 using namespace std;
 
 /**
- * @brief Calcula la combinación de compra óptima teniendo en cuenta la oferta 2x3.
- * @param dinero_disponible Dinero máximo.
- * @param n_productos Número de productos.
- * @param precio Vector de precios por producto.
- * @param beneficio Vector de beneficios por unidad de producto.
- * @return Vector de pares {índice_producto, cantidad} con la solución óptima.
+ * @brief Imprime la tabla de Programación Dinámica formateada.
  */
-vector<pair<int, int>> mejorCombinacionCompra(int dinero_disponible, const int n_productos, const vector<int>& precio, const vector<int>& beneficio);
+void imprimirTabla(const vector<vector<int>>& tabla, int n_productos, int dinero_disponible) {
+    cout << "Tabla de Programacion Dinamica T(i,k):" << endl;
+    cout << "i \\ k\t| ";
+    for (int k = 0; k <= dinero_disponible; k++) {
+        cout << k << "\t";
+    }
+    cout << endl;
+
+    cout << "--------+-";
+    for (int k = 0; k <= dinero_disponible; k++) cout << "--------";
+    cout << endl;
+
+    for (int i = 0; i <= n_productos; i++) {
+        cout << i << "\t| ";
+        for (int k = 0; k <= dinero_disponible; k++) {
+            cout << tabla[i][k] << "\t";
+        }
+        cout << endl;
+    }
+    cout << endl;
+}
 
 /**
  * @brief Reconstruye la solución trazando hacia atrás la tabla.
@@ -25,38 +40,6 @@ vector<pair<int, int>> mejorCombinacionCompra(int dinero_disponible, const int n
  * @param beneficio Vector de beneficios por unidad de producto.
  * @return Vector de pares {índice_producto, cantidad} con los productos seleccionados.
  */
-vector<pair<int,int>> construirSolucion(const vector<vector<int>> &tabla, int dinero_disponible, const int n_productos, const vector<int>& precio, const vector<int>& beneficio);
-
-
-vector<pair<int, int>> mejorCombinacionCompra(int dinero_disponible, const int n_productos,
-                                              const vector<int> &precio, const vector<int> &beneficio) {
-
-    //Matriz de n_productos+1 filas y dinero_disponible+1 columnas inicializada a 0
-    vector<vector<int>> tabla(n_productos + 1, vector<int>(dinero_disponible + 1, 0));
-
-    for (int i = 1; i <= n_productos; i++) {
-        for (int k = 1; k <= dinero_disponible; k++) {
-
-            int p_actual = precio[i-1];
-            int beneficio_actual = beneficio[i-1];
-
-            if (p_actual <= k) { //si hay plata para al menos 1
-
-                int no_comprar = tabla[i-1][k];
-                int comprar_uno = tabla[i-1][k-p_actual] + beneficio_actual;
-                int comprar_dos = (2 * p_actual <= k) ? tabla[i-1][k - 2 * p_actual] + 3 * beneficio_actual : 0 ;
-
-                tabla[i][k] = max({no_comprar, comprar_uno, comprar_dos});
-
-            } else //si no hay plata
-                tabla[i][k] = tabla[i-1][k];
-        }
-    }
-
-    //Construimos solucion
-    return construirSolucion(tabla, dinero_disponible, n_productos, precio, beneficio);
-}
-
 vector<pair<int,int>> construirSolucion(const vector<vector<int>> &tabla, int dinero_disponible, const int n_productos,
                                         const vector<int>& precio, const vector<int>& beneficio) {
 
@@ -86,6 +69,45 @@ vector<pair<int,int>> construirSolucion(const vector<vector<int>> &tabla, int di
     return compras;
 }
 
+/**
+ * @brief Calcula la combinación de compra óptima teniendo en cuenta la oferta 2x3.
+ * @param dinero_disponible Dinero máximo.
+ * @param n_productos Número de productos.
+ * @param precio Vector de precios por producto.
+ * @param beneficio Vector de beneficios por unidad de producto.
+ * @return Vector de pares {índice_producto, cantidad} con la solución óptima.
+ */
+vector<pair<int, int>> mejorCombinacionCompra(int dinero_disponible, const int n_productos,
+                                              const vector<int> &precio, const vector<int> &beneficio) {
+
+    //Matriz de n_productos+1 filas y dinero_disponible+1 columnas inicializada a 0
+    vector<vector<int>> tabla(n_productos + 1, vector<int>(dinero_disponible + 1, 0));
+
+    for (int i = 1; i <= n_productos; i++) {
+        for (int k = 1; k <= dinero_disponible; k++) {
+
+            int p_actual = precio[i-1];
+            int beneficio_actual = beneficio[i-1];
+
+            if (p_actual <= k) { //si hay plata para al menos 1
+
+                int no_comprar = tabla[i-1][k];
+                int comprar_uno = tabla[i-1][k-p_actual] + beneficio_actual;
+                int comprar_dos = (2 * p_actual <= k) ? tabla[i-1][k - 2 * p_actual] + 3 * beneficio_actual : 0 ;
+
+                tabla[i][k] = max({no_comprar, comprar_uno, comprar_dos});
+
+            } else //si no hay plata
+                tabla[i][k] = tabla[i-1][k];
+        }
+    }
+
+    imprimirTabla(tabla, n_productos, dinero_disponible);
+
+    //Construimos solucion
+    return construirSolucion(tabla, dinero_disponible, n_productos, precio, beneficio);
+}
+
 int main(const int argc, const char * argv[]) {
 
     int n = 3;
@@ -96,9 +118,12 @@ int main(const int argc, const char * argv[]) {
     vector<pair<int,int>> solucion = mejorCombinacionCompra(dineros,n, precio, beneficio);
 
     cout << "COMPRA OPTIMA 1" << endl << endl;
-    for (auto & i : solucion)
+    int utilidad_max_1 = 0;
+    for (auto & i : solucion) {
         cout << "Producto " << i.first << ": " << i.second << " unidad(es)." << endl;
-
+        utilidad_max_1 += i.second * beneficio[i.first - 1];
+    }
+    cout << "Utilidad maxima obtenida: " << utilidad_max_1 << endl;
 
     precio.erase(precio.begin(), precio.end());
     beneficio.erase(beneficio.begin(), beneficio.end());
@@ -112,8 +137,11 @@ int main(const int argc, const char * argv[]) {
     solucion = mejorCombinacionCompra(dineros,n, precio, beneficio);
 
     cout << endl << "COMPRA OPTIMA 2" << endl << endl;
-    for (auto & i : solucion)
+    int utilidad_max_2 = 0;
+    for (auto & i : solucion) {
         cout << "Producto " << i.first << ": " << i.second << " unidad(es)." << endl;
-
+        utilidad_max_2 += i.second * beneficio[i.first - 1];
+    }
+    cout << "Utilidad maxima obtenida: " << utilidad_max_2 << endl;
     return 0;
 }
