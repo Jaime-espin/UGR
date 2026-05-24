@@ -261,6 +261,15 @@ double AgenteEstudiante::alfaBeta(const Tablero &tablero, int profundidad, int p
                 return 0.0;
             }
 
+            //Optimización por límite de tiempo.
+            //Ordenamos los hijos priorizando los movimientos más cercanos 
+            // al centro (4,4) usando la Distancia de Manhattan.
+            std::sort(hijos.begin(), hijos.end(), [](const auto& a, const auto& b) {
+                int distA = std::abs(a.second.first - 4) + std::abs(a.second.second - 4);
+                int distB = std::abs(b.second.first - 4) + std::abs(b.second.second - 4);
+                return distA < distB; // Los más cercanos al centro van al principio del vector
+            });
+
             int turno = tablero.getJugadorTurno();
             double mejor_res;
             if(turno==id){
