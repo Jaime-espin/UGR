@@ -26,7 +26,7 @@ int main(){
     //[[maybe_unused]]  const int MIN_INTER = 0, MAX_INTER = 2500000;
     Practica2 p; 
     p.testProfe();
-    const EscenarioPivote escenario = EscenarioPivote::PeorCaso;
+    const EscenarioPivote escenario = EscenarioPivote::MejorCaso;
 
     
     vector<int> tams = {
