@@ -1,0 +1,107 @@
+Hago el archivo: matrices-lianas2/lianas10.txt
+He terminado el archivo matrices-lianas2/lianas10.txt
+Hago el archivo: matrices-lianas2/lianas10b.txt
+He terminado el archivo matrices-lianas2/lianas10b.txt
+Hago el archivo: matrices-lianas2/lianas10ss.txt
+He terminado el archivo matrices-lianas2/lianas10ss.txt
+
+================ MATRICES RESULTADO ================
+
+Mapa: lianas10.txt | ALGORITMO BÁSICO
+1	6	2	0	11	5	4	0	0	3	
+0	9	0	0	10	0	0	0	0	0	
+0	8	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+13	7	0	0	12	0	0	0	0	14	
+
+Mapa: lianas10.txt | ALGORITMO ÓPTIMO
+1	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+2	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+3	0	0	4	5	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	6	0	0	0	0	0	
+8	0	0	0	7	0	0	0	0	9	
+
+Mapa: lianas10b.txt | ALGORITMO BÁSICO
+1	0	2	0	0	0	23	6	0	0	
+14	12	0	0	0	11	0	0	0	13	
+0	0	0	0	0	10	0	9	0	0	
+0	0	0	0	0	0	0	5	0	0	
+0	0	0	0	0	25	24	8	26	0	
+0	21	0	0	0	0	22	0	0	0	
+0	20	0	0	19	0	0	0	0	18	
+0	0	0	0	0	0	0	7	0	17	
+15	0	3	0	0	0	0	4	0	16	
+0	28	0	29	0	30	0	0	27	31	
+
+Mapa: lianas10b.txt | ALGORITMO ÓPTIMO
+1	6	0	0	0	0	0	0	0	0	
+0	7	0	0	0	0	0	0	0	0	
+2	4	0	0	0	0	0	0	0	3	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	5	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	8	0	9	0	10	0	0	0	11	
+
+Mapa: lianas10ss.txt | ALGORITMO BÁSICO
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+
+Mapa: lianas10ss.txt | ALGORITMO ÓPTIMO
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+0	0	0	0	0	0	0	0	0	0	
+
+================ RESUMEN DE TRAYECTORIA ================
+
+Mapa: lianas10.txt
+  [BÁSICO] Saltos: 13 | Tiempo: 7.77614 ms
+  Trayectoria: (0,0) -> (0,2) -> (0,9) -> (0,6) -> (0,5) -> (0,1) -> (9,1) -> (2,1) -> (1,1) -> (1,4) -> (0,4) -> (9,4) -> (9,0) -> (9,9)
+  [ÓPTIMO] Saltos: 8 | Tiempo: 8.07611 ms
+  Trayectoria: (0,0) -> (2,0) -> (5,0) -> (5,3) -> (5,4) -> (8,4) -> (9,4) -> (9,0) -> (9,9)
+
+Mapa: lianas10b.txt
+  [BÁSICO] Saltos: 30 | Tiempo: 0.037831 ms
+  Trayectoria: (0,0) -> (0,2) -> (8,2) -> (8,7) -> (3,7) -> (0,7) -> (7,7) -> (4,7) -> (2,7) -> (2,5) -> (1,5) -> (1,1) -> (1,9) -> (1,0) -> (8,0) -> (8,9) -> (7,9) -> (6,9) -> (6,4) -> (6,1) -> (5,1) -> (5,6) -> (0,6) -> (4,6) -> (4,5) -> (4,8) -> (9,8) -> (9,1) -> (9,3) -> (9,5) -> (9,9)
+  [ÓPTIMO] Saltos: 10 | Tiempo: 0.416848 ms
+  Trayectoria: (0,0) -> (2,0) -> (2,9) -> (2,1) -> (5,1) -> (0,1) -> (1,1) -> (9,1) -> (9,3) -> (9,5) -> (9,9)
+
+Mapa: lianas10ss.txt
+  [BÁSICO] Saltos: 0 | Tiempo: 184.906 ms
+  Trayectoria: Ruta vacía. NO TIENE SOLUCION
+  [ÓPTIMO] Saltos: 0 | Tiempo: 239.43 ms
+  Trayectoria: Ruta vacía. NO TIENE SOLUCION
+================ TABLA PARA EL LIDER SUPREMO (OMAR) ================
+
+MAPA                 SALTOS(B)       TIEMPO(B)ms   SALTOS(O)       TIEMPO(O)ms      GENERADOS(O)     PODADOS(O)
+---------------------------------------------------------------------------------------------
+lianas10.txt                13            7.7761           8            8.0761     40495.0000       823.0000
+lianas10b.txt               30            0.0378          10            0.4168      1883.0000       618.0000
+lianas10ss.txt               0          184.9057           0          239.4299   1090343.0000         0.0000
