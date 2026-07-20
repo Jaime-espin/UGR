@@ -1,0 +1,334 @@
+=== LOG COMPLETO DE PRUEBAS CONTRA ninja3 ===
+
+
+*** TABLA 1: INTELIGENTE (J1) vs ninja3 (J2) [d=7] ***
+Valor Minimax: -822	Jugada: (1, 4)
+Jugador 1 mueve a (1, 4)
+. . . . X . . . . 
+. . . . X . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . O . . . . 
+Siguiente turno: Jugador 2
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (1, 5)
+Jugador 2 mueve a (1, 5)
+. . . . X . . . . 
+. . . . X O . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . O . . . . 
+Jugador 2 aún tiene 1 movimiento(s).
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (0, 6)
+Jugador 2 mueve a (0, 6)
+. . . . X . O . . 
+. . . . X O . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . O . . . . 
+Siguiente turno: Jugador 1
+Valor Minimax: 3	Jugada: (2, 5)
+Jugador 1 mueve a (2, 5)
+. . . . X . O . . 
+. . . . X O . . . 
+. . . . . X . . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . O . . . . 
+Jugador 1 aún tiene 1 movimiento(s).
+Valor Minimax: -19664	Jugada: (8, 5)
+Jugador 1 mueve a (8, 5)
+. . . . X . O . . 
+. . . . X O . . . 
+. . . . . X . . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . O X . . . 
+Siguiente turno: Jugador 2
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (2, 6)
+Jugador 2 mueve a (2, 6)
+. . . . X . O . . 
+. . . . X O . . . 
+. . . . . X O . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . O X . . . 
+Jugador 2 aún tiene 1 movimiento(s).
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (1, 7)
+Jugador 2 mueve a (1, 7)
+. . . . X . O . . 
+. . . . X O . O . 
+. . . . . X O . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . O X . . . 
+Jugador 2 aún tiene 1 movimiento(s).
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (4, 7)
+Jugador 2 mueve a (4, 7)
+. . . . X . O . . 
+. . . . X O . O . 
+. . . . . X O . . 
+. . . . . . . . . 
+X . . . . . . O O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . O X . . . 
+Siguiente turno: Jugador 1
+Valor Minimax: -199	Jugada: (5, 1)
+Jugador 1 mueve a (5, 1)
+. . . . X . O . . 
+. . . . X O . O . 
+. . . . . X O . . 
+. . . . . . . . . 
+X . . . . . . O O 
+. X . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . O X . . . 
+Jugador 1 aún tiene 1 movimiento(s).
+Valor Minimax: -129550	Jugada: (6, 0)
+Jugador 1 mueve a (6, 0)
+. . . . X . O . . 
+. . . . X O . O . 
+. . . . . X O . . 
+. . . . . . . . . 
+X . . . . . . O O 
+. X . . . . . . . 
+X . . . . . . . . 
+. . . . . . . . . 
+. . . . O X . . . 
+Siguiente turno: Jugador 2
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (3, 7)
+Jugador 2 mueve a (3, 7)
+. . . . X . O . . 
+. . . . X O . O . 
+. . . . . X O . . 
+. . . . . . . O . 
+X . . . . . . O O 
+. X . . . . . . . 
+X . . . . . . . . 
+. . . . . . . . . 
+. . . . O X . . . 
+Jugador 2 aún tiene 1 movimiento(s).
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (0, 7)
+Jugador 2 mueve a (0, 7)
+. . . . X . O O . 
+. . . . X O . O . 
+. . . . . X O . . 
+. . . . . . . O . 
+X . . . . . . O O 
+. X . . . . . . . 
+X . . . . . . . . 
+. . . . . . . . . 
+. . . . O X . . . 
+Siguiente turno: Jugador 1
+Valor Minimax: -1e+14	Jugada: (3, 5)
+Jugador 1 mueve a (3, 5)
+. . . . X . O O . 
+. . . . X O . O . 
+. . . . . X O . . 
+. . . . . X . O . 
+X . . . . . . O O 
+. X . . . . . . . 
+X . . . . . . . . 
+. . . . . . . . . 
+. . . . O X . . . 
+Jugador 1 aún tiene 1 movimiento(s).
+Valor Minimax: -1e+14	Jugada: (4, 4)
+¡CASILLA ROJA! El Jugador 1 se sabotea y coloca una ficha del oponente!
+Jugador 1 mueve a (4, 4)
+. . . . X . O O . 
+. . . . X O . O . 
+. . . . . X O . . 
+. . . . . X . O . 
+X . . . O . . O O 
+. X . . . . . . . 
+X . . . . . . . . 
+. . . . . . . . . 
+. . . . O X . . . 
+Siguiente turno: Jugador 2
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (2, 7)
+Jugador 2 mueve a (2, 7)
+. . . . X . O O . 
+. . . . X O . O . 
+. . . . . X O O . 
+. . . . . X . O . 
+X . . . O . . O O 
+. X . . . . . . . 
+X . . . . . . . . 
+. . . . . . . . . 
+. . . . O X . . . 
+PARTIDA FINALIZADA: ¡Gana el Jugador 2!
+
+
+*** TABLA 2: ninja3 (J1) vs INTELIGENTE (J2) [d=7] ***
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (0, 5)
+Jugador 1 mueve a (0, 5)
+. . . . X X . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . O . . . . 
+Siguiente turno: Jugador 2
+Valor Minimax: 336	Jugada: (1, 5)
+Jugador 2 mueve a (1, 5)
+. . . . X X . . . 
+. . . . . O . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . O . . . . 
+Jugador 2 aún tiene 1 movimiento(s).
+Valor Minimax: -2244	Jugada: (2, 4)
+¡BOOOOM! Casilla AMARILLA activada en (2, 4). Fila y columna limpias.
+Jugador 2 mueve a (2, 4)
+. . . . . X . . . 
+. . . . . O . . . 
+. . . . O . . . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+Siguiente turno: Jugador 1
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (0, 4)
+Jugador 1 mueve a (0, 4)
+. . . . X X . . . 
+. . . . . O . . . 
+. . . . O . . . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+Jugador 1 aún tiene 1 movimiento(s).
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (1, 3)
+Jugador 1 mueve a (1, 3)
+. . . . X X . . . 
+. . . X . O . . . 
+. . . . O . . . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+Siguiente turno: Jugador 2
+Valor Minimax: 1e+14	Jugada: (2, 3)
+Jugador 2 mueve a (2, 3)
+. . . . X X . . . 
+. . . X . O . . . 
+. . . O O . . . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+Jugador 2 aún tiene 1 movimiento(s).
+Valor Minimax: 1e+14	Jugada: (2, 6)
+Jugador 2 mueve a (2, 6)
+. . . . X X . . . 
+. . . X . O . . . 
+. . . O O . O . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+Siguiente turno: Jugador 1
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (0, 3)
+Jugador 1 mueve a (0, 3)
+. . . X X X . . . 
+. . . X . O . . . 
+. . . O O . O . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+Jugador 1 aún tiene 1 movimiento(s).
+Esperando la respuesta del ninja3...
+¡Respuesta recibida! El Ninja propone: (0, 6)
+Jugador 1 mueve a (0, 6)
+. . . X X X X . . 
+. . . X . O . . . 
+. . . O O . O . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+Siguiente turno: Jugador 2
+Valor Minimax: 1e+14	Jugada: (2, 5)
+Jugador 2 mueve a (2, 5)
+. . . X X X X . . 
+. . . X . O . . . 
+. . . O O O O . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+Jugador 2 aún tiene 1 movimiento(s).
+Valor Minimax: 1e+14	Jugada: (2, 2)
+Jugador 2 mueve a (2, 2)
+. . . X X X X . . 
+. . . X . O . . . 
+. . O O O O O . . 
+. . . . . . . . . 
+X . . . . . . . O 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+. . . . . . . . . 
+PARTIDA FINALIZADA: ¡Gana el Jugador 2!
