@@ -317,9 +317,17 @@ Action ComportamientoIngeniero::ComportamientoIngenieroNivel_0(Sensores sensores
   // CASO 2: Estamos en medio de un giro forzado
   else if(girando>0){
     cout << "REGLA: Girando contador=" << girando << endl;
-    accion=TURN_SL;
+    if(sensores.superficie[2]=='U'){
+      accion=WALK;
+    }else{
+      accion=TURN_SL;
+    }
+    
     girando--;
-  } 
+  } else if (sensores.agentes[2]=='t' && last_action == IDLE){
+    accion=TURN_SL;
+    girando=3;
+  }
   // CASO 3: Hay un técnico delante y NO es la meta. Espera ingeniero porque tiene prioridad.
   else if(sensores.agentes[2]=='t' && sensores.superficie[2]!='U'){
     cout << "REGLA: Tecnico delante, no es meta" << endl;
