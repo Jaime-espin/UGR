@@ -1,0 +1,4 @@
+#!/bin/bash
+# Esto une tus instrucciones, tus apuntes y la pregunta que hagas
+cat GEMINI.md todo_el_contenido.txt | gemini "$1"
+
