@@ -1,0 +1,288 @@
+#ifndef COMPORTAMIENTOTECNICO_H
+#define COMPORTAMIENTOTECNICO_H
+
+#include <chrono>
+#include <time.h>
+#include <thread>
+#include <list>
+
+#include "comportamientos/comportamiento.hpp"
+
+// =========================================================================
+// DOCUMENTACIÓN PARA ESTUDIANTES
+// =========================================================================
+/*
+ * CLASE: ComportamientoTecnico
+ * 
+ * DESCRIPCIÓN:
+ * Esta clase implementa el comportamiento del agente Técnico en el mundo Belkan.
+ * El técnico colabora con el ingeniero para resolver el problema de instalación de tuberías
+ */
+
+struct EstadoT {
+    ubicacion site; //// Contiene fila (f), columna (c) y orientación (brujula)
+    bool zapatillas;
+    bool operator==(const EstadoT &st) const{
+        return site == st.site && zapatillas == st.zapatillas;
+    }
+    bool operator<(const EstadoT &st) const{
+        if (site.f < st.site.f) return true;
+        if (site.f == st.site.f && site.c < st.site.c) return true;
+        if (site.f == st.site.f && site.c == st.site.c && site.brujula < st.site.brujula) return true;
+        if (site.f == st.site.f && site.c == st.site.c && site.brujula == st.site.brujula && zapatillas < st.zapatillas) return true;
+        return false;
+    }
+};
+
+struct NodoT{
+    EstadoT estado;
+    list<Action> secuencia;
+    int g_cost; // Energía REAL consumida hasta aquí
+    int f_cost; // g_cost + Heurística (estimación hasta la meta)
+    
+    bool operator==(const NodoT &node) const{
+        return estado == node.estado;
+    }
+    
+    bool operator<(const NodoT &node) const{
+      return f_cost > node.f_cost;
+    }
+};
+
+class ComportamientoTecnico : public Comportamiento {
+public:
+  // =========================================================================
+  // CONSTRUCTORES
+  // =========================================================================
+  
+  /**
+   * @brief Constructor para niveles 0, 1 y 6 (sin mapa completo)
+   * @param size Tamaño del mapa (si es 0, se inicializa más tarde)
+   */
+  ComportamientoTecnico(unsigned int size = 0) : Comportamiento(size) {
+    // Inicializar Variables de Estado
+    last_action=IDLE;
+    tiene_zapatillas=false;
+    giro45Izq=0;
+    girando=0;
+    iteracion_actual = 0;
+    mapaVisitas.assign(size, vector<int>(size,0));
+  }
+
+  /**
+   * @brief Constructor para niveles 2, 3, 4 y 5 (con mapa completo conocido)
+   * @param mapaR Mapa de terreno conocido
+   * @param mapaC Mapa de cotas conocido
+   */
+  ComportamientoTecnico(std::vector<std::vector<unsigned char>> mapaR, 
+                       std::vector<std::vector<unsigned char>> mapaC): 
+                       Comportamiento(mapaR, mapaC) {
+    // Inicializar Variables de Estado
+    plan.clear();
+    hayPlan = false;
+    tiene_zapatillas = false;
+  }
+
+  ComportamientoTecnico(const ComportamientoTecnico &comport): Comportamiento(comport) {}
+  ~ComportamientoTecnico() {}
+
+  /**
+   * @brief Bucle principal de decisión del técnico.
+   * Estudia los sensores y decide la siguiente acción.
+   * 
+   * EJEMPLO DE USO:
+   * Action accion = think(sensores);
+   * return accion; // El motor ejecutará esta acción
+   */
+  Action think(Sensores sensores);
+
+  ComportamientoTecnico *clone() {
+    return new ComportamientoTecnico(*this);
+  }
+
+  // =========================================================================
+  // ÁREA DE IMPLEMENTACIÓN DEL ESTUDIANTE
+  // =========================================================================
+  
+/**
+ * @brief Comportamiento del técnico para el Nivel 0.
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
+  Action ComportamientoTecnicoNivel_0(Sensores sensores);
+  
+/**
+ * @brief Comportamiento del técnico para el Nivel 1.
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
+  Action ComportamientoTecnicoNivel_1(Sensores sensores);
+  
+/**
+ * @brief Comportamiento del técnico para el Nivel 2.
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
+  Action ComportamientoTecnicoNivel_E(Sensores sensores);
+
+/**
+ * @brief Comportamiento del técnico para el Nivel 2.
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
+  Action ComportamientoTecnicoNivel_2(Sensores sensores);
+  
+/**
+ * @brief Comportamiento del técnico para el Nivel 3.
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
+  Action ComportamientoTecnicoNivel_3(Sensores sensores);
+  
+/**
+ * @brief Comportamiento del técnico para el Nivel 4.
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
+  Action ComportamientoTecnicoNivel_4(Sensores sensores);
+  
+/**
+ * @brief Comportamiento del técnico para el Nivel 5.
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
+  Action ComportamientoTecnicoNivel_5(Sensores sensores);
+  
+/**
+ * @brief Comportamiento del técnico para el Nivel 6.
+ * @param sensores Datos actuales de los sensores.
+ * @return Acción a realizar.
+ */
+  Action ComportamientoTecnicoNivel_6(Sensores sensores);
+
+protected:
+  // =========================================================================
+  // FUNCIONES PROPORCIONADAS
+  // =========================================================================
+
+  /**
+   * @brief Actualiza el mapaResultado y mapaCotas con la información de los sensores.
+   * IMPORTANTE: Esta función ya está implementada. Actualiza mapaResultado y mapaCotas
+   * con la información de los 16 sensores.
+   */
+  void ActualizarMapa(Sensores sensores);
+
+  /**
+   * @brief Determina si una casilla es transitable para el técnico.
+   * NOTA: El técnico puede tener reglas de transitabilidad diferentes al ingeniero.
+   * @param f Fila de la casilla.
+   * @param c Columna de la casilla.
+   * @param tieneZapatillas Indica si el agente posee las zapatillas.
+   * @return true si la casilla es transitable.
+   */
+  bool EsCasillaTransitableLevel0(int f, int c, bool tieneZapatillas);
+
+  /**
+   * @brief Comprueba si la casilla de delante es accesible por diferencia de altura.
+   * REGLA PARA TÉCNICO: Desnivel máximo siempre 1 (independiente de zapatillas).
+   * @param actual Estado actual del agente (fila, columna, orientacion).
+   * @return true si el desnivel con la casilla de delante es admisible.
+   */
+  bool EsAccesiblePorAltura(const ubicacion &actual);
+
+  /**
+   * @brief Devuelve la posición (fila, columna) de la casilla que hay delante del agente.
+   * @param actual Estado actual del agente (fila, columna, orientacion).
+   * @return Estado con la fila y columna de la casilla de enfrente.
+   */
+  ubicacion Delante(const ubicacion &actual) const;
+
+  /**
+   * @brief Comprueba si una celda es de tipo transitable por defecto.
+   * @param c Carácter que representa el tipo de superficie.
+   * @return true si es camino ('C'), zapatillas ('D') o meta ('U').
+   */
+  bool es_camino(unsigned char c) const;
+
+    /**
+ * @brief Imprime por consola la secuencia de acciones de un plan para un agente.
+ * @param plan  Lista de acciones del plan.
+ */
+  void PintaPlan(const list<Action> &plan);
+
+
+/**
+ * @brief Imprime las coordenadas y operaciones de un plan de tubería.
+ * @param plan  Lista de pasos (fila, columna, operación).
+ */
+  void PintaPlan(const list<Paso> &plan);
+
+
+  /**
+ * @brief Convierte un plan de acciones en una lista de casillas para
+ *        su visualización en el mapa gráfico.
+ * @param st    Estado de partida.
+ * @param plan  Lista de acciones del plan.
+ */
+  void VisualizaPlan(const ubicacion &st, const list<Action> &plan);
+
+private:
+  // funciones auxiliare nivel 0
+
+  /**
+   * @brief Evalúa la visión cercana y aplica memoria para elegir la mejor opción.
+   * @param vision_segura Vector de visión filtrado por altura
+   * @param mem1, mem2, mem3 Valores de memoria de las 3 casillas adyacentes
+   * @return Acción a realizar
+   */
+  Action EvaluarOpcionesAdyacentes(const vector<unsigned char> &vision_segura,
+                                   int mem1, int mem2, int mem3);
+
+  /**
+   * @brief Evalúa el radar ampliado cuando no hay opciones claras adyacentes.
+   * @param vision_segura Vector de visión filtrado por altura
+   * @return Acción a realizar basada en el radar lejano
+   */
+  Action EvaluarRadarAmpliado(const vector<unsigned char> &vision_segura);
+
+  /**
+   * @brief Extrae los datos de visión segura y memoria de las celdas adyacentes
+   * @param sensores Datos actuales de los sensores
+   * @param vision_segura Salida: Vector de visión filtrado por altura
+   * @param mem1 Salida: Memoria de la casilla izquierda
+   * @param mem2 Salida: Memoria de la casilla frontal
+   * @param mem3 Salida: Memoria de la casilla derecha
+   */
+  void ExtraerDatosDeZonaYMemoria(const Sensores &sensores, vector<unsigned char> &vision_segura, int &mem1, int &mem2, int &mem3);
+
+  // Versión simplificada de BuscarNuevaNiebla para el Técnico (sin acotar mapa)
+  bool BuscarNuevaNieblaSimple(const Sensores &sensores);
+
+  // =========================================================================
+  // VARIABLES DE ESTADO (PUEDEN SER EXTENDIDAS POR EL ALUMNO)
+  // =========================================================================
+
+  Action last_action;     //Almacena la última acción ejecutada
+  bool tiene_zapatillas;  //Indica si el agente tiene las zapatillas
+  int giro45Izq;          //Indica el número de giros a la izq que quedan por dar
+  int girando;            //Para completar un giro si hay obstaculo
+  int iteracion_actual; // Para saber en qué "momento" estamos
+  vector<vector<int>> mapaVisitas; //Matriz para saber por donde ya pasó
+
+  //Segunda parte
+  list<Action> plan;
+  bool hayPlan;
+
+  int faseNivel5;            // 0=esperando, 1=moviéndose, 2=instalando
+  //Nivel 5
+  int targetF = -1;
+  int targetC = -1;
+  int bloqueoF = -1;
+  int bloqueoC = -1;
+  int lastMoveRumbo = -1;   // orientación del último WALK exitoso
+  int girosBuscando=0;
+  //Nivel 6
+  int faseNivel6 = 0;
+};
+
+#endif
